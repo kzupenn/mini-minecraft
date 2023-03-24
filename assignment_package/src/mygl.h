@@ -38,6 +38,8 @@ private:
     void sendPlayerDataToGUI() const;
 
 
+
+
 public:
     explicit MyGL(QWidget *parent = nullptr);
     ~MyGL();
@@ -52,6 +54,10 @@ public:
     // Called whenever MyGL::update() is called.
     // In the base code, update() is called from tick().
     void paintGL() override;
+
+    //servers
+    void start();
+    std::string ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().

@@ -1,14 +1,31 @@
 #include "terrain.h"
+#include "algo/worley.h"
 #include "cube.h"
+#include "algo/perlin.h"
+#include "algo/noise.h"
+#include "algo/fractal.h"
+#include "scene/biome.h"
+#include "scene/structure.h"
 #include <stdexcept>
 #include <iostream>
+#include <QDebug>
+#include <thread>
+
+#define TEST_RADIUS 256
+
+#define ocean_level 0.54
+#define beach_level 0.03
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), m_generatedTerrain(), m_geomCube(context), mp_context(context)
-{}
+    : m_chunks(), m_generatedTerrain(), mp_context(context)
+{
+    for(int i = 0; i < 50; i++) {
+
+    }
+}
 
 Terrain::~Terrain() {
-    m_geomCube.destroyVBOdata();
+
 }
 
 // Combine two 32-bit ints into one 64-bit int
@@ -45,7 +62,7 @@ glm::ivec2 toCoords(int64_t k) {
 
 // Surround calls to this with try-catch if you don't know whether
 // the coordinates at x, y, z have a corresponding Chunk
-BlockType Terrain::getBlockAt(int x, int y, int z) const
+BlockType Terrain::getBlockAt(int x, int y, int z)
 {
     if(hasChunkAt(x, z)) {
         // Just disallow action below or above min/max height,
@@ -66,11 +83,11 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
     }
 }
 
-BlockType Terrain::getBlockAt(glm::vec3 p) const {
+BlockType Terrain::getBlockAt(glm::vec3 p)  {
     return getBlockAt(p.x, p.y, p.z);
 }
 
-bool Terrain::hasChunkAt(int x, int z) const {
+bool Terrain::hasChunkAt(int x, int z) {
     // Map x and z to their nearest Chunk corner
     // By flooring x and z, then multiplying by 16,
     // we clamp (x, z) to its nearest Chunk-space corner,
@@ -80,14 +97,21 @@ bool Terrain::hasChunkAt(int x, int z) const {
     // opposed to (int)(-1 / 16.f) giving us 0 (incorrect!).
     int xFloor = static_cast<int>(glm::floor(x / 16.f));
     int zFloor = static_cast<int>(glm::floor(z / 16.f));
-    return m_chunks.find(toKey(16 * xFloor, 16 * zFloor)) != m_chunks.end();
+    m_chunks_mutex.lock();
+    bool b= m_chunks.find(toKey(16 * xFloor, 16 * zFloor)) != m_chunks.end();
+    //qDebug() << x << z << b;
+    m_chunks_mutex.unlock();
+    return b;
 }
 
 
 uPtr<Chunk>& Terrain::getChunkAt(int x, int z) {
     int xFloor = static_cast<int>(glm::floor(x / 16.f));
     int zFloor = static_cast<int>(glm::floor(z / 16.f));
-    return m_chunks[toKey(16 * xFloor, 16 * zFloor)];
+    m_chunks_mutex.lock();
+    uPtr<Chunk>& c = m_chunks[toKey(16 * xFloor, 16 * zFloor)];
+    m_chunks_mutex.unlock();
+    return c;
 }
 
 
@@ -114,89 +138,220 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     }
 }
 
+
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
-    uPtr<Chunk> chunk = mkU<Chunk>();
+    uPtr<Chunk> chunk = mkU<Chunk>(mp_context);
     Chunk *cPtr = chunk.get();
-    m_chunks[toKey(x, z)] = move(chunk);
-    // Set the neighbor pointers of itself and its neighbors
-    if(hasChunkAt(x, z + 16)) {
-        auto &chunkNorth = m_chunks[toKey(x, z + 16)];
-        cPtr->linkNeighbor(chunkNorth, ZPOS);
-    }
-    if(hasChunkAt(x, z - 16)) {
-        auto &chunkSouth = m_chunks[toKey(x, z - 16)];
-        cPtr->linkNeighbor(chunkSouth, ZNEG);
-    }
-    if(hasChunkAt(x + 16, z)) {
-        auto &chunkEast = m_chunks[toKey(x + 16, z)];
-        cPtr->linkNeighbor(chunkEast, XPOS);
-    }
-    if(hasChunkAt(x - 16, z)) {
-        auto &chunkWest = m_chunks[toKey(x - 16, z)];
-        cPtr->linkNeighbor(chunkWest, XNEG);
-    }
-    return cPtr;
-    return cPtr;
-}
 
-// TODO: When you make Chunk inherit from Drawable, change this code so
-// it draws each Chunk with the given ShaderProgram, remembering to set the
-// model matrix to the proper X and Z translation!
-void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
-    m_geomCube.clearOffsetBuf();
-    m_geomCube.clearColorBuf();
+    //terrain initialization
+    //qDebug() << "Generating" << x << z;
+    for(int xx = x; xx < x+16; xx++) {
+        for(int zz = z; zz < z+16; zz++) {
+            float bedrock = 2*generateBedrock(vec2(xx,zz));
+            std::pair<float, BiomeType> groundInfo = generateGround(vec2(xx,zz));
+            //ground
+            if(bedrock < ocean_level) {
+                //use center of chunk as the biome of the chunk
+                if(xx == x+8 && zz == z+8) {
+                    cPtr->biome = groundInfo.second;
+                }
+                //height
+                float height = 64 + groundInfo.first +(ocean_level-bedrock)*50;
+                cPtr->heightMap[xx-x][zz-z] = height;
+                for(int y = 0; y < height; y++) {
+                    switch(groundInfo.second) {
+                        case TUNDRA:
+                            cPtr->setBlockAt(xx-x, y, zz-z, STONE);
+                            break;
+                        case PLAINS:
+                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                            break;
+                        case DESERT:
+                            cPtr->setBlockAt(xx-x, y, zz-z, SAND);
+                            break;
+                        case TAIGA:
+                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                            break;
+                        case FOREST:
+                            cPtr->setBlockAt(xx-x, y, zz-z, STONE);
+                            break;
+                        default:
+                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                            break;
+                    }
 
-    std::vector<glm::vec3> offsets, colors;
-
-    for(int x = minX; x < maxX; x += 16) {
-        for(int z = minZ; z < maxZ; z += 16) {
-            const uPtr<Chunk> &chunk = getChunkAt(x, z);
-            for(int i = 0; i < 16; ++i) {
-                for(int j = 0; j < 256; ++j) {
-                    for(int k = 0; k < 16; ++k) {
-                        BlockType t = chunk->getBlockAt(i, j, k);
-
-                        if(t != EMPTY) {
-                            offsets.push_back(glm::vec3(i+x, j, k+z));
-                            switch(t) {
-                            case GRASS:
-                                colors.push_back(glm::vec3(95.f, 159.f, 53.f) / 255.f);
+                }
+            }
+            //beach
+            else if(bedrock < ocean_level + beach_level){
+                //use center of chunk as the biome of the chunk
+                if(xx == x+8 && zz == z+8) {
+                    cPtr->biome = BEACH;
+                }
+                //height
+                //float erosion = generateErosion(vec2(xx,zz));
+                //shoreline
+                if(groundInfo.first > 20) {
+                    float height = 64 + groundInfo.first +(ocean_level+beach_level-bedrock)*50;
+                    cPtr->heightMap[xx-x][zz-z] = height;
+                    for(int y = 0; y < height; y++) {
+                        switch(groundInfo.second) {
+                            case TUNDRA:
+                                cPtr->setBlockAt(xx-x, y, zz-z, STONE);
                                 break;
-                            case DIRT:
-                                colors.push_back(glm::vec3(121.f, 85.f, 58.f) / 255.f);
+                            case PLAINS:
+                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
                                 break;
-                            case STONE:
-                                colors.push_back(glm::vec3(0.5f));
+                            case DESERT:
+                                cPtr->setBlockAt(xx-x, y, zz-z, SAND);
                                 break;
-                            case WATER:
-                                colors.push_back(glm::vec3(0.f, 0.f, 0.75f));
+                            case TAIGA:
+                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                                break;
+                            case FOREST:
+                                cPtr->setBlockAt(xx-x, y, zz-z, STONE);
                                 break;
                             default:
-                                // Other block types are not yet handled, so we default to debug purple
-                                colors.push_back(glm::vec3(1.f, 0.f, 1.f));
+                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
                                 break;
+                        }
+                    }
+                }
+                //override shoreline
+                else {
+                    float height = 64 + pow((ocean_level+beach_level-bedrock)*30,5)*groundInfo.first;
+                    cPtr->heightMap[xx-x][zz-z] = height;
+                    if(height <= 64+5){
+                        for(int y = 0; y < height; y++) {
+                            cPtr->setBlockAt(xx-x, y, zz-z, SAND);
+                        }
+                    }
+                    else {
+                        for(int y = 0; y < height; y++) {
+                            switch(groundInfo.second) {
+                                case TUNDRA:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, STONE);
+                                    break;
+                                case PLAINS:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                                    break;
+                                case DESERT:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, SAND);
+                                    break;
+                                case TAIGA:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                                    break;
+                                case FOREST:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, STONE);
+                                    break;
+                                default:
+                                    cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
+                                    break;
                             }
                         }
                     }
                 }
             }
+            else if(bedrock < ocean_level + 0.05){
+                //use center of chunk as the biome of the chunk
+                if(xx == x+8 && zz == z+8) {
+                    cPtr->biome = OCEAN;
+                }
+                //height
+                cPtr->heightMap[xx-x][zz-z] = 64;
+                for(int y = 0; y < 64; y++) {
+                    cPtr->setBlockAt(xx-x, y, zz-z, WATER);
+                }
+            }
+            else {
+                //use center of chunk as the biome of the chunk
+                if(xx == x+8 && zz == z+8) {
+                    cPtr->biome = OCEAN;
+                }
+                //height
+                cPtr->heightMap[xx-x][zz-z] = 64;
+                for(int y = 0; y < 64; y++) {
+                    cPtr->setBlockAt(xx-x, y, zz-z, WATER);
+                }
+            }
         }
     }
 
-    m_geomCube.createInstancedVBOdata(offsets, colors);
-    shaderProgram->drawInstanced(m_geomCube);
+    cPtr->setPos(x, z);
+    cPtr->createVBOdata();
+
+    m_chunks_mutex.lock();
+    m_chunks[toKey(x, z)] = move(chunk);
+    m_chunks_mutex.unlock();
+    // Set the neighbor pointers of itself and its neighbors
+    if(hasChunkAt(x, z + 16)) {
+        m_chunks_mutex.lock();
+        auto &chunkNorth = m_chunks[toKey(x, z + 16)];
+        m_chunks_mutex.unlock();
+        cPtr->linkNeighbor(chunkNorth, ZPOS);
+    }
+    if(hasChunkAt(x, z - 16)) {
+         m_chunks_mutex.lock();
+        auto &chunkSouth = m_chunks[toKey(x, z - 16)];
+        m_chunks_mutex.unlock();
+        cPtr->linkNeighbor(chunkSouth, ZNEG);
+    }
+    if(hasChunkAt(x + 16, z)) {
+         m_chunks_mutex.lock();
+        auto &chunkEast = m_chunks[toKey(x + 16, z)];
+        m_chunks_mutex.unlock();
+        cPtr->linkNeighbor(chunkEast, XPOS);
+    }
+    if(hasChunkAt(x - 16, z)) {
+         m_chunks_mutex.lock();
+        auto &chunkWest = m_chunks[toKey(x - 16, z)];
+        m_chunks_mutex.unlock();
+        cPtr->linkNeighbor(chunkWest, XNEG);
+    }
+
+    cPtr->dataGen = true;
+    return cPtr;
 }
+
+Chunk* Terrain::instantiateStructures(int x, int z) {
+    Chunk* c = getChunkAt(x, z).get();
+    return c;
+}
+// TODO: When you make Chunk inherit from Drawable, change this code so
+// it draws each Chunk with the given ShaderProgram, remembering to set the
+// model matrix to the proper X and Z translation!
+void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
+    for(int x = minX; x < maxX; x += 16) {
+        for(int z = minZ; z < maxZ; z += 16) {
+            if(hasChunkAt(x, z)){
+                uPtr<Chunk> &chunk = getChunkAt(x, z);
+                //only renders chunks with generated terrain data
+                if(chunk->dataGen){
+                    //since only main thread can add
+                    if(!chunk->dataBound){
+                        chunk->bindVBOdata();
+                    }
+                    qDebug() << chunk->biome;
+                    shaderProgram->draw(*chunk.get());
+                }
+            }
+            else {
+                //qDebug() << "missing chunk at " << x << z;
+            }
+        }
+    }
+}
+
+
 
 void Terrain::CreateTestScene()
 {
-    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
-    m_geomCube.createVBOdata();
-
+    return;
     // Create the Chunks that will
     // store the blocks for our
     // initial world space
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
+    for(int x = 0; x < TEST_RADIUS; x += 16) {
+        for(int z = 0; z < TEST_RADIUS; z += 16) {
             instantiateChunkAt(x, z);
         }
     }
@@ -204,27 +359,19 @@ void Terrain::CreateTestScene()
     // the "generated terrain zone" at (0,0)
     // now exists.
     m_generatedTerrain.insert(toKey(0, 0));
-
-    // Create the basic terrain floor
-    for(int x = 0; x < 64; ++x) {
-        for(int z = 0; z < 64; ++z) {
-            if((x + z) % 2 == 0) {
-                setBlockAt(x, 128, z, STONE);
-            }
-            else {
-                setBlockAt(x, 128, z, DIRT);
-            }
-        }
-    }
-    // Add "walls" for collision testing
-    for(int x = 0; x < 64; ++x) {
-        setBlockAt(x, 129, 0, GRASS);
-        setBlockAt(x, 130, 0, GRASS);
-        setBlockAt(x, 129, 63, GRASS);
-        setBlockAt(0, 130, x, GRASS);
-    }
-    // Add a central column
-    for(int y = 129; y < 140; ++y) {
-        setBlockAt(32, y, 32, GRASS);
-    }
 }
+
+void Terrain::createGroundThread(glm::vec2 p) {
+    if(hasChunkAt(p.x, p.y)) return;
+    qDebug() << "instantiating " << p.x << p.y;
+    groundGen_mutex.lock();
+    groundGenThreads.push_back(std::thread(&Terrain::instantiateChunkAt, this, p.x, p.y));
+    groundGen_mutex.unlock();
+}
+
+void Terrain::createStructThread(glm::vec2 p) {
+    structGen_mutex.lock();
+    structGenThreads.push_back(std::thread(&Terrain::instantiateStructures, this, p.x, p.y));
+    structGen_mutex.unlock();
+}
+

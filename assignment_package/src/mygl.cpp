@@ -4,22 +4,35 @@
 #include <iostream>
 #include <QApplication>
 #include <QKeyEvent>
+#include <thread>
+
+#include "algo/perlin.h"
+#include "scene/biome.h"
+#include "scene/structure.h"
 
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain)
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      ip("localhost")
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
+}
+
+//move stuff from constructor to here so that it can be called upon entering game scene
+void MyGL::start() {
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+
+    //distTest();
+    //erosionDist();
 }
 
 MyGL::~MyGL() {
@@ -70,8 +83,6 @@ void MyGL::initializeGL()
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
-
-    m_terrain.CreateTestScene();
 }
 
 void MyGL::resizeGL(int w, int h) {
@@ -93,9 +104,42 @@ void MyGL::resizeGL(int w, int h) {
 // We're treating MyGL as our game engine class, so we're going to perform
 // all per-frame actions here, such as performing physics updates on all
 // entities in the scene.
+
 void MyGL::tick() {
+
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
+    //generates chunks based on player position
+    //chunk player is in
+    int minx = floor(m_player.mcr_position.x/64)*64;
+    int miny = floor(m_player.mcr_position.z/64)*64;
+
+    //does rendering stuff
+    for(int dx = minx-128; dx <= minx+128; dx+=64) {
+        for(int dy = miny-128; dy <= miny+128; dy+=64) {
+            if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
+                m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
+                for(int ddx = dx; ddx < dx + 64; ddx+=16) {
+                    for(int ddy = dy; ddy < dy + 64; ddy+=16) {
+                        m_terrain.createGroundThread(glm::vec2(ddx, ddy));
+                    }
+                }
+            }
+        }
+    }
+    //seems to be really slow
+//    std::map<std::pair<int,int>, std::thread>::iterator it;
+//    for(it = thread_pool.begin(); it != thread_pool.end(); it++) {
+//        if(m_terrain.hasChunkAt(it->first.first, it->first.second)) {
+//            if(m_terrain.getChunkAt(it->first.first, it->first.second)->dataGen) {
+//                if(it->second.joinable()){
+//                    //qDebug() << "joining" << it->first.first << it->first.second;
+//                    it->second.join();
+//                    //thread_pool.erase(it->first);
+//                }
+//            }
+//        }
+//    }
 }
 
 void MyGL::sendPlayerDataToGUI() const {
@@ -133,8 +177,15 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
+
 void MyGL::renderTerrain() {
-    m_terrain.draw(0, 64, 0, 64, &m_progInstanced);
+    //chunk player is in
+    int renderDist = 500;
+    float minx = floor(m_player.mcr_position.x/16.f)*16;
+    float miny = floor(m_player.mcr_position.z/16.f)*16;
+
+    m_terrain.draw(minx-renderDist, minx+renderDist, miny-renderDist, miny+renderDist, &m_progInstanced);
+    //m_terrain.draw(0, 1024, 0, 1024, &m_progInstanced);
 }
 
 

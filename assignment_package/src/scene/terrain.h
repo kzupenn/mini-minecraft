@@ -6,7 +6,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "shaderprogram.h"
-#include "cube.h"
+#include <mutex>
+#include <queue>
 
 
 //using namespace std;
@@ -27,6 +28,19 @@ private:
     // so that we can use them as a key for the map, as objects like std::pairs or
     // glm::ivec2s are not hashable by default, so they cannot be used as keys.
     std::unordered_map<int64_t, uPtr<Chunk>> m_chunks;
+    std::mutex m_chunks_mutex;
+
+    OpenGLContext* mp_context;
+
+    //multithreading!
+    std::mutex groundGen_mutex;
+    std::vector<std::thread> groundGenThreads;
+    std::mutex structGen_mutex;
+    std::vector<std::thread> structGenThreads;
+
+public:
+    Terrain(OpenGLContext *context);
+    ~Terrain();
 
     // We will designate every 64 x 64 area of the world's x-z plane
     // as one "terrain generation zone". Every time the player moves
@@ -43,28 +57,16 @@ private:
     // in the Terrain will never be deleted until the program is terminated.
     std::unordered_set<int64_t> m_generatedTerrain;
 
-    // TODO: DELETE ALL REFERENCES TO m_geomCube AS YOU WILL NOT USE
-    // IT IN YOUR FINAL PROGRAM!
-    // The instance of a unit cube we can use to render any cube.
-    // Presently, Terrain::draw renders one instance of this cube
-    // for every non-EMPTY block within its Chunks. This is horribly
-    // inefficient, and will cause your game to run very slowly until
-    // milestone 1's Chunk VBO setup is completed.
-    Cube m_geomCube;
-
-    OpenGLContext* mp_context;
-
-public:
-    Terrain(OpenGLContext *context);
-    ~Terrain();
-
     // Instantiates a new Chunk and stores it in
     // our chunk map at the given coordinates.
     // Returns a pointer to the created Chunk.
     Chunk* instantiateChunkAt(int x, int z);
+    //for generating surface level objects that require multiple chunks
+    Chunk* instantiateStructures(int x, int z);
+
     // Do these world-space coordinates lie within
     // a Chunk that exists?
-    bool hasChunkAt(int x, int z) const;
+    bool hasChunkAt(int x, int z);
     // Assuming a Chunk exists at these coords,
     // return a mutable reference to it
     uPtr<Chunk>& getChunkAt(int x, int z);
@@ -73,8 +75,8 @@ public:
     const uPtr<Chunk>& getChunkAt(int x, int z) const;
     // Given a world-space coordinate (which may have negative
     // values) return the block stored at that point in space.
-    BlockType getBlockAt(int x, int y, int z) const;
-    BlockType getBlockAt(glm::vec3 p) const;
+    BlockType getBlockAt(int x, int y, int z) ;
+    BlockType getBlockAt(glm::vec3 p) ;
     // Given a world-space coordinate (which may have negative
     // values) set the block at that point in space to the
     // given type.
@@ -88,4 +90,8 @@ public:
     // Initializes the Chunks that store the 64 x 256 x 64 block scene you
     // see when the base code is run.
     void CreateTestScene();
+
+    //for multithreading
+    void createGroundThread(glm::vec2);
+    void createStructThread(glm::vec2);
 };

@@ -1,6 +1,7 @@
 #include "drawable.h"
 #include <glm_includes.h>
 
+
 Drawable::Drawable(OpenGLContext* context)
     : m_count(-1), m_bufIdx(), m_bufPos(), m_bufNor(), m_bufCol(),
       m_idxGenerated(false), m_posGenerated(false), m_norGenerated(false), m_colGenerated(false),

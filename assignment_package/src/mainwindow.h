@@ -18,11 +18,18 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+    int scene;
 
 private slots:
     void on_actionQuit_triggered();
 
     void on_actionCamera_Controls_triggered();
+
+    //scene
+    void slot_setSceneSinglePlayer();
+    void slot_setSceneMultiPlayer();
+    void slot_setSeed();
+    void slot_startGame();
 
 private:
     Ui::MainWindow *ui;

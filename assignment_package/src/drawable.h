@@ -1,6 +1,7 @@
 #pragma once
 #include <openglcontext.h>
 #include <glm_includes.h>
+#include <mutex>
 
 //This defines a class which can be rendered by our shader program.
 //Make any geometry a subclass of ShaderProgram::Drawable in order to render it with the ShaderProgram class.
@@ -22,7 +23,6 @@ protected:
     OpenGLContext* mp_context; // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,
                           // we need to pass our OpenGL context to the Drawable in order to call GL functions
                           // from within this class.
-
 
 public:
     Drawable(OpenGLContext* mp_context);

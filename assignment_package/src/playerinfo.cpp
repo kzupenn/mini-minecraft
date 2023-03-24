@@ -32,6 +32,10 @@ void PlayerInfo::slot_setLookText(QString s) {
 void PlayerInfo::slot_setChunkText(QString s) {
     ui->chunkLabel->setText(s);
 }
+
+void PlayerInfo::slot_setChunkBiomeText(QString s) {
+    ui->chunkBiomeLabel->setText(s);
+}
 void PlayerInfo::slot_setZoneText(QString s) {
     ui->zoneLabel->setText(s);
 }
