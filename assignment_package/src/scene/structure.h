@@ -1,6 +1,7 @@
 #pragma once
 
 #include "glm_includes.h"
+#include "chunk.h"
 
 enum StructureType : unsigned char{
     OAK_TREE, VILLAGE
@@ -10,7 +11,7 @@ struct Structure{
     //type of structure
     StructureType type;
     //position the structure is centered at
-    glm::vec2 pos;
+    glm::ivec2 pos;
     //size of chunks the structure will take up
     glm::vec2 chunk_size;
 
@@ -18,3 +19,6 @@ struct Structure{
 
     }
 };
+
+std::vector<Structure> getStructureZones(Chunk* c);
+

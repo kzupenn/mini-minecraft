@@ -33,6 +33,8 @@ void Chunk::setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType
     setBlock_mutex.lock();
     m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
     setBlock_mutex.unlock();
+
+    blocksChanged = true;
 }
 
 
@@ -75,7 +77,13 @@ const int facedeltas[] = {
     0, 1, 0
 };
 void Chunk::createVBOdata() {
-    int faces = 0;
+//    int faces = 0;
+    createVBO_mutex.lock();
+    VBOpos.clear();
+    VBOnor.clear();
+    idx.clear();
+    VBOcol.clear();
+
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 256; j++) {
             for(int k = 0; k < 16; k++) {
@@ -162,6 +170,12 @@ void Chunk::createVBOdata() {
             }
         }
     }
+
+    createVBO_mutex.unlock();
+
+    //tells the main thread to bind to vbo
+    dataGen = true;
+    dataBound = false;
 }
 
 void Chunk::bindVBOdata() {

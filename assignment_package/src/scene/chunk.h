@@ -74,7 +74,7 @@ private:
     std::vector<int> idx;
 
     std::mutex setBlock_mutex;
-
+    std::mutex createVBO_mutex;
 public:
     Chunk(OpenGLContext*);
     BlockType getBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
@@ -87,6 +87,9 @@ public:
     virtual void createVBOdata();
     //locks for multithreading stages
     bool dataBound, dataGen, surfaceGen;
+
+    //for generating structures, don't want to redraw vbo for every single one
+    std::atomic_bool blocksChanged;
 
     void bindVBOdata();
     virtual GLenum drawMode();

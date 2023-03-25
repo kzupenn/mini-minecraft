@@ -28,16 +28,17 @@ float hills(glm::vec2 pos) {
     std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, glm::vec4(getSeed(2), getSeed(3), getSeed(4), getSeed(5)), 32);
     float ret = 0;
     for(std::pair<float, glm::vec2> p: hillWeights) {
-        ret+=p.first*perlinNoise(p.second, heightSeed, 16);
+        ret+=pow(glm::tanh(1.5*p.first-1.5)*0.5+0.5, 4);
     }
+
     //return true height
-    return 8*ret;
+    return 6*ret-6;
 }
 
 //valley?
 
 float terraces(glm::vec2 pos) {
-    return 50*hybridMultifractal(pos, 8, heightSeed, 32);
+    return 50*fBm(pos, 8, heightSeed, 64);
 }
 
 //desert
@@ -48,6 +49,17 @@ float dunes(glm::vec2 pos) {
 //mountains
 float mountains(glm::vec2 pos) {
     return 128*pow(hybridMultifractal(pos, 8, heightSeed, 128), 3);
+}
+
+//UNUSED
+//tall cone peaks, has issues with jagged terrain
+float cone_mountains(glm::vec2 pos) {
+    std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, glm::vec4(getSeed(2), getSeed(3), getSeed(4), getSeed(5)), 32);
+    float ret = 0;
+    for(std::pair<float, glm::vec2> p: hillWeights) {
+        ret+=1/(1+p.first);
+    }
+    return 20*ret;
 }
 
 //perlin percentiles from 0-100%
@@ -203,6 +215,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
         for(vec2 rt: p.second) {
             td += 1/pow(length(rt-vec2(crain,ctemp)), 8);
         }
+        //dont compute influences with < 10% to reduce unnecessary computation time
         if(td > mag*0.1) {
             output += td*getBiomeHeight(erosion, pp, biomeErosion[b]);
             adjmag += td;

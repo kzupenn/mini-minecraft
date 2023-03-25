@@ -2,7 +2,6 @@
 #include "algo/perlin.h"
 #include "algo/worley.h"
 #include "algo/noise.h"
-#include "terrain.h"
 
 using namespace glm;
 
@@ -15,7 +14,7 @@ float getSeed2(float f) {
 std::vector<Structure> getStructureZones(Chunk* c) {
     std::vector<Structure> ret;
     vec2 cp = vec2(c->pos.x, c->pos.z);
-    //find trees, trees should force a 3x3 generation zone
+    //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
     case PLAINS:
         for(int i = 0; i < 16; i+=4) {
@@ -26,6 +25,13 @@ std::vector<Structure> getStructureZones(Chunk* c) {
         }
         break;
     default:
+        for(int i = 0; i < 16; i+=8) {
+            for(int j = 0; j < 16; j+=8) {
+                ivec2 pp = cp+vec2(i,j)+8.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1)));
+                ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
+            }
+        }
         break;
     }
+    return ret;
 }

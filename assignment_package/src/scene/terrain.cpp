@@ -1,15 +1,11 @@
 #include "terrain.h"
-#include "algo/worley.h"
-#include "cube.h"
-#include "algo/perlin.h"
-#include "algo/noise.h"
-#include "algo/fractal.h"
 #include "scene/biome.h"
 #include "scene/structure.h"
 #include <stdexcept>
 #include <iostream>
 #include <QDebug>
 #include <thread>
+#include "algo/noise.h"
 
 #define TEST_RADIUS 256
 
@@ -17,11 +13,10 @@
 #define beach_level 0.03
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), m_generatedTerrain(), mp_context(context)
+    : m_chunks(), m_generatedTerrain(), mp_context(context),
+      activeGroundThreads(300)
 {
-    for(int i = 0; i < 50; i++) {
 
-    }
 }
 
 Terrain::~Terrain() {
@@ -130,6 +125,7 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
                       static_cast<unsigned int>(y),
                       static_cast<unsigned int>(z - chunkOrigin.y),
                       t);
+        //c->createVBOdata();
     }
     else {
         throw std::out_of_range("Coordinates " + std::to_string(x) +
@@ -140,6 +136,12 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 
 
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
+    //semaphore blocking to limit thread count
+    activeGroundThreads.acquire();
+
+    x = floor(x/16.f)*16;
+    z = floor(z/16.f)*16;
+
     uPtr<Chunk> chunk = mkU<Chunk>(mp_context);
     Chunk *cPtr = chunk.get();
 
@@ -147,8 +149,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     //qDebug() << "Generating" << x << z;
     for(int xx = x; xx < x+16; xx++) {
         for(int zz = z; zz < z+16; zz++) {
-            float bedrock = 2*generateBedrock(vec2(xx,zz));
-            std::pair<float, BiomeType> groundInfo = generateGround(vec2(xx,zz));
+            float bedrock = 2*generateBedrock(glm::vec2(xx,zz));
+            std::pair<float, BiomeType> groundInfo = generateGround(glm::vec2(xx,zz));
             //ground
             if(bedrock < ocean_level) {
                 //use center of chunk as the biome of the chunk
@@ -278,7 +280,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     }
 
     cPtr->setPos(x, z);
-    cPtr->createVBOdata();
+    createVBOThread(cPtr);
 
     m_chunks_mutex.lock();
     m_chunks[toKey(x, z)] = move(chunk);
@@ -309,14 +311,44 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
         cPtr->linkNeighbor(chunkWest, XNEG);
     }
 
-    cPtr->dataGen = true;
+    //remove
+    activeGroundThreads.release();
+    return cPtr;
+    //remove
+
+    //finds the structures and add them to our struct list
+    std::vector<Structure> structures = getStructureZones(cPtr);
+    structWait_mutex.lock();
+    structWait.insert(structWait.end(), structures.begin(),structures.end());
+    structWait_mutex.unlock();
+
+    //decrement the active ground counter
+    activeGroundThreads.release();
+
     return cPtr;
 }
 
-Chunk* Terrain::instantiateStructures(int x, int z) {
-    Chunk* c = getChunkAt(x, z).get();
-    return c;
+//draws a primitive tree for now
+void Terrain::instantiateStructures(std::vector<Structure> vs) {
+    for(const Structure &s: vs){
+        Chunk* c = getChunkAt(s.pos.x, s.pos.y).get();
+        int foo = 3.f*noise1D(glm::vec2(s.pos.x, s.pos.y), glm::vec3(3,2,1));
+        int ymin = c->heightMap[s.pos.x-(int)c->pos.x][s.pos.y-(int)c->pos.z]+1;
+        for(int y = ymin; y <= ymin+5+foo; y++) {
+            if(y >= ymin+3+foo) {
+                int a = ymin+5+foo-y+1;
+                for(int x = s.pos.x-a; x <= s.pos.x+a; x++){
+                    for(int z = s.pos.y-a; z <= s.pos.y+a; z++){
+                        setBlockAt(x, y, z, GRASS);
+                    }
+                }
+            }
+            setBlockAt(s.pos.x, y, s.pos.y, DIRT);
+        }
+        setBlockAt(s.pos.x, ymin+5+foo+1, s.pos.y, GRASS);
+    }
 }
+
 // TODO: When you make Chunk inherit from Drawable, change this code so
 // it draws each Chunk with the given ShaderProgram, remembering to set the
 // model matrix to the proper X and Z translation!
@@ -331,7 +363,6 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
                     if(!chunk->dataBound){
                         chunk->bindVBOdata();
                     }
-                    qDebug() << chunk->biome;
                     shaderProgram->draw(*chunk.get());
                 }
             }
@@ -342,36 +373,83 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
     }
 }
 
-
-
-void Terrain::CreateTestScene()
-{
-    return;
-    // Create the Chunks that will
-    // store the blocks for our
-    // initial world space
-    for(int x = 0; x < TEST_RADIUS; x += 16) {
-        for(int z = 0; z < TEST_RADIUS; z += 16) {
-            instantiateChunkAt(x, z);
+//goes through our structure list and sees if any are available to be generated
+void Terrain::pollStructures() {
+    structWait_mutex.lock();
+    std::vector<Structure> toGen;
+    std::vector<int> toRemove;
+    for(int i = structWait.size()-1; i >= 0; i--)
+    {
+        const Structure s = structWait[i];
+        int dx = 8*(s.chunk_size.x-1);
+        int dy = 8*(s.chunk_size.y-1);
+        bool allgen = true;
+        for(int x = (int)(s.pos.x) - dx; x <= (int)(s.pos.x) + dx; x+=16) {
+            for(int y = (int)(s.pos.y) - dy; y <= (int)(s.pos.y) + dy; y+=16) {
+                if(!hasChunkAt(x, y) || !getChunkAt(x, y)->dataGen){
+                    allgen = false;
+                    break;
+                }
+            }
+            if(!allgen) break;
+        }
+        if(allgen) {
+            toGen.push_back(structWait[i]);
+            toRemove.push_back(i);
         }
     }
+
+    for(int i: toRemove) {
+        structWait.erase(structWait.begin()+i);
+    }
+
+    //qDebug() << "generating" << toRemove.size() << "structures";
+
+    structWait_mutex.unlock();
+
+    //if we removed structs from the wait list, generate them
+    if(toRemove.size() > 0){
+        structGen_mutex.lock();
+        structGenThreads.emplace_back(&Terrain::instantiateStructures, this, toGen);
+        structGen_mutex.unlock();
+    }
+}
+
+void Terrain::createInitScene()
+{
+    // mark one semaphor immediately to signal start
+    activeGroundThreads.acquire();
     // Tell our existing terrain set that
     // the "generated terrain zone" at (0,0)
     // now exists.
-    m_generatedTerrain.insert(toKey(0, 0));
+    // We'll do this part somewhat synchronously since doing it async will result in 500+ threads and crash
+
+    for(int dx = -256; dx <= 256; dx+=64) {
+        for(int dy = -256; dy <= 256; dy+=64) {
+            m_generatedTerrain.insert(toKey(dx, dy));
+            for(int ddx = dx; ddx < dx + 64; ddx+=16) {
+                for(int ddy = dy; ddy < dy + 64; ddy+=16) {
+                    createGroundThread(glm::vec2(ddx, ddy));
+                }
+            }
+        }
+    }
+    activeGroundThreads.release();
 }
 
 void Terrain::createGroundThread(glm::vec2 p) {
     if(hasChunkAt(p.x, p.y)) return;
-    qDebug() << "instantiating " << p.x << p.y;
+    //mutex to prevent concurrent modification of threads vector
     groundGen_mutex.lock();
     groundGenThreads.push_back(std::thread(&Terrain::instantiateChunkAt, this, p.x, p.y));
     groundGen_mutex.unlock();
+    qDebug() << "chunk generators: " << groundGenThreads.size();
 }
 
-void Terrain::createStructThread(glm::vec2 p) {
-    structGen_mutex.lock();
-    structGenThreads.push_back(std::thread(&Terrain::instantiateStructures, this, p.x, p.y));
-    structGen_mutex.unlock();
+void Terrain::createVBOThread(Chunk* c) {
+    vboGen_mutex.lock();
+    vboGenThreads.emplace_back(std::thread(&Chunk::createVBOdata, c));
+    vboGen_mutex.unlock();
 }
+
 

@@ -16,7 +16,7 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      ip("localhost")
+      ip("localhost"), time(0)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -24,15 +24,18 @@ MyGL::MyGL(QWidget *parent)
 
 //move stuff from constructor to here so that it can be called upon entering game scene
 void MyGL::start() {
-    // Tell the timer to redraw 60 times per second
-    m_timer.start(16);
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
 
-    //distTest();
-    //erosionDist();
+    m_terrain.createInitScene();
+    //check if no more chunks are being generated
+    m_terrain.activeGroundThreads.acquire(300);
+    m_terrain.activeGroundThreads.release(300);
+
+    // Tell the timer to redraw 60 times per second
+    m_timer.start(16);
 }
 
 MyGL::~MyGL() {
@@ -106,7 +109,7 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 
 void MyGL::tick() {
-
+    time++;
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
@@ -115,18 +118,43 @@ void MyGL::tick() {
     int miny = floor(m_player.mcr_position.z/64)*64;
 
     //does rendering stuff
-    for(int dx = minx-128; dx <= minx+128; dx+=64) {
-        for(int dy = miny-128; dy <= miny+128; dy+=64) {
+    for(int dx = minx-128; dx <= minx+192; dx+=64) {
+        for(int dy = miny-128; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
                     for(int ddy = dy; ddy < dy + 64; ddy+=16) {
+                        qDebug() << "creating ground for " << ddx << ddy;
                         m_terrain.createGroundThread(glm::vec2(ddx, ddy));
                     }
                 }
             }
         }
     }
+
+    //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
+    if(time%30 == 0) {
+        for(int dx = minx-128; dx <= minx+192; dx+=64) {
+            for(int dy = miny-128; dy <= miny+192; dy+=64) {
+                for(int ddx = dx; ddx < dx + 64; ddx+=16) {
+                    for(int ddy = dy; ddy < dy + 64; ddy+=16) {
+                        if(m_terrain.hasChunkAt(ddx, ddy)){
+                            Chunk* c = m_terrain.getChunkAt(ddx, ddy).get();
+                            if(c->dataGen && c->blocksChanged){
+                                c->blocksChanged = false;
+                                m_terrain.createVBOThread(c);
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    //structure stuff
+    m_terrain.pollStructures();
+
     //seems to be really slow
 //    std::map<std::pair<int,int>, std::thread>::iterator it;
 //    for(it = thread_pool.begin(); it != thread_pool.end(); it++) {

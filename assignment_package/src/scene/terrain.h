@@ -2,12 +2,14 @@
 #include "smartpointerhelp.h"
 #include "glm_includes.h"
 #include "chunk.h"
+#include "scene/structure.h"
 #include <array>
 #include <unordered_map>
 #include <unordered_set>
 #include "shaderprogram.h"
 #include <mutex>
-#include <queue>
+#include <QSemaphore>
+
 
 
 //using namespace std;
@@ -33,10 +35,18 @@ private:
     OpenGLContext* mp_context;
 
     //multithreading!
+    //blockWorkers
     std::mutex groundGen_mutex;
     std::vector<std::thread> groundGenThreads;
+    //structure workers, these work on a group of structures at once b/c trees are very simple
     std::mutex structGen_mutex;
     std::vector<std::thread> structGenThreads;
+    //a list of structures queued up until their desired chunks have generated ground terrain
+    std::mutex structWait_mutex;
+    std::vector<Structure> structWait;
+    //vbo workers
+    std::mutex vboGen_mutex;
+    std::vector<std::thread> vboGenThreads;
 
 public:
     Terrain(OpenGLContext *context);
@@ -62,7 +72,7 @@ public:
     // Returns a pointer to the created Chunk.
     Chunk* instantiateChunkAt(int x, int z);
     //for generating surface level objects that require multiple chunks
-    Chunk* instantiateStructures(int x, int z);
+    void instantiateStructures(std::vector<Structure> vs);
 
     // Do these world-space coordinates lie within
     // a Chunk that exists?
@@ -89,9 +99,14 @@ public:
 
     // Initializes the Chunks that store the 64 x 256 x 64 block scene you
     // see when the base code is run.
-    void CreateTestScene();
+    void createInitScene();
 
     //for multithreading
+    //counts number of active ground gen threads, can be used to limit
+    QSemaphore activeGroundThreads;
+    //creates a ground thread
     void createGroundThread(glm::vec2);
-    void createStructThread(glm::vec2);
+    //creates a vbo thread
+    void createVBOThread(Chunk* c);
+    void pollStructures();
 };
