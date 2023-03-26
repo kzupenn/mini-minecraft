@@ -19,6 +19,15 @@ void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
 
+    if (inputs.mouseX) {
+        rotateOnUpLocal(-inputs.mouseX);
+        inputs.mouseX = 0.f;
+    }
+
+    if (inputs.mouseY) {
+        rotateOnRightLocal(-inputs.mouseY);
+        inputs.mouseY = 0.f;
+    }
     float SPEED = 0.1f;
     if (inputs.fPressed) {
         m_flightMode = !m_flightMode;
@@ -102,7 +111,8 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
 
-    m_velocity = m_velocity * 0.95f;
+    //to simulate friction and drag
+    m_velocity = m_velocity * 0.85f;
 
     if (m_flightMode) {
         m_velocity += m_acceleration * glm::max(dT, 1.f);
@@ -110,11 +120,18 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
         glm::vec3 gravity(0, -0.005f, 0);
         m_velocity += gravity;
         m_velocity += m_acceleration * glm::max(dT, 1.f);
+
+        checkCollision(terrain);
     }
 
     moveAlongVector(m_velocity);
 
     m_acceleration = glm::vec3(0);
+}
+
+void Player::checkCollision(const Terrain &terrain)
+{
+
 }
 
 void Player::setCameraWidthHeight(unsigned int w, unsigned int h) {

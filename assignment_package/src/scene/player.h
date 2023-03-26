@@ -13,6 +13,8 @@ private:
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
 
+    void checkCollision(const Terrain &terrain);
+
 public:
     // Readonly public reference to our camera
     // for easy access from MyGL
@@ -24,6 +26,7 @@ public:
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
     void tick(float dT, InputBundle &input) override;
+
 
     // Player overrides all of Entity's movement
     // functions so that it transforms its camera

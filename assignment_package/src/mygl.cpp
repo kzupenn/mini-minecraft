@@ -11,7 +11,8 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch())
+      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_mousePosPrev(0)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -190,8 +191,25 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
     // TODO
+    glm::vec2 pos(e->pos().x(), e->pos().y());
+    if(e->buttons() & Qt::LeftButton)
+    {
+        // Rotation
+        glm::vec2 diff = 0.02f * (pos - m_mousePosPrev);
+        m_mousePosPrev = pos;
+        m_inputs.mouseX = diff.x;
+        m_inputs.mouseY = diff.y;
+    }
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     // TODO
+    if(e->buttons() & Qt::LeftButton)
+    {
+        m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
+    }
+
+    if (e->buttons() & Qt::RightButton) {
+
+    }
 }
