@@ -4,7 +4,7 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      mcr_camera(m_camera)
+      m_flightMode(true), mcr_camera(m_camera)
 {}
 
 Player::~Player()
@@ -18,11 +18,103 @@ void Player::tick(float dT, InputBundle &input) {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
+
+    float SPEED = 0.1f;
+    if (inputs.fPressed) {
+        m_flightMode = !m_flightMode;
+        inputs.fPressed = false;
+    }
+
+    if (inputs.wPressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration += m_forward * SPEED;
+        } else {
+            m_acceleration += glm::normalize(
+                                glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
+        }
+        inputs.wPressed = false;
+    }
+
+    if (inputs.sPressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration -= m_forward * SPEED;
+        } else {
+            m_acceleration -= glm::normalize(
+                                glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
+        }
+        inputs.sPressed = false;
+    }
+
+    if (inputs.dPressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration += m_right * SPEED;
+        } else {
+            m_acceleration += glm::normalize(
+                                glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
+        }
+        inputs.dPressed = false;
+    }
+
+    if (inputs.aPressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration -= m_right * SPEED;
+        } else {
+            m_acceleration -= glm::normalize(
+                                glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
+        }
+        inputs.aPressed = false;
+    }
+
+    if (inputs.ePressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration += m_up * SPEED;
+        } else {
+            m_acceleration += glm::normalize(
+                                glm::vec3(m_up.x, 0, m_up.z)) * SPEED;
+        }
+        inputs.ePressed = false;
+    }
+
+    if (inputs.qPressed) {
+        //action
+        if (m_flightMode) {
+            m_acceleration -= m_up * SPEED;
+        } else {
+            m_acceleration -= glm::normalize(
+                                glm::vec3(m_up.x, 0, m_up.z)) * SPEED;
+        }
+        inputs.qPressed = false;
+    }
+
+    if (inputs.spacePressed) {
+        //action
+        m_acceleration += m_up * SPEED * 2.f;
+        inputs.spacePressed = false;
+    }
 }
 
 void Player::computePhysics(float dT, const Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
+
+    m_velocity = m_velocity * 0.95f;
+
+    if (m_flightMode) {
+        m_velocity += m_acceleration * glm::max(dT, 1.f);
+    } else {
+        glm::vec3 gravity(0, -0.005f, 0);
+        m_velocity += gravity;
+        m_velocity += m_acceleration * glm::max(dT, 1.f);
+    }
+
+    moveAlongVector(m_velocity);
+
+    m_acceleration = glm::vec3(0);
 }
 
 void Player::setCameraWidthHeight(unsigned int w, unsigned int h) {

@@ -21,6 +21,7 @@ MyGL::MyGL(QWidget *parent)
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
+
 }
 
 MyGL::~MyGL() {
@@ -96,8 +97,8 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 void MyGL::tick() {
 
-    float ct = QDateTime::currentMSecsSinceEpoch();
-    float dt = ct - m_currentMSecsSinceEpoch;
+    long long ct = QDateTime::currentMSecsSinceEpoch();
+    float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
 
     m_player.tick(dt, m_inputs);
@@ -167,19 +168,25 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     } else if (e->key() == Qt::Key_Down) {
         m_player.rotateOnRightLocal(amount);
     } else if (e->key() == Qt::Key_W) {
-        m_player.moveForwardLocal(amount);
+        m_inputs.wPressed = true;
     } else if (e->key() == Qt::Key_S) {
-        m_player.moveForwardLocal(-amount);
+        m_inputs.sPressed = true;
     } else if (e->key() == Qt::Key_D) {
-        m_player.moveRightLocal(amount);
+        m_inputs.dPressed = true;
     } else if (e->key() == Qt::Key_A) {
-        m_player.moveRightLocal(-amount);
+        m_inputs.aPressed = true;
     } else if (e->key() == Qt::Key_Q) {
-        m_player.moveUpGlobal(-amount);
+        m_inputs.qPressed = true;
     } else if (e->key() == Qt::Key_E) {
-        m_player.moveUpGlobal(amount);
+        m_inputs.ePressed = true;
+    } else if (e->key() == Qt::Key_F) {
+        m_inputs.fPressed = true;
+    } else if (e->key() ==Qt::Key_Space) {
+        m_inputs.spacePressed = true;
     }
 }
+
+
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
     // TODO
