@@ -34,7 +34,7 @@ std::vector<Structure> getStructureZones(Chunk* c) {
                 ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(16.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f));
                 // TO DO: modify tree spawn conditions
                 if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[i][j]-1, pp.y-cp.y) == GRASS){
-                    ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
+                    ret.push_back(Structure(SPRUCE_TREE, pp, vec2(3, 3)));
                 }
             }
         }

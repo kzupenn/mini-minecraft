@@ -15,7 +15,7 @@
 #define beach_level 0.03
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), m_generatedTerrain(), mp_context(context),
+    : m_chunks(), mp_context(context), m_generatedTerrain(),
       activeGroundThreads(300)
 {
 
@@ -224,7 +224,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             for(int y = 0; y < cPtr->heightMap[xx][zz]; y++) {
                 switch(biomeMap[xx][zz]) {
                     case TUNDRA:
-                        cPtr->setBlockAt(xx, y, zz, STONE);
+                        cPtr->setBlockAt(xx, y, zz, SNOW);
                         break;
                     case PLAINS:
                         cPtr->setBlockAt(xx, y, zz, GRASS);
@@ -248,7 +248,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                         cPtr->setBlockAt(xx, y, zz, WATER);
                         break;
                     default:
-                        cPtr->setBlockAt(xx, y, zz, DIRT);
+                        cPtr->setBlockAt(xx, y, zz, GRASS);
                         break;
                 }
             }
@@ -272,7 +272,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             //TO DO: replace DIRT with WOOD block once implemented
             int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), glm::vec3(3,2,1));
             //find base of tree
-            int ymin = c->heightMap[xx-x][zz-z]-1;
+            int ymin = c->heightMap[xx-x][zz-z];
             for(int dy = 0; dy < 4; dy++) {
                 int yat = ymin+ymax-dy;
                 switch(dy) {
@@ -331,13 +331,58 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                         break;
                 }
             }
-            for(int y = ymin+1; y < ymin+ymax; y++){
+            for(int y = ymin; y < ymin+ymax; y++){
                 setBlockAt(xx, y, zz, DIRT);
             }
             break;
         }
         case FANCY_OAK_TREE:{
             int ymin = c->heightMap[x-(int)c->pos.x][z-(int)c->pos.z];
+            break;
+        }
+            //creates a spruce tree
+            //TO DO: replace the seed with an actual seed-dependent seed
+            //TO DO: replace block types with appropriate leaves and wood
+        case SPRUCE_TREE:{
+            int ymin = c->heightMap[x-(int)c->pos.x][z-(int)c->pos.z];
+            int ymax = 5+7*noise1D(glm::vec2(xx,zz), glm::vec3(3,2,1));
+            float leaves = 1;
+            setBlockAt(xx, ymax, zz, DIRT);
+            for(int y = ymax+ymin-1; y > ymax; y--) {
+                float transition = noise1D(glm::vec3(xx, y, zz), glm::vec4(32,24,10, 12));
+                if(leaves == 0){
+                    leaves++;
+                }
+                else if(leaves == 1) { //radius 1
+                    setBlockAt(xx-1, y, zz, GRASS);
+                    setBlockAt(xx+1, y, zz, GRASS);
+                    setBlockAt(xx, y, zz-1, GRASS);
+                    setBlockAt(xx, y, zz+1, GRASS);
+                    if(transition < 0.3) leaves--;
+                    else leaves++;
+                }
+                else if(leaves == 2) { //radius 2
+                    for(int xxx = xx-2; xxx <= xx+2; xxx++) {
+                        for(int zzz = zz-2; zzz <= zz+2; zzz++) {
+                            if(abs(xxx-xx)+abs(zzz-zz) != 4)
+                                setBlockAt(xxx, y, zzz, GRASS);
+                        }
+                    }
+                    if(transition<0.7) leaves--;
+                    else leaves++;
+                }
+                else{ //radius 3
+                    for(int xxx = xx-3; xxx <= xx+3; xxx++) {
+                        for(int zzz = zz-3; zzz <= zz+3; zzz++) {
+                            if(abs(xxx-xx)+abs(zzz-zz) != 6)
+                                setBlockAt(xxx, y, zzz, GRASS);
+                        }
+                    }
+                    leaves--;
+                }
+                setBlockAt(xx, y, zz, DIRT);
+            }
+            setBlockAt(xx, ymax+ymin, zz, GRASS);
             break;
         }
         default:

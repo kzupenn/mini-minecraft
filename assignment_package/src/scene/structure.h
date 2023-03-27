@@ -4,7 +4,9 @@
 #include "chunk.h"
 
 enum StructureType : unsigned char{
-    OAK_TREE, FANCY_OAK_TREE, VILLAGE
+    OAK_TREE, FANCY_OAK_TREE,
+    SPRUCE_TREE, MEGA_SPRUCE_TREE, PINE_TREE, MEGA_PINE_TREE,
+    VILLAGE
 };
 
 struct Structure{

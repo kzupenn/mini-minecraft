@@ -153,9 +153,12 @@ void Chunk::createVBOdata() {
                             case SAND:
                                 this_color = glm::vec4(1,1,0,1);
                                 break;
+                            case SNOW:
+                                this_color = glm::vec4(1,1,1,1);
+                                break;
                             default:
-                                    this_color = glm::vec4(0);
-                                    break;
+                                this_color = glm::vec4(0);
+                                break;
                             }
                             for(int foo = 0; foo < 4; foo++) {
                                 VBOcol.push_back(this_color);

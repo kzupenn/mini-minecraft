@@ -17,12 +17,12 @@ float getSeed(float f) {
 
 vec3 heightSeed = vec3(getSeed(4), getSeed(3), getSeed(5));
 
-const bool TESTING = false;
+const bool TESTING = true;
 
 //terrain generation
 //divets
 float divet(glm::vec2 pos) {
-    return -10*min(0.f, normPerlin(pos, heightSeed, 16)-0.7f);
+    return -20*max(0.f, fBm(pos, 4, vec3(getSeed(1.43), getSeed(43.3), getSeed(431)), 50)-0.57f);
 }
 //flat
 float superflat(glm::vec2 p){
@@ -245,7 +245,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
     //make rivers here
     float height = output/adjmag;
     float rivercoef = generateRiver(pp);
-    float riverdepression = pow(clamp((float)(35*(abs(rivercoef-0.5)-0.005)), 0.f, 1.f), 3);
+    float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-0.005)), 0.f, 1.f), 3);
     //river depression needs to be 0 at 0.5+-, and grow to 1 at like 0.8
     if(rivercoef < 0.5+0.005 && rivercoef >0.5-0.005) {
         bigb = RIVER;
@@ -281,5 +281,5 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    return fBm(pp, 8, heightSeed*4.f, 1024);
+    return fBm(pp, 4, heightSeed*4.f, 1024);
 }

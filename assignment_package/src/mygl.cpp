@@ -151,21 +151,6 @@ void MyGL::tick() {
             }
         }
     }
-
-
-    //seems to be really slow
-//    std::map<std::pair<int,int>, std::thread>::iterator it;
-//    for(it = thread_pool.begin(); it != thread_pool.end(); it++) {
-//        if(m_terrain.hasChunkAt(it->first.first, it->first.second)) {
-//            if(m_terrain.getChunkAt(it->first.first, it->first.second)->dataGen) {
-//                if(it->second.joinable()){
-//                    //qDebug() << "joining" << it->first.first << it->first.second;
-//                    it->second.join();
-//                    //thread_pool.erase(it->first);
-//                }
-//            }
-//        }
-//    }
 }
 
 void MyGL::sendPlayerDataToGUI() const {
