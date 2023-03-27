@@ -10,9 +10,13 @@
 #include <mutex>
 #include <QSemaphore>
 
+struct metadata{
+    BlockType type;
+    glm::vec3 pos;
+    metadata(BlockType t, glm::vec3 p): type(t), pos(p){
 
-
-//using namespace std;
+    }
+};
 
 // Helper functions to convert (x, z) to and from hash map key
 int64_t toKey(int x, int z);
@@ -38,12 +42,9 @@ private:
     //blockWorkers
     std::mutex groundGen_mutex;
     std::vector<std::thread> groundGenThreads;
-    //structure workers, these work on a group of structures at once b/c trees are very simple
-    std::mutex structGen_mutex;
-    std::vector<std::thread> structGenThreads;
-    //a list of structures queued up until their desired chunks have generated ground terrain
-    std::mutex structWait_mutex;
-    std::vector<Structure> structWait;
+    //meta data, stores chunk changes until that chunk is loaded, after which it loads those changes in
+    std::mutex metaData_mutex;
+    std::map<int64_t, std::vector<metadata>> metaData;
     //vbo workers
     std::mutex vboGen_mutex;
     std::vector<std::thread> vboGenThreads;

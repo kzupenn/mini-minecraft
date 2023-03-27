@@ -30,11 +30,17 @@ BlockType Chunk::getBlockAt(int x, int y, int z) const {
 
 // Does bounds checking with at()
 void Chunk::setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t) {
-    setBlock_mutex.lock();
-    m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
-    setBlock_mutex.unlock();
+    try{
+        setBlock_mutex.lock();
+        m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
+        setBlock_mutex.unlock();
 
-    blocksChanged = true;
+        blocksChanged = true;
+    }
+    catch(...){
+        qDebug() << x << y << z;
+        throw std::invalid_argument( "chunk set block received faulty values" );
+    }
 }
 
 
@@ -179,6 +185,7 @@ void Chunk::createVBOdata() {
 }
 
 void Chunk::bindVBOdata() {
+    createVBO_mutex.lock();
     m_count = idx.size();
 
     // Create a VBO on our GPU and store its handle in bufIdx
@@ -201,7 +208,9 @@ void Chunk::bindVBOdata() {
     generateCol();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
     mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), VBOcol.data(), GL_STATIC_DRAW);
+
     dataBound = true;
+    createVBO_mutex.unlock();
 }
 
 void Chunk::setPos(int x, int z) {

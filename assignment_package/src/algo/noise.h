@@ -2,6 +2,9 @@
 
 #include "glm_includes.h"
 
+//given a coordinate and a seed, produce a float in the range [0-1]
 float noise1D(glm::vec2, glm::vec3);
+float noise1D(glm::vec3, glm::vec4);
+
+//given a coordinate and a seed, produce a random pair
 glm::vec2 random2(glm::vec2, glm::vec4);
-float map0to1(float f);

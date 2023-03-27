@@ -17,18 +17,24 @@ std::vector<Structure> getStructureZones(Chunk* c) {
     //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
     case PLAINS:
-        for(int i = 0; i < 16; i+=4) {
-            for(int j = 0; j < 16; j+=4) {
-                vec2 pp = cp+vec2(i,j)+4.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1)));
-                ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
-            }
-        }
+//        for(int i = 0; i < 16; i+=4) {
+//            for(int j = 0; j < 16; j+=4) {
+//                vec2 pp = cp+vec2(i,j)+4.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1)));
+//                ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
+//            }
+//        }
+        break;
+    case OCEAN:
+        break;
+    case BEACH:
         break;
     default:
-        for(int i = 0; i < 16; i+=8) {
-            for(int j = 0; j < 16; j+=8) {
-                ivec2 pp = cp+vec2(i,j)+8.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1)));
-                ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
+        for(int i = 0; i < 16; i+=16) {
+            for(int j = 0; j < 16; j+=16) {
+                if(c->heightMap[i][j] < 64+64){
+                    ivec2 pp = cp+vec2(i,j)+clamp(16.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f);
+                    ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
+                }
             }
         }
         break;

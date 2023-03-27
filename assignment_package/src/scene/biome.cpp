@@ -10,17 +10,29 @@ using namespace glm;
 #define OCEAN 0.55
 
 //TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed = 2294021;
+int seed = 12294021;
 float getSeed(float f) {
     return seed*f;
 }
 
 vec3 heightSeed = vec3(getSeed(4), getSeed(3), getSeed(5));
 
+const bool TESTING = false;
+
 //terrain generation
+//divets
+float divet(glm::vec2 pos) {
+    return -10*min(0.f, normPerlin(pos, heightSeed, 16)-0.7f);
+}
 //flat
-float flat(glm::vec2 pos) {
+float superflat(glm::vec2 p){
     return 0;
+}
+
+//flat, but with natural divets
+float flat(glm::vec2 pos) {
+    //add divets in terrain
+    return divet(pos);
 }
 
 //shallow hills
@@ -48,7 +60,7 @@ float dunes(glm::vec2 pos) {
 
 //mountains
 float mountains(glm::vec2 pos) {
-    return 128*pow(hybridMultifractal(pos, 8, heightSeed, 128), 3);
+    return 164*pow(hybridMultifractalM(pos, 8, heightSeed, 128), 3);
 }
 
 //UNUSED
@@ -63,7 +75,7 @@ float cone_mountains(glm::vec2 pos) {
 }
 
 //perlin percentiles from 0-100%
-const float p5P[21] = {0.00492358 ,
+const float p5P[21] = {0,
                        0.175705 ,
                        0.238587 ,
                        0.289835 ,
@@ -132,6 +144,9 @@ std::map<BiomeType, std::vector<std::pair<vec2, float(*)(vec2)>>> biomeErosion =
          std::make_pair(vec2(p5P[10/5], p5P[30/5]), hills),
          std::make_pair(vec2(p5P[30/5], p5P[90/5]), terraces),
          std::make_pair(vec2(p5P[90/5], p5P[100/5]), mountains)
+    }},
+    {TEST_BIOME, std::vector<std::pair<vec2, float(*)(vec2)>>{
+         std::make_pair(vec2(p5P[0/5], p5P[100/5]), superflat)
     }}
 };
 
@@ -170,10 +185,6 @@ float generateErosion(vec2 pp) {
 //    return hybridMultifractal(pp);
 }
 
-BiomeType getPrimaryBiome(vec2 pp) {
-
-}
-
 std::pair<float, BiomeType> generateGround (vec2 pp) {
     //generate rainfall and temp
     vec2 q = vec2(fBm( pp + vec2(0.0,0.0), 8,  vec3(getSeed(3), getSeed(2), getSeed(3)), 1024),
@@ -194,6 +205,11 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
     float mag = 0;
     float adjmag = 0;
     float output = 0;
+
+    //TO DO: remove this later
+    if(TESTING) {
+        return std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TEST_BIOME]), TEST_BIOME);
+    }
 
     //calculate total distance magnitude
     for(std::pair<BiomeType, std::vector<vec2>> p: biomeSpace) {
@@ -244,4 +260,12 @@ void erosionDist() {
     for(int i = 0; i < 20; i++) {
         qDebug() << foo[i*100000/20] << ',';
     }
+}
+
+float generateBeach(vec2 pp) {
+    return normPerlin(pp, heightSeed, 128);
+}
+
+float generateRiver(vec2 pp) {
+    return normPerlin(pp, heightSeed*4.f, 128);
 }

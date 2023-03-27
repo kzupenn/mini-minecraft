@@ -152,8 +152,6 @@ void MyGL::tick() {
         }
     }
 
-    //structure stuff
-    m_terrain.pollStructures();
 
     //seems to be really slow
 //    std::map<std::pair<int,int>, std::thread>::iterator it;
