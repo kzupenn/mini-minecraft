@@ -1,4 +1,5 @@
 #include "terrain.h"
+#include "algo/worley.h"
 #include "scene/biome.h"
 #include "scene/structure.h"
 #include <stdexcept>
@@ -157,6 +158,9 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 
     cPtr->setPos(x, z);
 
+    //biome info to generate with blocktype later
+    BiomeType biomeMap[16][16];
+
     //terrain initialization
     for(int xx = x; xx < x+16; xx++) {
         for(int zz = z; zz < z+16; zz++) {
@@ -165,13 +169,6 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             std::pair<float, BiomeType> groundInfo = generateGround(glm::vec2(xx,zz));
             //ground
             if(bedrock < ocean_level) {
-                if(generateRiver(glm::vec2(xx, zz))>0.8){
-                    cPtr->heightMap[xx-x][zz-z] = 64;
-                    for(int y = 0; y < 64; y++) {
-                        cPtr->setBlockAt(xx-x, y, zz-z, WATER);
-                    }
-                    continue;
-                }
                 //use center of chunk as the biome of the chunk
                 if(xx == x+8 && zz == z+8) {
                     cPtr->biome = groundInfo.second;
@@ -179,29 +176,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 //height
                 float height = 64 + groundInfo.first +(ocean_level-bedrock)*50;
                 cPtr->heightMap[xx-x][zz-z] = height;
-                for(int y = 0; y < height; y++) {
-                    switch(groundInfo.second) {
-                        case TUNDRA:
-                            cPtr->setBlockAt(xx-x, y, zz-z, STONE);
-                            break;
-                        case PLAINS:
-                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                            break;
-                        case DESERT:
-                            cPtr->setBlockAt(xx-x, y, zz-z, SAND);
-                            break;
-                        case TAIGA:
-                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                            break;
-                        case FOREST:
-                            cPtr->setBlockAt(xx-x, y, zz-z, STONE);
-                            break;
-                        default:
-                            cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                            break;
-                    }
-
-                }
+                biomeMap[xx-x][zz-z] = groundInfo.second;
             }
             //beach
             else if(bedrock < ocean_level + beachhead){
@@ -214,34 +189,11 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 //shoreline
                 float height = 64 + pow((ocean_level+beachhead-bedrock)/beachhead,5)*groundInfo.first;
                 cPtr->heightMap[xx-x][zz-z] = height;
-                if(height <= 64+5){
-                    for(int y = 0; y < height; y++) {
-                        cPtr->setBlockAt(xx-x, y, zz-z, SAND);
-                    }
+                if(height <= 64+5 && groundInfo.second != RIVER){
+                    biomeMap[xx-x][zz-z] = BEACH;
                 }
                 else {
-                    for(int y = 0; y < height; y++) {
-                        switch(groundInfo.second) {
-                            case TUNDRA:
-                                cPtr->setBlockAt(xx-x, y, zz-z, STONE);
-                                break;
-                            case PLAINS:
-                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                                break;
-                            case DESERT:
-                                cPtr->setBlockAt(xx-x, y, zz-z, SAND);
-                                break;
-                            case TAIGA:
-                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                                break;
-                            case FOREST:
-                                cPtr->setBlockAt(xx-x, y, zz-z, STONE);
-                                break;
-                            default:
-                                cPtr->setBlockAt(xx-x, y, zz-z, GRASS);
-                                break;
-                        }
-                    }
+                    biomeMap[xx-x][zz-z] = groundInfo.second;
                 }
 
             }
@@ -252,9 +204,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 }
                 //height
                 cPtr->heightMap[xx-x][zz-z] = 64;
-                for(int y = 0; y < 64; y++) {
-                    cPtr->setBlockAt(xx-x, y, zz-z, WATER);
-                }
+                biomeMap[xx-x][zz-z] = OCEAN;
             }
             else {
                 //use center of chunk as the biome of the chunk
@@ -263,8 +213,43 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 }
                 //height
                 cPtr->heightMap[xx-x][zz-z] = 64;
-                for(int y = 0; y < 64; y++) {
-                    cPtr->setBlockAt(xx-x, y, zz-z, WATER);
+                biomeMap[xx-x][zz-z] = OCEAN;
+            }
+        }
+    }
+
+    //using height and biome map, generate chunk
+    for(int xx = 0; xx < 16; xx++) {
+        for(int zz = 0; zz < 16; zz++) {
+            for(int y = 0; y < cPtr->heightMap[xx][zz]; y++) {
+                switch(biomeMap[xx][zz]) {
+                    case TUNDRA:
+                        cPtr->setBlockAt(xx, y, zz, STONE);
+                        break;
+                    case PLAINS:
+                        cPtr->setBlockAt(xx, y, zz, GRASS);
+                        break;
+                    case DESERT:
+                        cPtr->setBlockAt(xx, y, zz, SAND);
+                        break;
+                    case TAIGA:
+                        cPtr->setBlockAt(xx, y, zz, GRASS);
+                        break;
+                    case FOREST:
+                        cPtr->setBlockAt(xx, y, zz, STONE);
+                        break;
+                    case BEACH:
+                        cPtr->setBlockAt(xx, y, zz, SAND);
+                        break;
+                    case OCEAN:
+                        cPtr->setBlockAt(xx, y, zz, WATER);
+                        break;
+                    case RIVER:
+                        cPtr->setBlockAt(xx, y, zz, WATER);
+                        break;
+                    default:
+                        cPtr->setBlockAt(xx, y, zz, DIRT);
+                        break;
                 }
             }
         }
@@ -287,7 +272,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             //TO DO: replace DIRT with WOOD block once implemented
             int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), glm::vec3(3,2,1));
             //find base of tree
-            int ymin = c->heightMap[xx-x][zz-z];
+            int ymin = c->heightMap[xx-x][zz-z]-1;
             for(int dy = 0; dy < 4; dy++) {
                 int yat = ymin+ymax-dy;
                 switch(dy) {

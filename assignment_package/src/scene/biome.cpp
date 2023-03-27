@@ -60,7 +60,7 @@ float dunes(glm::vec2 pos) {
 
 //mountains
 float mountains(glm::vec2 pos) {
-    return 164*pow(hybridMultifractalM(pos, 8, heightSeed, 128), 3);
+    return 128*pow(hybridMultifractalM(pos, 8, heightSeed, 128), 2);
 }
 
 //UNUSED
@@ -242,7 +242,21 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
         }
     }
 
-    return std::make_pair(output/adjmag, bigb);
+    //make rivers here
+    float height = output/adjmag;
+    float rivercoef = generateRiver(pp);
+    float riverdepression = pow(clamp((float)(35*(abs(rivercoef-0.5)-0.005)), 0.f, 1.f), 3);
+    //river depression needs to be 0 at 0.5+-, and grow to 1 at like 0.8
+    if(rivercoef < 0.5+0.005 && rivercoef >0.5-0.005) {
+        bigb = RIVER;
+        //TO DO: replace height with a river bed calculation
+        height = 0;
+    }
+    else {
+        height*= riverdepression;
+    }
+
+    return std::make_pair(height, bigb);
 }
 
 float generateBedrock(vec2 pp){
@@ -267,5 +281,5 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    return normPerlin(pp, heightSeed*4.f, 128);
+    return fBm(pp, 8, heightSeed*4.f, 1024);
 }

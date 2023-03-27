@@ -13,7 +13,7 @@ float getSeed2(float f) {
 
 std::vector<Structure> getStructureZones(Chunk* c) {
     std::vector<Structure> ret;
-    vec2 cp = vec2(c->pos.x, c->pos.z);
+    ivec2 cp = ivec2(c->pos.x, c->pos.z);
     //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
     case PLAINS:
@@ -31,8 +31,9 @@ std::vector<Structure> getStructureZones(Chunk* c) {
     default:
         for(int i = 0; i < 16; i+=16) {
             for(int j = 0; j < 16; j+=16) {
-                if(c->heightMap[i][j] < 64+64){
-                    ivec2 pp = cp+vec2(i,j)+clamp(16.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f);
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(16.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f));
+                // TO DO: modify tree spawn conditions
+                if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[i][j]-1, pp.y-cp.y) == GRASS){
                     ret.push_back(Structure(OAK_TREE, pp, vec2(3, 3)));
                 }
             }

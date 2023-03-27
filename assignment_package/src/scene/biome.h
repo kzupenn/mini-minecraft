@@ -6,7 +6,7 @@
 enum BiomeType : unsigned char
 {
     TUNDRA, PLAINS, DESERT, TAIGA, SHRUBLAND, SAVANNA, FOREST, SEASONAL_FOREST, SWAMP, RAINFOREST,
-    BEACH, OCEAN, TEST_BIOME
+    BEACH, OCEAN, RIVER, TEST_BIOME
 };
 
 float generateBedrock(glm::vec2);
