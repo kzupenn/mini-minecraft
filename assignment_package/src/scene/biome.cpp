@@ -15,14 +15,14 @@ float getSeed(float f) {
     return seed*f;
 }
 
-vec3 heightSeed = vec3(getSeed(4), getSeed(3), getSeed(5));
+vec4 heightSeed = vec4(getSeed(4), getSeed(3), getSeed(5), getSeed(2));
 
-const bool TESTING = true;
+const bool TESTING = false;
 
 //terrain generation
 //divets
 float divet(glm::vec2 pos) {
-    return -20*max(0.f, fBm(pos, 4, vec3(getSeed(1.43), getSeed(43.3), getSeed(431)), 50)-0.57f);
+    return -20*max(0.f, fBm(pos, 4, vec4(getSeed(1.43), getSeed(43.3), getSeed(431), getSeed(223)), 50)-0.57f);
 }
 //flat
 float superflat(glm::vec2 p){
@@ -76,25 +76,25 @@ float cone_mountains(glm::vec2 pos) {
 
 //perlin percentiles from 0-100%
 const float p5P[21] = {0,
-                       0.175705 ,
-                       0.238587 ,
-                       0.289835 ,
-                       0.331721 ,
-                       0.369187 ,
-                       0.40303 ,
-                       0.434481 ,
-                       0.463022 ,
-                       0.487222 ,
-                       0.49995 ,
-                       0.505617 ,
-                       0.526931 ,
-                       0.554015 ,
-                       0.585002 ,
-                       0.618836 ,
-                       0.656681 ,
-                       0.696229 ,
-                       0.746581 ,
-                       0.814599 ,
+                       0.163355,
+                       0.228847,
+                       0.279731,
+                       0.322539,
+                       0.358845,
+                       0.390918,
+                       0.420682,
+                       0.447783,
+                       0.47443,
+                       0.5,
+                       0.525273,
+                       0.552094,
+                       0.579494,
+                       0.608912,
+                       0.640787,
+                       0.677271,
+                       0.719848,
+                       0.771009,
+                       0.837976,
                       1};
 
 
@@ -180,18 +180,18 @@ float getBiomeHeight(float e, vec2 pp, std::vector<std::pair<vec2, float(*)(vec2
 }
 
 float generateErosion(vec2 pp) {
-    return normPerlin(pp, vec3(getSeed(7.8), getSeed(5.6), getSeed(2.5)), 1024);
+    return normPerlin(pp, vec4(getSeed(7.8), getSeed(5.6), getSeed(2.5), getSeed(4.6)), 1024);
 //    setMultiFractalNoise(normPerlin);
 //    return hybridMultifractal(pp);
 }
 
 std::pair<float, BiomeType> generateGround (vec2 pp) {
     //generate rainfall and temp
-    vec2 q = vec2(fBm( pp + vec2(0.0,0.0), 8,  vec3(getSeed(3), getSeed(2), getSeed(3)), 1024),
-             fBm( pp + 500.f*vec2(-5,5), 8,  vec3(getSeed(3), getSeed(2), getSeed(3)), 1024 ));
+    vec2 q = vec2(fBm( pp + vec2(0.0,0.0), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(546)), 1024),
+             fBm( pp + 500.f*vec2(-5,5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(546)), 1024 ));
 
-    vec2 r = vec2(fBm( pp + 4.f*q + 500.f*vec2(5,-5), 8,  vec3(getSeed(3), getSeed(2), getSeed(3)), 1024  ),
-             fBm( pp + 4.f*q + 500.f*vec2(-5,5), 8,  vec3(getSeed(3), getSeed(2), getSeed(3)), 1024  ));
+    vec2 r = vec2(fBm( pp + 4.f*q + 500.f*vec2(5,-5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(523)), 1024  ),
+             fBm( pp + 4.f*q + 500.f*vec2(-5,5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(434)), 1024  ));
 
     float rain = length(q)/sqrt(2);
     float temp = length(r)/sqrt(2);
@@ -245,9 +245,9 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
     //make rivers here
     float height = output/adjmag;
     float rivercoef = generateRiver(pp);
-    float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-0.005)), 0.f, 1.f), 3);
+    float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-0.007)), 0.f, 1.f), 3);
     //river depression needs to be 0 at 0.5+-, and grow to 1 at like 0.8
-    if(rivercoef < 0.5+0.005 && rivercoef >0.5-0.005) {
+    if(rivercoef < 0.5+0.007 && rivercoef >0.5-0.007) {
         bigb = RIVER;
         //TO DO: replace height with a river bed calculation
         height = 0;
@@ -261,7 +261,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return warpPattern(pp, q, r, 12, 500, vec3(getSeed(2), getSeed(1), getSeed(3)), 2048);
+    return warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048);
 }
 
 void erosionDist() {
@@ -281,5 +281,7 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    return fBm(pp, 4, heightSeed*4.f, 1024);
+    return fBm(pp, 8, heightSeed*4.f, 1024);
 }
+
+

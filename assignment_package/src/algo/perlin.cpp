@@ -4,19 +4,15 @@
 
 using namespace glm;
 
-vec3 powv3(vec3 v, float f){
-    return vec3(pow(v[0], f), pow(v[1], f), pow(v[2], f));
-}
 
-
-float surflet(vec2 P, vec2 gridPoint, vec3 perlinSeed) {
+float surflet(vec2 P, vec2 gridPoint, vec4 perlinSeed) {
     // Compute falloff function by converting linear distance to a polynomial
     float distX = abs(P.x - gridPoint.x);
     float distY = abs(P.y - gridPoint.y);
     float tX = 1 - 6 * pow(distX, 5.f) + 15 * pow(distX, 4.f) - 10 * pow(distX, 3.f);
     float tY = 1 - 6 * pow(distY, 5.f) + 15 * pow(distY, 4.f) - 10 * pow(distY, 3.f);
     // Get the random vector for the grid point
-    vec2 gradient = 2.f * noise1D(gridPoint, perlinSeed) - vec2(1.f);
+    vec2 gradient = 2.f * random2(gridPoint, perlinSeed) - vec2(1.f);
     // Get the vector from the grid point to P
     vec2 diff = P - gridPoint;
     // Get the value of our height field by dotting grid->P with our gradient
@@ -25,7 +21,7 @@ float surflet(vec2 P, vec2 gridPoint, vec3 perlinSeed) {
     return height * tX * tY;
 }
 
-float perlinNoise(vec2 uv, vec3 seed, int g) {
+float perlinNoise(vec2 uv, vec4 seed, int g) {
     float gridSizePerlin = 1.f/g;
     uv *= gridSizePerlin;
     float surfletSum = 0.f;
@@ -38,7 +34,7 @@ float perlinNoise(vec2 uv, vec3 seed, int g) {
     return 2*surfletSum;
 }
 
-float normPerlin(vec2 uv, vec3 seed, int g) {
+float normPerlin(vec2 uv, vec4 seed, int g) {
     return clamp(0.5f*(1+perlinNoise(uv, seed, g)), 0.f, 1.f);
 }
 
@@ -48,7 +44,7 @@ void distTest() {
     int k = 0;
     for(int i = 0; i < 1000; i++) {
         for(int j = 0; j < 1000; j++) {
-            float f = normPerlin(vec2(i,j), vec3(1203123,123123,123123), 16);
+            float f = normPerlin(vec2(i,j), vec4(1203123,123123,123123, 12313), 16);
             all[k++] = f;
             f*=10;
             buckets[(int)(floor(f))%10]++;

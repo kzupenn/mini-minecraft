@@ -57,6 +57,7 @@ glm::ivec2 toCoords(int64_t k) {
     return glm::ivec2(x, z);
 }
 
+
 // Surround calls to this with try-catch if you don't know whether
 // the coordinates at x, y, z have a corresponding Chunk
 BlockType Terrain::getBlockAt(int x, int y, int z)
@@ -259,8 +260,33 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     m_chunks[toKey(x, z)] = move(chunk);
     m_chunks_mutex.unlock();
 
+    std::vector<Structure> chunkStructures = getStructureZones(cPtr);
+    //checks and generates metaStructures, if needed
+
+    for(std::pair<glm::vec2, StructureType> metaS: getMetaStructures(glm::vec2(x, z))){
+        int64_t key = toKey(metaS.first.x, metaS.first.y);
+        metaStructures_mutex.lock();
+        if(metaStructures.find(key) == metaStructures.end()){
+            metaStructures[key] = metaS.second;
+            //unlock the map so other threads can use it after marking this one as generating
+            metaStructures_mutex.unlock();
+            std::vector<Structure> new_structures;
+            switch(metaS.second){
+            case VILLAGE_CENTER:
+                new_structures = generateVillage(glm::vec2(x, z));
+                chunkStructures.insert(chunkStructures.end(), new_structures.begin(), new_structures.end());
+                break;
+            default:
+                break;
+            }
+        }
+        else{
+            metaStructures_mutex.unlock();
+        }
+    }
+
     //generates structures
-    for(const Structure &s: getStructureZones(cPtr)){
+    for(const Structure &s: chunkStructures){
         int xx = s.pos.x;
         int zz = s.pos.y;
         Chunk* c = cPtr;
@@ -385,6 +411,71 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             setBlockAt(xx, ymax+ymin, zz, GRASS);
             break;
         }
+        case VILLAGE_CENTER:
+            setBlockAt(xx, 1000, zz, STONE);
+            setBlockAt(xx, 1001, zz, STONE);
+            setBlockAt(xx, 1002, zz, STONE);
+            break;
+        case VILLAGE_ROAD:
+            setBlockAt(xx, 1000-1, zz, DIRT);
+            break;
+        case VILLAGE_HOUSE_1:
+            //floor
+            for(int i = -1; i <= 1; i++) {
+                for(int j = -1; j <= 1; j++) {
+                    //TO DO: replace dirt with planks
+                    setBlockAt(xx+i, 1000-1, zz+j, DIRT);
+                }
+            }
+            //pillars
+            for(int i = -2; i <= 2; i+= 4){
+                for(int j = -2; j <= 2; j+= 4){
+                    for(int y = -1; y < -1+4; y++) {
+                        setBlockAt(xx+i, 1000+y, zz+j, GRASS);
+                    }
+                }
+            }
+            //walls
+            for(int i = -1; i <= 1; i++) {
+                for(int y = -1; y < -1+4; y++) {
+                    setBlockAt(xx+i, 1000+y, zz+2, STONE);
+                    setBlockAt(xx+i, 1000+y, zz-2, STONE);
+                    setBlockAt(xx+2, 1000+y, zz+i, STONE);
+                    setBlockAt(xx-2, 1000+y, zz+i, STONE);
+                }
+            }
+            //carve out windows+door
+            setBlockAt(xx+2, 1000+1, zz, EMPTY);
+            setBlockAt(xx-2, 1000+1, zz, EMPTY);
+            setBlockAt(xx, 1000+1, zz+2, EMPTY);
+            setBlockAt(xx, 1000+1, zz-1, EMPTY);
+            setBlockAt(xx+2.f*dirToVec(s.orient).x, 1000, zz+2.f*dirToVec(s.orient).z, EMPTY);
+
+            //roof
+            for(int i = -3; i <= 3; i++) {
+                setBlockAt(xx+i, 1000+3, zz+3, DIRT);
+                setBlockAt(xx+i, 1000+3, zz-3, DIRT);
+                setBlockAt(xx+3, 1000+3, zz+i, DIRT);
+                setBlockAt(xx-3, 1000+3, zz+i, DIRT);
+            }
+            for(int i = -2; i <= 2; i++) {
+                for(int j = 0; j < 2; j++){
+                    setBlockAt(xx+i, 1000+3+j, zz+2, DIRT);
+                    setBlockAt(xx+i, 1000+3+j, zz-2, DIRT);
+                    setBlockAt(xx+2, 1000+3+j, zz+i, DIRT);
+                    setBlockAt(xx-2, 1000+3+j, zz+i, DIRT);
+                }
+            }
+            for(int i = -1; i <= 1; i++) {
+                for(int j = 0; j < 2; j++){
+                    setBlockAt(xx+i, 1000+4+j, zz+1, DIRT);
+                    setBlockAt(xx+i, 1000+4+j, zz-1, DIRT);
+                    setBlockAt(xx+1, 1000+4+j, zz+i, DIRT);
+                    setBlockAt(xx-1, 1000+4+j, zz+i, DIRT);
+                }
+            }
+            setBlockAt(xx, 1000+5, zz, DIRT);
+            break;
         default:
             break;
         }

@@ -12,19 +12,40 @@ bool isTransparent(BlockType b) {
     return false;
 }
 
+glm::vec3 dirToVec(Direction d) {
+    switch(d) {
+    case XPOS:
+    return glm::vec3(1,0,0);
+    case XNEG:
+    return glm::vec3(-1,0,0);
+    case YPOS:
+    return glm::vec3(0,1,0);
+    case YNEG:
+    return glm::vec3(0,-1,0);
+    case ZPOS:
+    return glm::vec3(0,0,1);
+    case ZNEG:
+    return glm::vec3(0,0,-1);
+    default:
+    return glm::vec3(0,0,0);
+    }
+}
+
 Chunk::Chunk(OpenGLContext* mp_context) : Drawable(mp_context), m_blocks(), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
-    dataGen(false), dataBound(false), surfaceGen(false)
+    dataBound(false), dataGen(false), surfaceGen(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
 }
 
 // Does bounds checking with at()
 BlockType Chunk::getBlockAt(unsigned int x, unsigned int y, unsigned int z) const {
+    if(y > 500 && y < 1500) y+= heightMap[x][z]-1000;
     return m_blocks.at(x + 16 * y + 16 * 256 * z);
 }
 
 // Exists to get rid of compiler warnings about int -> unsigned int implicit conversion
 BlockType Chunk::getBlockAt(int x, int y, int z) const {
+    if(y > 500 && y < 1500) y+= heightMap[x][z]-1000;
     return getBlockAt(static_cast<unsigned int>(x), static_cast<unsigned int>(y), static_cast<unsigned int>(z));
 }
 
@@ -32,6 +53,8 @@ BlockType Chunk::getBlockAt(int x, int y, int z) const {
 void Chunk::setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t) {
     try{
         setBlock_mutex.lock();
+        //if y is in this range, means that we want to take a delta of height map instead
+        if(y > 500 && y < 1500) y += heightMap[x][z]-1000;
         m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
         setBlock_mutex.unlock();
 

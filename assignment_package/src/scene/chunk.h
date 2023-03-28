@@ -24,6 +24,8 @@ enum Direction : unsigned char
     XPOS, XNEG, YPOS, YNEG, ZPOS, ZNEG
 };
 
+glm::vec3 dirToVec(Direction);
+
 // Lets us use any enum class as the key of a
 // std::unordered_map
 struct EnumHash {
