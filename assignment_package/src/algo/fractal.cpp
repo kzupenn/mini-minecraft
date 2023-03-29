@@ -69,7 +69,7 @@ float hybridMultifractalM(vec2 p, int numoctaves, vec4 seed, int grid_size) {
 
         weight *= signal;
     }
-    return clamp(2*t/m, 0.f, 1.f);
+    return clamp(t/m, 0.f, 1.f);
 }
 
 

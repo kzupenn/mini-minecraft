@@ -128,7 +128,7 @@ void MyGL::tick() {
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
                     for(int ddy = dy; ddy < dy + 64; ddy+=16) {
-                        qDebug() << "creating ground for " << ddx << ddy;
+                        //qDebug() << "creating ground for " << ddx << ddy;
                         m_terrain.createGroundThread(glm::vec2(ddx, ddy));
                     }
                 }

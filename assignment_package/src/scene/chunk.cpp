@@ -239,6 +239,35 @@ void Chunk::bindVBOdata() {
     createVBO_mutex.unlock();
 }
 
+void Chunk::unbindVBOdata() {
+    createVBO_mutex.lock();
+    m_count = 0;
+
+    // Create a VBO on our GPU and store its handle in bufIdx
+    generateIdx();
+    // Tell OpenGL that we want to perform subsequent operations on the VBO referred to by bufIdx
+    // and that it will be treated as an element array buffer (since it will contain triangle indices)
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
+    // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
+    // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), nullptr, GL_STATIC_DRAW);
+
+    generatePos();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+
+    generateNor();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+
+    generateCol();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+
+    dataBound = false;
+    createVBO_mutex.unlock();
+}
+
 void Chunk::setPos(int x, int z) {
     pos = glm::vec4(x, 0, z, 0);
 }

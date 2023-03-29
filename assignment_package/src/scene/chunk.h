@@ -94,6 +94,7 @@ public:
     std::atomic_bool blocksChanged;
 
     void bindVBOdata();
+    void unbindVBOdata();
     virtual GLenum drawMode();
 
     //for debugging

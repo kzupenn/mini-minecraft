@@ -11,8 +11,10 @@
 
 #define TEST_RADIUS 256
 
-#define ocean_level 0.43
-#define beach_level 0.03
+#define ocean_level 0.53
+#define OCEAN_LEVEL 64
+#define BEDROCK_LEVEL 64
+#define beach_level 0.1
 
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), mp_context(context), m_generatedTerrain(),
@@ -176,7 +178,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                     cPtr->biome = OCEAN;
                 }
                 //height
-                cPtr->heightMap[xx-x][zz-z] = 64;
+                cPtr->heightMap[xx-x][zz-z] = OCEAN_LEVEL;
                 biomeMap[xx-x][zz-z] = OCEAN;
             }
             //shallow ocean
@@ -186,7 +188,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                     cPtr->biome = OCEAN;
                 }
                 //height
-                cPtr->heightMap[xx-x][zz-z] = 64;
+                cPtr->heightMap[xx-x][zz-z] = OCEAN_LEVEL;
                 biomeMap[xx-x][zz-z] = OCEAN;
             }
             //beach
@@ -198,9 +200,10 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 //height
                 //float erosion = generateErosion(vec2(xx,zz));
                 //shoreline
-                float height = 64 + pow((bedrock-ocean_level)/beachhead,5)*groundInfo.first;
+                float height = glm::clamp((int)(OCEAN_LEVEL + pow((bedrock-ocean_level)/beachhead,2)*(groundInfo.first+(bedrock-ocean_level)*BEDROCK_LEVEL)),
+                                     0, 256);
                 cPtr->heightMap[xx-x][zz-z] = height;
-                if(height <= 64+5 && groundInfo.second != RIVER){
+                if(height <= OCEAN_LEVEL+5 && groundInfo.second != RIVER){
                     biomeMap[xx-x][zz-z] = BEACH;
                 }
                 else {
@@ -214,7 +217,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                     cPtr->biome = groundInfo.second;
                 }
                 //height
-                float height = 64 + groundInfo.first +(bedrock-ocean_level)*50;
+                float height = glm::clamp((int)(OCEAN_LEVEL + groundInfo.first +(bedrock-ocean_level)*BEDROCK_LEVEL), 0, 256);
                 cPtr->heightMap[xx-x][zz-z] = height;
                 biomeMap[xx-x][zz-z] = groundInfo.second;
             }
@@ -538,6 +541,36 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             }
             else {
                 //qDebug() << "missing chunk at " << x << z;
+            }
+        }
+    }
+    //check if we should clear unloaded chunk vbos
+    for(int x = minX - 32; x < maxX + 32; x+= 16) {
+        if(hasChunkAt(x, minZ - 32)) {
+            uPtr<Chunk> &chunk = getChunkAt(x, minZ - 32);
+            if(chunk->dataGen && chunk->dataBound) {
+                chunk->unbindVBOdata();
+            }
+        }
+        if(hasChunkAt(x, maxZ+16)) { //not that we don't actually hit maxZ in the drawloop
+            uPtr<Chunk> &chunk = getChunkAt(x, maxZ+16);
+            if(chunk->dataGen && chunk->dataBound) {
+                chunk->unbindVBOdata();
+            }
+        }
+    }
+    //dont need to recheck corners, lower bounds by 1 chunk
+    for(int z = minZ - 16; z < maxZ+16; z+= 16) {
+        if(hasChunkAt(minX-32, z)) {
+            uPtr<Chunk> &chunk = getChunkAt(minX-32, z);
+            if(chunk->dataGen && chunk->dataBound) {
+                chunk->unbindVBOdata();
+            }
+        }
+        if(hasChunkAt(maxX+16, z)) { //not that we don't actually hit maxZ in the drawloop
+            uPtr<Chunk> &chunk = getChunkAt(maxX+16, z);
+            if(chunk->dataGen && chunk->dataBound) {
+                chunk->unbindVBOdata();
             }
         }
     }

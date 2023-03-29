@@ -7,10 +7,8 @@
 
 using namespace glm;
 
-#define OCEAN 0.55
-
 //TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed = 12294021;
+int seed = 42294021;
 float getSeed(float f) {
     return seed*f;
 }
@@ -18,11 +16,12 @@ float getSeed(float f) {
 vec4 heightSeed = vec4(getSeed(4), getSeed(3), getSeed(5), getSeed(2));
 vec4 rainSeed = vec4(getSeed(432), getSeed(1249), getSeed(120.3), getSeed(582.259));
 vec4 tempSeed = vec4(getSeed(593.24), getSeed(52.29), getSeed(623.33), getSeed(5920.2));
+#define river_width 0.008
 
-const bool TESTING = false;
+const bool TESTING = true;
 
 //terrain generation
-//divets
+//makes sporatic divets to make smooth terrain appear with erosion
 float divet(glm::vec2 pos) {
     return -20*max(0.f, fBm(pos, 4, vec4(getSeed(1.43), getSeed(43.3), getSeed(431), getSeed(223)), 50)-0.57f);
 }
@@ -62,7 +61,7 @@ float dunes(glm::vec2 pos) {
 
 //mountains
 float mountains(glm::vec2 pos) {
-    return 128*pow(hybridMultifractalM(pos, 8, heightSeed, 128), 2);
+    return 120*pow(hybridMultifractalM(pos, 8, heightSeed, 256), 2) + 30*fBm(pos, 8, heightSeed, 128);
 }
 
 //UNUSED
@@ -190,9 +189,10 @@ float generateErosion(vec2 pp) {
 std::pair<float, BiomeType> generateGround (vec2 pp) {
     float rain = fBm(pp, 12, rainSeed, 2048);
     float temp = fBm(pp, 12, tempSeed, 2048);
+
     float crain = rain * std::sqrt(1 - 0.5*temp*temp);
     float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
-
+    //qDebug() << "R/T" << crain << ctemp;
     //generate erosion
     float erosion = generateErosion(pp);
 
@@ -202,7 +202,20 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
     //TO DO: remove this later
     if(TESTING) {
-        return std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TEST_BIOME]), TEST_BIOME);
+        std::pair<float, BiomeType> testret = std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TEST_BIOME]), TEST_BIOME);
+        float height = output/adjmag;
+        float rivercoef = generateRiver(pp);
+        float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-river_width)), 0.f, 1.f), 3);
+        //river depression needs to be 0 at 0.5+-, and grow to 1 at like 0.8
+        if(rivercoef < 0.5+river_width && rivercoef >0.5-river_width) {
+            testret.second = RIVER;
+            //TO DO: replace height with a river bed calculation
+            testret.first = 0;
+        }
+        else {
+            testret.first*= riverdepression;
+        }
+        return testret;
     }
 
     //calculate total distance magnitude
@@ -211,7 +224,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
         for(vec2 rt: p.second) {
             float d = length(rt-vec2(crain,ctemp));
             if(d==0){
-                return std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[b]), b);
+                mag += 1000000000;
             }
             mag += 1/pow(d, 6);
         }
@@ -239,9 +252,9 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
     //make rivers here
     float height = output/adjmag;
     float rivercoef = generateRiver(pp);
-    float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-0.007)), 0.f, 1.f), 3);
+    float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-river_width)), 0.f, 1.f), 3);
     //river depression needs to be 0 at 0.5+-, and grow to 1 at like 0.8
-    if(rivercoef < 0.5+0.007 && rivercoef >0.5-0.007) {
+    if(rivercoef < 0.5+river_width && rivercoef >0.5-river_width) {
         bigb = RIVER;
         //TO DO: replace height with a river bed calculation
         height = 0;
@@ -255,22 +268,21 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048)-0.5);
+    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048)-0.5)),
+                 0.f, 1.f);
 }
 
-void erosionDist() {
-    float foo[100000];
-    for(int i = 0; i < 100000; i++) {
-        float f = generateErosion(vec2(std::rand()%10000,std::rand()%10000));
-        foo[i] = f;
-    }
-    std::sort(std::begin(foo), std::end(foo));
-    for(int i = 0; i < 20; i++) {
-        qDebug() << foo[i*100000/20] << ',';
-    }
+float generateBeach(vec2 pp) {
+    return normPerlin(pp, heightSeed, 128);
 }
 
-void biomeDist() {
+float generateRiver(vec2 pp) {
+    return fBm(pp, 8, heightSeed*4.f, 1024);
+}
+
+//noise distribution tests
+
+void raintempTest() {
     float foo1[1000000], foo2[1000000];
     for(int i = 0; i < 1000; i++) {
         for(int j = 0; j < 1000; j++) {
@@ -295,12 +307,31 @@ void biomeDist() {
     }
 }
 
-float generateBeach(vec2 pp) {
-    return normPerlin(pp, heightSeed, 128);
+void bedrockTest() {
+    float foo[100000];
+    for(int i = 0; i < 100000; i++) {
+        float f = generateBedrock(vec2(std::rand()%10000,std::rand()%10000));
+        foo[i] = f;
+    }
+    std::sort(std::begin(foo), std::end(foo));
+    for(int i = 0; i < 20; i++) {
+        qDebug() << i*5 << foo[i*100000/20];
+    }
+}
+void biomeDist() {
+    bedrockTest();
 }
 
-float generateRiver(vec2 pp) {
-    return fBm(pp, 8, heightSeed*4.f, 1024);
+void erosionDist() {
+    float foo[100000];
+    for(int i = 0; i < 100000; i++) {
+        float f = generateErosion(vec2(std::rand()%10000,std::rand()%10000));
+        foo[i] = f;
+    }
+    std::sort(std::begin(foo), std::end(foo));
+    for(int i = 0; i < 20; i++) {
+        qDebug() << foo[i*100000/20] << ',';
+    }
 }
 
 
