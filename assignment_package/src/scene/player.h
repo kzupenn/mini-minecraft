@@ -51,4 +51,6 @@ public:
     QString velAsQString() const;
     QString accAsQString() const;
     QString lookAsQString() const;
+
+    glm::vec3 getLook();
 };

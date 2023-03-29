@@ -81,10 +81,7 @@ void Player::processInputs(InputBundle &inputs) {
     if (inputs.ePressed) {
         //action
         if (m_flightMode) {
-            m_acceleration += m_up * SPEED;
-        } else {
-            m_acceleration += glm::normalize(
-                                glm::vec3(m_up.x, 0, m_up.z)) * SPEED;
+            m_acceleration += glm::vec3(0, 1, 0) * SPEED;
         }
         inputs.ePressed = false;
     }
@@ -92,24 +89,21 @@ void Player::processInputs(InputBundle &inputs) {
     if (inputs.qPressed) {
         //action
         if (m_flightMode) {
-            m_acceleration -= m_up * SPEED;
-        } else {
-            m_acceleration -= glm::normalize(
-                                glm::vec3(m_up.x, 0, m_up.z)) * SPEED;
+            m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
         }
         inputs.qPressed = false;
     }
 
     if (inputs.spacePressed) {
         //action
-        m_acceleration += m_up * SPEED * 2.f;
+        m_acceleration += glm::vec3(0, 1, 0) * SPEED * 2.f;
         inputs.spacePressed = false;
     }
 }
 
 
 void Player::computePhysics(float dT, const Terrain &terrain) {
-    // TODO: Update the Player's position based on its acceleration
+    // TODO: Update the PlayerE's position based on its acceleration
     // and velocity, and also perform collision detection.
 
     //to simulate friction and drag
@@ -246,4 +240,9 @@ QString Player::accAsQString() const {
 QString Player::lookAsQString() const {
     std::string str("( " + std::to_string(m_forward.x) + ", " + std::to_string(m_forward.y) + ", " + std::to_string(m_forward.z) + ")");
     return QString::fromStdString(str);
+}
+
+glm::vec3 Player::getLook()
+{
+    return this->m_forward;
 }

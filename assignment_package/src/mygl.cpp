@@ -207,9 +207,28 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
     if(e->buttons() & Qt::LeftButton)
     {
         m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
+
+        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+        glm::vec3 ray_dir = m_player.getLook() * 3.f;
+
+        float dist;
+        glm::ivec3 block_pos;
+
+        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+            m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+        }
     }
 
     if (e->buttons() & Qt::RightButton) {
+        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+        glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
+        float dist;
+        glm::ivec3 block_pos;
+
+        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+            BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
+            m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+        }
     }
 }
