@@ -28,7 +28,7 @@ void Player::processInputs(InputBundle &inputs) {
         rotateOnRightLocal(-inputs.mouseY);
         inputs.mouseY = 0.f;
     }
-    float SPEED = 0.1f;
+    float SPEED = 0.6f;
     if (inputs.fPressed) {
         m_flightMode = !m_flightMode;
         inputs.fPressed = false;
@@ -112,14 +112,14 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     // and velocity, and also perform collision detection.
 
     //to simulate friction and drag
-    m_velocity = m_velocity * 0.85f;
+    m_velocity = m_velocity * 0.8f;
 
     if (m_flightMode) {
-        m_velocity += m_acceleration * glm::max(dT, 1.f);
+        m_velocity += m_acceleration * dT;
     } else {
         glm::vec3 gravity(0, -0.005f, 0);
         m_velocity += gravity;
-        m_velocity += m_acceleration * glm::max(dT, 1.f);
+        m_velocity += m_acceleration * dT;
 
         checkCollision(terrain);
     }
