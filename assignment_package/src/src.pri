@@ -9,6 +9,7 @@ SOURCES += \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
     $$PWD/scene/biome.cpp \
+    $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
     $$PWD/scene/transform.cpp \
     $$PWD/server/client.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
     $$PWD/scene/biome.h \
+    $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
     $$PWD/scene/transform.h \
     $$PWD/server/client.h \

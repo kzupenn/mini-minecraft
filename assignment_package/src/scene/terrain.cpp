@@ -5,9 +5,11 @@
 #include <stdexcept>
 #include <iostream>
 #include <QDebug>
+#include "runnables.h"
 #include <thread>
 #include <queue>
 #include "algo/noise.h"
+
 
 #define TEST_RADIUS 256
 
@@ -17,8 +19,7 @@
 #define beach_level 0.1
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), mp_context(context), m_generatedTerrain(),
-      activeGroundThreads(300)
+    : m_chunks(), mp_context(context), m_generatedTerrain()
 {
 
 }
@@ -149,8 +150,6 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
     //semaphore blocking to limit thread count
-    activeGroundThreads.acquire();
-
     x = floor(x/16.f)*16;
     z = floor(z/16.f)*16;
 
@@ -517,8 +516,6 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     }
 
     //decrement the active ground counter
-    activeGroundThreads.release();
-
     return cPtr;
 }
 
@@ -579,7 +576,6 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
 void Terrain::createInitScene()
 {
     // mark one semaphor immediately to signal start
-    activeGroundThreads.acquire();
     // Tell our existing terrain set that
     // the "generated terrain zone" at (0,0)
     // now exists.
@@ -595,22 +591,18 @@ void Terrain::createInitScene()
             }
         }
     }
-    activeGroundThreads.release();
 }
 
 void Terrain::createGroundThread(glm::vec2 p) {
     if(hasChunkAt(p.x, p.y)) return;
-    //mutex to prevent concurrent modification of threads vector
-    groundGen_mutex.lock();
-    groundGenThreads.push_back(std::thread(&Terrain::instantiateChunkAt, this, p.x, p.y));
-    groundGen_mutex.unlock();
-    //qDebug() << "chunk generators: " << groundGenThreads.size();
+
+    BlockTypeWorker* btw = new BlockTypeWorker(this, p.x, p.y);
+    QThreadPool::globalInstance()->start(btw);
 }
 
 void Terrain::createVBOThread(Chunk* c) {
-    vboGen_mutex.lock();
-    vboGenThreads.emplace_back(std::thread(&Chunk::createVBOdata, c));
-    vboGen_mutex.unlock();
+    VBOWorker* vw = new VBOWorker(c);
+    QThreadPool::globalInstance()->start(vw);
 }
 
 

@@ -34,9 +34,6 @@ void MyGL::start() {
     //biomeDist();
     //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
     //m_terrain.createInitScene();
-    //check if no more chunks are being generated
-    m_terrain.activeGroundThreads.acquire(300);
-    m_terrain.activeGroundThreads.release(300);
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
