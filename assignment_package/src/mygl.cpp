@@ -29,8 +29,11 @@ void MyGL::start() {
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
 
-    distTest();
-    m_terrain.createInitScene();
+    //distribution tests
+    //distTest();
+    //biomeDist();
+    //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
+    //m_terrain.createInitScene();
     //check if no more chunks are being generated
     m_terrain.activeGroundThreads.acquire(300);
     m_terrain.activeGroundThreads.release(300);

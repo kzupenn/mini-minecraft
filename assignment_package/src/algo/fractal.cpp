@@ -11,13 +11,15 @@ float fBm(vec2 x, int numoctaves, vec4 seed, int grid_size)
     float f = 1.0;
     float a = 0.5;//1.0;
     float t = 0.0;
+    float m = 0; //use a mag to scale noise up
     for( int i=0; i<numoctaves; i++ )
     {
         t += a*(normPerlin(f*x, seed, grid_size));
+        m+= a;
         f *= 2.0;
         a *= G;
     }
-    return t;
+    return t/m;
 }
 
 float hybridMultifractal(vec2 p, int numoctaves, vec4 seed, int grid_size) {
@@ -26,6 +28,7 @@ float hybridMultifractal(vec2 p, int numoctaves, vec4 seed, int grid_size) {
     float a = 0.5;//1.0; using 0.5 to scale from 0,2 to 0,1
 
     float t = a*normPerlin(f*p, seed, grid_size);
+    float m = a;
     float weight = t;
     f *= 2.0;
     a *= G;
@@ -35,12 +38,13 @@ float hybridMultifractal(vec2 p, int numoctaves, vec4 seed, int grid_size) {
 
         float signal = normPerlin(f*p, seed, grid_size);
         t += weight*a*signal;
+        m+= a;
         f *= 2.0;
         a *= G;
 
         weight *= signal;
     }
-    return clamp(t, 0.f, 1.f);
+    return clamp(2*t/m, 0.f, 1.f);
 }
 
 float hybridMultifractalM(vec2 p, int numoctaves, vec4 seed, int grid_size) {
@@ -49,6 +53,7 @@ float hybridMultifractalM(vec2 p, int numoctaves, vec4 seed, int grid_size) {
     float a = 0.5;//1.0; using 0.5 to scale from 0,2 to 0,1
 
     float t = a*(1-abs(perlinNoise(f*p, seed, grid_size)));
+    float m = a;
     float weight = t;
     f *= 2.0;
     a *= G;
@@ -58,12 +63,13 @@ float hybridMultifractalM(vec2 p, int numoctaves, vec4 seed, int grid_size) {
 
         float signal = 1-abs(perlinNoise(f*p, seed, grid_size));
         t += weight*a*signal;
+        m+= a;
         f *= 2.0;
         a *= G;
 
         weight *= signal;
     }
-    return clamp(t, 0.f, 1.f);
+    return clamp(2*t/m, 0.f, 1.f);
 }
 
 

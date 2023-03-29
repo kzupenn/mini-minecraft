@@ -16,6 +16,8 @@ float getSeed(float f) {
 }
 
 vec4 heightSeed = vec4(getSeed(4), getSeed(3), getSeed(5), getSeed(2));
+vec4 rainSeed = vec4(getSeed(432), getSeed(1249), getSeed(120.3), getSeed(582.259));
+vec4 tempSeed = vec4(getSeed(593.24), getSeed(52.29), getSeed(623.33), getSeed(5920.2));
 
 const bool TESTING = false;
 
@@ -151,18 +153,18 @@ std::map<BiomeType, std::vector<std::pair<vec2, float(*)(vec2)>>> biomeErosion =
 };
 
 std::pair<BiomeType, std::vector<vec2>> biomeSpace[] = {
-    std::make_pair(TUNDRA, std::vector<vec2>{vec2(0.42, 0.38), vec2(0.52, 0.42)}),
-    std::make_pair(PLAINS, std::vector<vec2>{vec2(0.42, 0.54), vec2(0.52, 0.52)}),
-    std::make_pair(DESERT, std::vector<vec2>{vec2(0.42, 0.67)}),
-    std::make_pair(TAIGA, std::vector<vec2>{vec2(0.52, 0.46), vec2(0.57, 0.44)}),
-    std::make_pair(SAVANNA, std::vector<vec2>{vec2(0.52, 0.69)}),
+    std::make_pair(TUNDRA, std::vector<vec2>{vec2(0.42, 0.3), vec2(0.52, 0.3)}),
+    std::make_pair(PLAINS, std::vector<vec2>{vec2(0.42, 0.5), vec2(0.52, 0.45)}),
+    std::make_pair(DESERT, std::vector<vec2>{vec2(0.42, 0.7)}),
+    std::make_pair(TAIGA, std::vector<vec2>{vec2(0.52, 0.55), vec2(0.57, 0.44)}),
+    std::make_pair(SAVANNA, std::vector<vec2>{vec2(0.52, 0.7)}),
     std::make_pair(FOREST, std::vector<vec2>{vec2(0.57, 0.56), vec2(0.57, 0.68)}),
     std::make_pair(SWAMP, std::vector<vec2>{vec2(0.69, 0.58)}),
     std::make_pair(RAINFOREST, std::vector<vec2>{vec2(0.69, 0.68)})
 };
 
 //pretty laggy
-float getBiomeHeight(float e, vec2 pp, std::vector<std::pair<vec2, float(*)(vec2)>> v){
+float getBiomeHeight(float e, vec2 pp, std::vector<std::pair<vec2, float(*)(vec2)>> &v){
     float ret = 0;
     float mag = 0;
     for(std::pair<vec2, float(*)(vec2)> p: v) {
@@ -186,18 +188,10 @@ float generateErosion(vec2 pp) {
 }
 
 std::pair<float, BiomeType> generateGround (vec2 pp) {
-    //generate rainfall and temp
-    vec2 q = vec2(fBm( pp + vec2(0.0,0.0), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(546)), 1024),
-             fBm( pp + 500.f*vec2(-5,5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(546)), 1024 ));
-
-    vec2 r = vec2(fBm( pp + 4.f*q + 500.f*vec2(5,-5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(523)), 1024  ),
-             fBm( pp + 4.f*q + 500.f*vec2(-5,5), 8,  vec4(getSeed(3), getSeed(2), getSeed(3), getSeed(434)), 1024  ));
-
-    float rain = length(q)/sqrt(2);
-    float temp = length(r)/sqrt(2);
-
-    float crain = rain * glm::sqrt(1.f - 0.5f*temp*temp);
-    float ctemp = 1-(temp * glm::sqrt(1.f - 0.5f*rain*rain));
+    float rain = fBm(pp, 12, rainSeed, 2048);
+    float temp = fBm(pp, 12, tempSeed, 2048);
+    float crain = rain * std::sqrt(1 - 0.5*temp*temp);
+    float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
 
     //generate erosion
     float erosion = generateErosion(pp);
@@ -261,7 +255,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048);
+    return abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048)-0.5);
 }
 
 void erosionDist() {
@@ -273,6 +267,31 @@ void erosionDist() {
     std::sort(std::begin(foo), std::end(foo));
     for(int i = 0; i < 20; i++) {
         qDebug() << foo[i*100000/20] << ',';
+    }
+}
+
+void biomeDist() {
+    float foo1[1000000], foo2[1000000];
+    for(int i = 0; i < 1000; i++) {
+        for(int j = 0; j < 1000; j++) {
+            vec2 randp = vec2(i,j);//vec2(std::rand()%10000,std::rand()%10000);
+            float crain = fBm(randp, 12, rainSeed, 1024);
+            float ctemp = fBm(randp, 12, tempSeed, 1024);
+            //float crain = rain * std::sqrt(1.f - 0.5f*temp*temp);
+            //float ctemp = 1-(temp * std::sqrt(1.f - 0.5f*rain*rain));
+            foo1[1000*i+j] = crain;
+            foo2[1000*i+j] = ctemp;
+        }
+    }
+    std::sort(std::begin(foo1), std::end(foo1));
+    std::sort(std::begin(foo2), std::end(foo2));
+    qDebug() << "rain";
+    for(int i = 0; i < 20; i++) {
+        qDebug() <<i*5 << foo1[i*1000000/20];
+    }
+    qDebug() << "temp";
+    for(int i = 0; i < 20; i++) {
+        qDebug() <<i*5<< foo2[i*1000000/20];
     }
 }
 

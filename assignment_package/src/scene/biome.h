@@ -20,3 +20,4 @@ float generateRiver(glm::vec2);
 std::pair<float, BiomeType> generateGround(glm::vec2);
 
 void erosionDist();
+void biomeDist();

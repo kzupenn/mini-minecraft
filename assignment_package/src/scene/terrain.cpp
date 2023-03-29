@@ -11,7 +11,7 @@
 
 #define TEST_RADIUS 256
 
-#define ocean_level 0.54
+#define ocean_level 0.43
 #define beach_level 0.03
 
 Terrain::Terrain(OpenGLContext *context)
@@ -165,22 +165,32 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     //terrain initialization
     for(int xx = x; xx < x+16; xx++) {
         for(int zz = z; zz < z+16; zz++) {
-            float bedrock = 2*generateBedrock(glm::vec2(xx,zz));
+            float bedrock = generateBedrock(glm::vec2(xx,zz));
             float beachhead = beach_level*generateBeach(glm::vec2(xx,zz));
             std::pair<float, BiomeType> groundInfo = generateGround(glm::vec2(xx,zz));
-            //ground
-            if(bedrock < ocean_level) {
+
+            //deep ocean
+            if(bedrock < ocean_level/2) {
                 //use center of chunk as the biome of the chunk
                 if(xx == x+8 && zz == z+8) {
-                    cPtr->biome = groundInfo.second;
+                    cPtr->biome = OCEAN;
                 }
                 //height
-                float height = 64 + groundInfo.first +(ocean_level-bedrock)*50;
-                cPtr->heightMap[xx-x][zz-z] = height;
-                biomeMap[xx-x][zz-z] = groundInfo.second;
+                cPtr->heightMap[xx-x][zz-z] = 64;
+                biomeMap[xx-x][zz-z] = OCEAN;
+            }
+            //shallow ocean
+            else if(bedrock < ocean_level) {
+                //use center of chunk as the biome of the chunk
+                if(xx == x+8 && zz == z+8) {
+                    cPtr->biome = OCEAN;
+                }
+                //height
+                cPtr->heightMap[xx-x][zz-z] = 64;
+                biomeMap[xx-x][zz-z] = OCEAN;
             }
             //beach
-            else if(bedrock < ocean_level + beachhead){
+            else if(bedrock < ocean_level+beachhead) {
                 //use center of chunk as the biome of the chunk
                 if(xx == x+8 && zz == z+8) {
                     cPtr->biome = BEACH;
@@ -188,7 +198,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 //height
                 //float erosion = generateErosion(vec2(xx,zz));
                 //shoreline
-                float height = 64 + pow((ocean_level+beachhead-bedrock)/beachhead,5)*groundInfo.first;
+                float height = 64 + pow((bedrock-ocean_level)/beachhead,5)*groundInfo.first;
                 cPtr->heightMap[xx-x][zz-z] = height;
                 if(height <= 64+5 && groundInfo.second != RIVER){
                     biomeMap[xx-x][zz-z] = BEACH;
@@ -196,25 +206,17 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 else {
                     biomeMap[xx-x][zz-z] = groundInfo.second;
                 }
-
             }
-            else if(bedrock < ocean_level + 0.05){
-                //use center of chunk as the biome of the chunk
-                if(xx == x+8 && zz == z+8) {
-                    cPtr->biome = OCEAN;
-                }
-                //height
-                cPtr->heightMap[xx-x][zz-z] = 64;
-                biomeMap[xx-x][zz-z] = OCEAN;
-            }
+            //land
             else {
                 //use center of chunk as the biome of the chunk
                 if(xx == x+8 && zz == z+8) {
-                    cPtr->biome = OCEAN;
+                    cPtr->biome = groundInfo.second;
                 }
                 //height
-                cPtr->heightMap[xx-x][zz-z] = 64;
-                biomeMap[xx-x][zz-z] = OCEAN;
+                float height = 64 + groundInfo.first +(bedrock-ocean_level)*50;
+                cPtr->heightMap[xx-x][zz-z] = height;
+                biomeMap[xx-x][zz-z] = groundInfo.second;
             }
         }
     }
@@ -569,7 +571,7 @@ void Terrain::createGroundThread(glm::vec2 p) {
     groundGen_mutex.lock();
     groundGenThreads.push_back(std::thread(&Terrain::instantiateChunkAt, this, p.x, p.y));
     groundGen_mutex.unlock();
-    qDebug() << "chunk generators: " << groundGenThreads.size();
+    //qDebug() << "chunk generators: " << groundGenThreads.size();
 }
 
 void Terrain::createVBOThread(Chunk* c) {
