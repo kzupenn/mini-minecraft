@@ -28,7 +28,7 @@ void Player::processInputs(InputBundle &inputs) {
         rotateOnRightLocal(-inputs.mouseY);
         inputs.mouseY = 0.f;
     }
-    float SPEED = 0.6f;
+    float SPEED = 4.f;
     if (inputs.fPressed) {
         m_flightMode = !m_flightMode;
         inputs.fPressed = false;
@@ -107,12 +107,13 @@ void Player::processInputs(InputBundle &inputs) {
     }
 }
 
+
 void Player::computePhysics(float dT, const Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
 
     //to simulate friction and drag
-    m_velocity = m_velocity * 0.8f;
+    m_velocity = m_velocity * 0.85f;
 
     if (m_flightMode) {
         m_velocity += m_acceleration * dT;
@@ -131,8 +132,47 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
 
 void Player::checkCollision(const Terrain &terrain)
 {
+    glm::vec3 p = this->m_position;
+    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.5, p.y+2, p.z-0.5),
+                                     glm::vec3(p.x+0.5, p.y+2, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y+2, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y+2, p.z-0.5),
+                                     glm::vec3(p.x+0.5, p.y+1, p.z-0.5),
+                                     glm::vec3(p.x+0.5, p.y+1, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y+1, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y+1, p.z-0.5),
+                                     glm::vec3(p.x+0.5, p.y, p.z-0.5),
+                                     glm::vec3(p.x+0.5, p.y, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y, p.z+0.5),
+                                     glm::vec3(p.x-0.5, p.y, p.z-0.5)};
 
+    glm::vec3 min = glm::vec3(m_velocity.x, m_velocity.y, m_velocity.z);
+
+    for (glm::vec3& origin : corners) {
+        float x, y, z;
+        glm::ivec3 b;
+        bool xF = terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
+                                    terrain, &x, &b);
+        bool yF = terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
+                                    terrain, &y, &b);
+        bool zF = terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
+                                    terrain, &z, &b);
+
+        if (xF && x < glm::abs(min.x)) {
+            min.x = x * glm::sign(min.x);
+        }
+        if (yF && y < glm::abs(min.y)) {
+            min.y = y * glm::sign(min.y);
+        }
+        if (zF && z < glm::abs(min.z)) {
+            min.z = z * glm::sign(min.z);
+        }
+    }
+    m_velocity.x = min.x;
+    m_velocity.y = min.y;
+    m_velocity.z = min.z;
 }
+
 
 void Player::setCameraWidthHeight(unsigned int w, unsigned int h) {
     m_camera.setWidthHeight(w, h);
