@@ -26,3 +26,16 @@ public:
 
     void run();
 };
+
+class StructureWorker: public QRunnable {
+private:
+    Terrain* t;
+    StructureType s;
+    int x, y, z;
+public:
+    StructureWorker(Terrain* t, StructureType s, int x, int y, int z);
+    ~StructureWorker();
+
+    void run();
+};
+

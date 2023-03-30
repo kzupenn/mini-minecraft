@@ -13,8 +13,10 @@ enum StructureType : unsigned char{
 struct Structure{
     //type of structure
     StructureType type;
-    //position the structure is centered at
+    //position the structure is centered at x,z wise
     glm::ivec2 pos;
+    //vertical component, only relevant for structures with fixed center pos in space
+    unsigned char y;
     //orientation for asymmetric structures
     Direction orient;
 
@@ -29,7 +31,7 @@ struct Structure{
 
 std::vector<Structure> getStructureZones(Chunk* c);
 
-std::vector<std::pair<glm::vec2, StructureType>> getMetaStructures(glm::vec2 p);
+std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures(glm::vec2 p);
 
 std::vector<Structure> generateVillage(glm::vec2 p);
 
