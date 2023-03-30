@@ -6,19 +6,26 @@
 enum StructureType : unsigned char{
     OAK_TREE, FANCY_OAK_TREE,
     SPRUCE_TREE, MEGA_SPRUCE_TREE, PINE_TREE, MEGA_PINE_TREE,
-    VILLAGE_CENTER, VILLAGE_ROAD, VILLAGE_HOUSE_1, VILLAGE_HOUSE_2
+    VILLAGE_CENTER, VILLAGE_ROAD, VILLAGE_HOUSE_1, VILLAGE_HOUSE_2,
+    VILLAGE_LIBRARY
 };
 
 //struct for storing structure information
 struct Structure{
     //type of structure
     StructureType type;
+
     //position the structure is centered at x,z wise
     glm::ivec2 pos;
+
     //vertical component, only relevant for structures with fixed center pos in space
     unsigned char y;
+
     //orientation for asymmetric structures
     Direction orient;
+
+    //length, if the structure is 1d
+    int length;
 
     Structure(StructureType st, glm::vec2 p):type(st), pos(p){
 

@@ -31,6 +31,27 @@ glm::vec3 dirToVec(Direction d) {
     }
 }
 
+Direction vecToDir(glm::vec3 v) {
+    if(v.x == -1) {
+        return XNEG;
+    }
+    else if(v.x == 1) {
+        return XPOS;
+    }
+    else if(v.y == -1) {
+        return YNEG;
+    }
+    else if(v.y == 1) {
+        return YPOS;
+    }
+    else if(v.z == -1) {
+        return ZNEG;
+    }
+    else {
+        return ZPOS;
+    }
+}
+
 Chunk::Chunk(OpenGLContext* mp_context) : Drawable(mp_context), m_blocks(), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
     dataBound(false), dataGen(false), surfaceGen(false)
 {
@@ -178,6 +199,15 @@ void Chunk::createVBOdata() {
                                 break;
                             case SNOW:
                                 this_color = glm::vec4(1,1,1,1);
+                                break;
+                            case COBBLESTONE:
+                                this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                                break;
+                            case OAK_PLANKS:
+                                this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
+                                break;
+                            case OAK_LOG:
+                                this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
                                 break;
                             default:
                                 this_color = glm::vec4(0);

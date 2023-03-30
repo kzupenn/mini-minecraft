@@ -58,13 +58,22 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
 
 //procedurally generates a village
 std::vector<Structure> generateVillage(vec2 pp) {
+    //TO DO: replace this fixed noise seed with a world seed based seed
+    vec3 seeds7 = vec3(5893, 12319, 4394);
     qDebug() << "generating village";
     std::vector<Structure> ret;
+
     //generates village center
-    vec2 villageCenter = vec2(0,0);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
+    ivec2 villageCenter = ivec2(0,0);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
     ret.emplace_back(VILLAGE_CENTER, villageCenter);
     ret.emplace_back(OAK_TREE, villageCenter);
-    std::queue<std::vector<int>> paths;
+
+    //stores the 'hitbox' of structures for spawn condition detection
+    std::vector<std::pair<vec2, vec2>> hitbox;
+
+    int libraries = 1;
+    ret.emplace_back(VILLAGE_HOUSE_1, villageCenter+ivec2(-50, 50), XPOS);
+    ret.emplace_back(VILLAGE_LIBRARY, villageCenter+ivec2(50, 50), XPOS);
 
     return ret;
 }

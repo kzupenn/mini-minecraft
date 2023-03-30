@@ -579,66 +579,391 @@ void Terrain::buildStructure(const Structure& s) {
             }
         }
         break;
-    case VILLAGE_ROAD:
-        setBlockAt(xx, 1000-1, zz, DIRT);
+    case VILLAGE_ROAD:{
+        glm::vec2 perp = glm::vec2(dirToVec(s.orient).z, dirToVec(s.orient).x);
+        for(int i = -1; i <= 1; i++) {
+            setBlockAt(xx+i*perp.x, 1000-1, zz+i*perp.y, DIRT);
+        }
         break;
+    }
+        // TO DO: recenter the house so the position corresponds to the door
     case VILLAGE_HOUSE_1: {
         int floorh = c->heightMap[xx-x][zz-z];
         //floor
         for(int i = -1; i <= 1; i++) {
             for(int j = -1; j <= 1; j++) {
-                //TO DO: replace dirt with planks
-                setBlockAt(xx+i, floorh, zz+j, DIRT);
+                setBlockAt(xx+i, floorh, zz+j, OAK_PLANKS);
             }
         }
         //pillars
         for(int i = -2; i <= 2; i+= 4){
             for(int j = -2; j <= 2; j+= 4){
                 for(int y = 0; y < 4; y++) {
-                    setBlockAt(xx+i, floorh+y, zz+j, GRASS);
+                    setBlockAt(xx+i, floorh+y, zz+j, OAK_LOG);
                 }
             }
         }
         //walls
         for(int i = -1; i <= 1; i++) {
             for(int y = 0; y < 4; y++) {
-                setBlockAt(xx+i, floorh+y, zz+2, STONE);
-                setBlockAt(xx+i, floorh+y, zz-2, STONE);
-                setBlockAt(xx+2, floorh+y, zz+i, STONE);
-                setBlockAt(xx-2, floorh+y, zz+i, STONE);
+                setBlockAt(xx+i, floorh+y, zz+2, COBBLESTONE);
+                setBlockAt(xx+i, floorh+y, zz-2, COBBLESTONE);
+                setBlockAt(xx+2, floorh+y, zz+i, COBBLESTONE);
+                setBlockAt(xx-2, floorh+y, zz+i, COBBLESTONE);
             }
         }
         //carve out windows+door
-        setBlockAt(xx+2, floorh+1, zz, EMPTY);
-        setBlockAt(xx-2, floorh+1, zz, EMPTY);
-        setBlockAt(xx, floorh+1, zz+2, EMPTY);
-        setBlockAt(xx, floorh+1, zz-2, EMPTY);
-        setBlockAt(xx+2.f*dirToVec(s.orient).x, floorh, zz+2.f*dirToVec(s.orient).z, EMPTY);
+        setBlockAt(xx+2, floorh+2, zz, GLASS);
+        setBlockAt(xx-2, floorh+2, zz, GLASS);
+        setBlockAt(xx, floorh+2, zz+2, GLASS);
+        setBlockAt(xx, floorh+2, zz-2, GLASS);
+
+        setBlockAt(xx+1.f*dirToVec(s.orient).x, floorh+2, zz+1.f*dirToVec(s.orient).z, EMPTY);
+        setBlockAt(xx+2.f*dirToVec(s.orient).x, floorh+1, zz+2.f*dirToVec(s.orient).z, EMPTY);
 
         //roof
         for(int i = -3; i <= 3; i++) {
-            setBlockAt(xx+i, floorh+4, zz+3, DIRT);
-            setBlockAt(xx+i, floorh+4, zz-3, DIRT);
-            setBlockAt(xx+3, floorh+4, zz+i, DIRT);
-            setBlockAt(xx-3, floorh+4, zz+i, DIRT);
+            setBlockAt(xx+i, floorh+4, zz+3, OAK_PLANKS);
+            setBlockAt(xx+i, floorh+4, zz-3, OAK_PLANKS);
+            setBlockAt(xx+3, floorh+4, zz+i, OAK_PLANKS);
+            setBlockAt(xx-3, floorh+4, zz+i, OAK_PLANKS);
         }
         for(int i = -2; i <= 2; i++) {
             for(int j = 0; j < 2; j++){
-                setBlockAt(xx+i, floorh+4+j, zz+2, DIRT);
-                setBlockAt(xx+i, floorh+4+j, zz-2, DIRT);
-                setBlockAt(xx+2, floorh+4+j, zz+i, DIRT);
-                setBlockAt(xx-2, floorh+4+j, zz+i, DIRT);
+                setBlockAt(xx+i, floorh+4+j, zz+2, OAK_PLANKS);
+                setBlockAt(xx+i, floorh+4+j, zz-2, OAK_PLANKS);
+                setBlockAt(xx+2, floorh+4+j, zz+i, OAK_PLANKS);
+                setBlockAt(xx-2, floorh+4+j, zz+i, OAK_PLANKS);
             }
         }
         for(int i = -1; i <= 1; i++) {
             for(int j = 0; j < 2; j++){
-                setBlockAt(xx+i, floorh+5+j, zz+1, DIRT);
-                setBlockAt(xx+i, floorh+5+j, zz-1, DIRT);
-                setBlockAt(xx+1, floorh+5+j, zz+i, DIRT);
-                setBlockAt(xx-1, floorh+5+j, zz+i, DIRT);
+                setBlockAt(xx+i, floorh+5+j, zz+1, OAK_PLANKS);
+                setBlockAt(xx+i, floorh+5+j, zz-1, OAK_PLANKS);
+                setBlockAt(xx+1, floorh+5+j, zz+i, OAK_PLANKS);
+                setBlockAt(xx-1, floorh+5+j, zz+i, OAK_PLANKS);
             }
         }
-        setBlockAt(xx, floorh+6, zz, DIRT);
+        setBlockAt(xx, floorh+7, zz, OAK_PLANKS);
+        break;
+    }
+    case VILLAGE_LIBRARY: {
+        int floorh = c->heightMap[xx-x][zz-z];
+        glm::vec2 perp = glm::vec2(dirToVec(s.orient).z, dirToVec(s.orient).x);
+        glm::vec2 back = glm::vec2(perp.y, perp.x);
+        glm::vec2 pp;
+        //layer 1
+        for(int i = -1; i <= 1; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        }
+        for(int i = -2; i <= 2; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i+back;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        }
+        for(int i = 2; i <= 8; i++) {
+            for(int j = -7; j <= 7; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)j+back*(float)i;
+                setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+            }
+        }
+        //layer 2
+        floorh++;
+        pp = glm::vec2(xx, zz) + perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) + 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - perp*2.f + 4.f*back;
+        setBlockAt(pp.x, floorh, pp.y, BOOKSHELF);
+        pp = glm::vec2(xx, zz) + perp*2.f + 4.f*back;
+        setBlockAt(pp.x, floorh, pp.y, BOOKSHELF);
+        for(int i = 3; i <= 7; i++){
+            pp = glm::vec2(xx, zz) - perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = 2; i <= 8; i++) {
+            pp = glm::vec2(xx, zz) - perp*7.f + back*(float)i;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + perp*7.f + back*(float)i;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -7; i <= 7; i++){
+            pp = glm::vec2(xx, zz) - perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = 3; i <= 5; i++){
+            pp = glm::vec2(xx, zz) - perp*(float)i + 4.f*back;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+            pp = glm::vec2(xx, zz) + perp*(float)i + 4.f*back;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        }
+        for(int i = 1; i <= 3; i++){
+            pp = glm::vec2(xx, zz) - perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, BOOKSHELF);
+            pp = glm::vec2(xx, zz) + perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, BOOKSHELF);
+        }
+        for(int i = 4; i <= 6; i++){
+            pp = glm::vec2(xx, zz) - perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        pp = glm::vec2(xx, zz) - perp*6.f + 6.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        pp = glm::vec2(xx, zz) + perp*6.f + 6.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        //layer 3
+        floorh++;
+        pp = glm::vec2(xx, zz) + perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) + 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        for(int i = -1; i <= 1; i+= 2) {
+            pp = glm::vec2(xx, zz) + 3.f*perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 4.f*perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + 5.f*perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, GLASS);
+            pp = glm::vec2(xx, zz) + 6.f*perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + 3.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + 4.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + 5.f*back;
+            setBlockAt(pp.x, floorh, pp.y, GLASS);
+            pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + 6.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            pp = glm::vec2(xx, zz) + 1.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 2.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + 3.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 4.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, GLASS);
+            pp = glm::vec2(xx, zz) + 5.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + 6.f*perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + 2.f*perp*(float)i + 7.f*back;
+            setBlockAt(pp.x, floorh, pp.y, BOOKSHELF);
+        }
+        pp = glm::vec2(xx, zz) + 8.f*back;
+        setBlockAt(pp.x, floorh, pp.y, GLASS);
+        for(int i = -1; i <= 1; i+= 2) {
+            pp = glm::vec2(xx, zz) + perp*3.f*(float)i + 4.f*back;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+            pp = glm::vec2(xx, zz) + perp*4.f*(float)i + 4.f*back;
+            setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        }
+        //layer 4
+        floorh++;
+        setBlockAt(xx, floorh, zz, COBBLESTONE);
+        pp = glm::vec2(xx, zz) + perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - perp;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) + 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) - 2.f*perp + back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        for(int i = -1; i <= 1; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i + back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -6; i <= 6; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i + 2.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            pp = glm::vec2(xx, zz) + perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 3; j <= 7; j++) {
+                pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -2; i <= 2; i++) {
+            for(int j = 3; j <= 4; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        pp = glm::vec2(xx, zz) - 3.f*perp + 4.f*back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        pp = glm::vec2(xx, zz) + 3.f*perp + 4.f*back;
+        setBlockAt(pp.x, floorh, pp.y, COBBLESTONE);
+        //layer 5
+        floorh++;
+        for(int i = 3; i <= 6; i++){
+            for(int j = -1; j <= 1; j+= 2){
+                pp = glm::vec2(xx, zz) + perp*(float)(i*j) + 2.f*back;
+                setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            }
+        }
+        for(int i = -6; i <= 6; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i + 8.f*back;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 3; j <= 7; j++) {
+                pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            }
+        }
+        pp = glm::vec2(xx, zz) - 2.f*perp + 2.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        pp = glm::vec2(xx, zz) + 2.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        pp = glm::vec2(xx, zz) + 3.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        pp = glm::vec2(xx, zz) + 2.f*perp + 2.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        //layer 6
+        floorh++;
+        for(int i = 2; i <= 8; i++) {
+            for(int j = -1; j <= 1; j+= 2) {
+                pp = glm::vec2(xx, zz) + perp*(float)(i*j) + 2.f*back;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -8; i <= 8; i++) {
+            for(int j = 8; j <= 9; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 3; j <= 7; j++) {
+                pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 4; j <= 8; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)(i*j) + back;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        pp = glm::vec2(xx, zz) + 2.f*back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        //layer 7
+        floorh++;
+        for(int i = -8; i <= 8; i++) {
+            for(int j = 7; j <= 8; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+            pp = glm::vec2(xx, zz) + perp*(float)i + back*2.f;
+            setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 3; j <= 8; j++){
+                pp = glm::vec2(xx, zz) + perp*(float)(i*j) + back*3.f;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -1; i <= 1; i+= 2) {
+            for(int j = 4; j <= 6; j++){
+                pp = glm::vec2(xx, zz) + 7.f*perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        pp = glm::vec2(xx, zz) - perp*3.f + back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        pp = glm::vec2(xx, zz) + perp*3.f + back;
+        setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+        //layer 8
+        floorh++;
+        for(int i = -8; i <= 8; i++) {
+            for(int j = 6; j <= 7; j++){
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = 2; i <= 8; i++) {
+            for(int j = -1; j <= 1; j+= 2){
+                for(int k = 3; k <= 4; k++) {
+                    pp = glm::vec2(xx, zz) + perp*(float)(i*j) + back*(float)k;
+                    setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+                }
+            }
+        }
+        for(int i = 4; i <= 6; i++) {
+            for(int j = -1; j <= 1; j+= 2) {
+                pp = glm::vec2(xx, zz) + 7.f*perp*(float)j + back*(float)i;
+                setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+            }
+        }
+        for(int i = -2; i <= 2; i++) {
+            pp = glm::vec2(xx, zz) + perp*(float)i + back*2.f;
+            setBlockAt(pp.x, floorh, pp.y, OAK_LOG);
+        }
+        //layer 9
+        floorh++;
+        for(int i = 4; i <= 6; i++) {
+            for(int j = -8; j <= 8; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)j + back*(float)i;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        for(int i = -2; i <= 2; i++) {
+            for(int j = 1; j <= 3; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh-1, pp.y, OAK_PLANKS);
+            }
+        }
+        pp = glm::vec2(xx, zz) + back;
+        setBlockAt(pp.x, floorh, pp.y, EMPTY);
+        pp = glm::vec2(xx, zz) + back*3.f;
+        setBlockAt(pp.x, floorh, pp.y, EMPTY);
+        pp = glm::vec2(xx, zz) + back*4.f;
+        setBlockAt(pp.x, floorh, pp.y, EMPTY);
+        //layer 10
+        //floorh++;
+        for(int i = -1; i <= 1; i++) {
+            for(int j = 1; j <= 5; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)i + back*(float)j;
+                setBlockAt(pp.x, floorh, pp.y, OAK_PLANKS);
+            }
+        }
+        //pillars
+        floorh = c->heightMap[xx-x][zz-z];
+        for(int i = 0; i < 6; i++) {
+            pp = glm::vec2(xx, zz) + perp*7.f + back*2.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) - perp*7.f + back*2.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) + perp*7.f + back*8.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) - perp*7.f + back*8.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+        }
+        for(int i = 0; i < 7; i++) {
+            pp = glm::vec2(xx, zz) + perp*3.f + back*2.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+            pp = glm::vec2(xx, zz) - perp*3.f + back*2.f;
+            setBlockAt(pp.x, floorh+i, pp.y, OAK_LOG);
+        }
         break;
     }
     default:

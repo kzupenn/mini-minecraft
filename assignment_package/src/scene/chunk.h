@@ -16,7 +16,8 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW};
+    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW,
+    COBBLESTONE, OAK_PLANKS, OAK_LOG, BOOKSHELF, GLASS};
 
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
@@ -25,6 +26,7 @@ enum Direction : unsigned char
 };
 
 glm::vec3 dirToVec(Direction);
+Direction vecToDir(glm::vec3);
 
 // Lets us use any enum class as the key of a
 // std::unordered_map
@@ -34,21 +36,6 @@ struct EnumHash {
         return static_cast<size_t>(t);
     }
 };
-
-//biomes here
-//enum BiomeType : unsigned char
-//{
-//    //snowy
-//    SNOWY_PLAINS, ICE_SPIKES, SNOWY_TAIGA, SNOWY_BEACH, GROVE,
-//    SNOWY_SLOPES, JAGGED_PEAKS, FROZEN_PEAKS,
-//    //cold
-//    WINDSWEPT_HILLS, WINDSWEPT_GRAVELLY_HILLS, WINDSWEPT_FOREST, TAIGA, OLD_GROWTH_PINE_TAIGA, OLD_GROWTH_SPRUCE_TAIGA,
-//    STONY_SHORE,
-//    //temperate
-//    PLAINS, SUNFLOWER_PLAINS, FOREST, FLOWER_FOREST, BIRCH_FOREST, OLD_GROWTH_BIRCH_FOREST, DARK_FOREST, SWAMP, MANGROVE_SWAMP, JUNGLE, SPARSE_JUNGLE, BAMBOO_JUNGLE, BEACH, MUSHROOM_FIELDS, MEADOW, STONY_PEAKS, CHERRY_GROVE,
-//    //warm
-//    DESERT, SAVANNA, SAVANNA_PLATEAU, WINDSWEPT_SAVANNA, BADLANDS, WOODED_BADLANDS, ERODED_BADLANDS
-//};
 
 // One Chunk is a 16 x 256 x 16 section of the world,
 // containing all the Minecraft blocks in that area.
