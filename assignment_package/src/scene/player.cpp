@@ -96,7 +96,7 @@ void Player::processInputs(InputBundle &inputs) {
 
     if (inputs.spacePressed) {
         //action
-        m_acceleration += glm::vec3(0, 1, 0) * SPEED * 2.f;
+        m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
         inputs.spacePressed = false;
     }
 }
