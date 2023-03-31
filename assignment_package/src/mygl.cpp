@@ -228,8 +228,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
 
         if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
             BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
-            if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
+                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
             } else {
                 if (m_terrain.getBlockAt(glm::vec3(block_pos.x-1, block_pos.y, block_pos.z)) == EMPTY) {
                     m_terrain.setBlockAt(block_pos.x-1, block_pos.y, block_pos.z, b);
@@ -243,8 +243,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                             if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z+1)) == EMPTY) {
                                 m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z+1, b);
                             } else {
-                                if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
-                                    m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
+                                if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
+                                    m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
                                 }
                             }
                         }

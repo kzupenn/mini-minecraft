@@ -112,7 +112,7 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     if (m_flightMode) {
         m_velocity += m_acceleration * dT;
     } else {
-        glm::vec3 gravity(0, -0.005f, 0);
+        glm::vec3 gravity(0, -0.01f, 0);
         m_velocity += gravity;
         m_velocity += m_acceleration * dT;
 
