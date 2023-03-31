@@ -21,7 +21,7 @@
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), mp_context(context), m_generatedTerrain()
 {
-
+    QThreadPool::globalInstance()->setMaxThreadCount(100);
 }
 
 Terrain::~Terrain() {
@@ -224,38 +224,106 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     }
 
     //using height and biome map, generate chunk
+    //TO DO: add ocean floor and river bed, do swamp somehow
     for(int xx = 0; xx < 16; xx++) {
         for(int zz = 0; zz < 16; zz++) {
-            for(int y = 0; y < cPtr->heightMap[xx][zz]; y++) {
-                switch(biomeMap[xx][zz]) {
-                    case TUNDRA:
-                        cPtr->setBlockAt(xx, y, zz, SNOW);
-                        break;
-                    case PLAINS:
-                        cPtr->setBlockAt(xx, y, zz, GRASS);
-                        break;
-                    case DESERT:
-                        cPtr->setBlockAt(xx, y, zz, SAND);
-                        break;
-                    case TAIGA:
-                        cPtr->setBlockAt(xx, y, zz, GRASS);
-                        break;
-                    case FOREST:
-                        cPtr->setBlockAt(xx, y, zz, STONE);
-                        break;
-                    case BEACH:
-                        cPtr->setBlockAt(xx, y, zz, SAND);
-                        break;
-                    case OCEAN:
-                        cPtr->setBlockAt(xx, y, zz, WATER);
-                        break;
-                    case RIVER:
-                        cPtr->setBlockAt(xx, y, zz, WATER);
-                        break;
-                    default:
-                        cPtr->setBlockAt(xx, y, zz, GRASS);
-                        break;
-                }
+            switch(biomeMap[xx][zz]) {
+            case TUNDRA: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                for(; y > maxy-1; y--) cPtr->setBlockAt(xx, y, zz, SNOW);
+                for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case PLAINS: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                else cPtr->setBlockAt(xx, y, zz, GRASS);
+                y--;
+                if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case DESERT:{
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                for(; y > maxy-3; y--) cPtr->setBlockAt(xx, y, zz, SAND);
+                for(; y > maxy-8; y--) cPtr->setBlockAt(xx, y, zz, SANDSTONE);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case TAIGA: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                else cPtr->setBlockAt(xx, y, zz, GRASS);
+                y--;
+                if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case FOREST: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                else cPtr->setBlockAt(xx, y, zz, GRASS);
+                y--;
+                for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case SAVANNA: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                else cPtr->setBlockAt(xx, y, zz, GRASS);
+                y--;
+                if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case RAINFOREST: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                else cPtr->setBlockAt(xx, y, zz, GRASS);
+                y--;
+                if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case BEACH:{
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                for(; y > maxy-6; y--) cPtr->setBlockAt(xx, y, zz, SAND);
+                for(; y > maxy-12; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                break;
+            }
+            case OCEAN:{
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                break;
+            }
+            case RIVER: {
+                int maxy = cPtr->heightMap[xx][zz]-1;
+                int y = maxy;
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                break;
+            }
+            default:{
+                for(int y = 0; y < cPtr->heightMap[xx][zz]; y++)
+                    cPtr->setBlockAt(xx, y, zz, GRASS);
+                break;
+            }
             }
         }
     }
@@ -422,8 +490,8 @@ void Terrain::processMegaStructure(const std::vector<Structure>& s) {
             buildStructure(st);
         }
         else{
-            int x = floor(st.pos.x/16)*16;
-            int z = floor(st.pos.y/16)*16;
+            int x = 16*static_cast<int>(glm::floor(st.pos.x / 16.f));
+            int z = 16*static_cast<int>(glm::floor(st.pos.y / 16.f));
             metaSubStructures_mutex.lock();
             if(metaSubStructures.find(toKey(x, z)) == metaSubStructures.end()) {
                 metaSubStructures[toKey(x, z)] = std::vector<Structure>();
@@ -455,62 +523,62 @@ void Terrain::buildStructure(const Structure& s) {
             int yat = ymin+ymax-dy;
             switch(dy) {
                 case 0:
-                    setBlockAt(xx, yat, zz, GRASS);
-                    setBlockAt(xx-1, yat, zz, GRASS);
-                    setBlockAt(xx+1, yat, zz, GRASS);
-                    setBlockAt(xx, yat, zz-1, GRASS);
-                    setBlockAt(xx, yat, zz+1, GRASS);
+                    setBlockAt(xx, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES);
                     break;
                 case 1:
-                    setBlockAt(xx, yat, zz, GRASS);
-                    setBlockAt(xx-1, yat, zz, GRASS);
-                    setBlockAt(xx+1, yat, zz, GRASS);
-                    setBlockAt(xx, yat, zz-1, GRASS);
-                    setBlockAt(xx, yat, zz+1, GRASS);
+                    setBlockAt(xx, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES);
                     if(noise1D(glm::vec3(xx+1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+1, yat, zz+1, GRASS);
+                        setBlockAt(xx+1, yat, zz+1, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx+1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+1, yat, zz-1, GRASS);
+                        setBlockAt(xx+1, yat, zz-1, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx-1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-1, yat, zz+1, GRASS);
+                        setBlockAt(xx-1, yat, zz+1, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx-1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-1, yat, zz-1, GRASS);
+                        setBlockAt(xx-1, yat, zz-1, OAK_LEAVES);
                     }
                     break;
                 default: //2, 3
                     for(int dx = xx-2; dx <= xx+2; dx++) {
                         for(int dz = zz-1; dz <= zz+1; dz++) {
                             if(dx != xx || dz != zz) {
-                                setBlockAt(dx, yat, dz, GRASS);
+                                setBlockAt(dx, yat, dz, OAK_LEAVES);
                             }
                         }
                     }
-                    setBlockAt(xx-1, yat, zz+2, GRASS);
-                    setBlockAt(xx, yat, zz+2, GRASS);
-                    setBlockAt(xx+1, yat, zz+2, GRASS);
-                    setBlockAt(xx-1, yat, zz-2, GRASS);
-                    setBlockAt(xx, yat, zz-2, GRASS);
-                    setBlockAt(xx+1, yat, zz-2, GRASS);
+                    setBlockAt(xx-1, yat, zz+2, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz+2, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz+2, OAK_LEAVES);
+                    setBlockAt(xx-1, yat, zz-2, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz-2, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz-2, OAK_LEAVES);
                     if(noise1D(glm::vec3(xx+2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+2, yat, zz+2, GRASS);
+                        setBlockAt(xx+2, yat, zz+2, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx+2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+2, yat, zz-2, GRASS);
+                        setBlockAt(xx+2, yat, zz-2, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx-2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-2, yat, zz+2, GRASS);
+                        setBlockAt(xx-2, yat, zz+2, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx-2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-2, yat, zz-2, GRASS);
+                        setBlockAt(xx-2, yat, zz-2, OAK_LEAVES);
                     }
                     break;
             }
         }
         for(int y = ymin; y < ymin+ymax; y++){
-            setBlockAt(xx, y, zz, DIRT);
+            setBlockAt(xx, y, zz, OAK_LOG);
         }
         break;
     }

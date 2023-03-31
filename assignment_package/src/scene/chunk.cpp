@@ -207,7 +207,10 @@ void Chunk::createVBOdata() {
                                 this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
                                 break;
                             case OAK_LOG:
-                                this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
+                                this_color = glm::vec4(151.f, 125.f, 60.f, 255.f)/255.f;
+                                break;
+                            case OAK_LEAVES:
+                                this_color = glm::vec4(0, 0.5, 0, 1);
                                 break;
                             default:
                                 this_color = glm::vec4(0);
