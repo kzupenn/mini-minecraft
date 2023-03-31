@@ -114,13 +114,13 @@ void MyGL::tick() {
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
-    //chunk player is in
+    //zone player is in
     int minx = floor(m_player.mcr_position.x/64)*64;
     int miny = floor(m_player.mcr_position.z/64)*64;
 
     //does rendering stuff
-    for(int dx = minx-128; dx <= minx+192; dx+=64) {
-        for(int dy = miny-128; dy <= miny+192; dy+=64) {
+    for(int dx = minx-128; dx <= minx+128; dx+=64) {
+        for(int dy = miny-128; dy <= miny+128; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
@@ -192,11 +192,11 @@ void MyGL::paintGL() {
 
 void MyGL::renderTerrain() {
     //chunk player is in
-    int renderDist = 500;
-    float minx = floor(m_player.mcr_position.x/16.f)*16;
-    float miny = floor(m_player.mcr_position.z/16.f)*16;
+    int renderDist = 512;
+    float x = floor(m_player.mcr_position.x/16.f)*16;
+    float y = floor(m_player.mcr_position.z/16.f)*16;
 
-    m_terrain.draw(minx-renderDist, minx+renderDist, miny-renderDist, miny+renderDist, &m_progInstanced);
+    m_terrain.draw(x-renderDist, x+renderDist, y-renderDist, y+renderDist, &m_progLambert);
     //m_terrain.draw(0, 1024, 0, 1024, &m_progInstanced);
 }
 

@@ -72,7 +72,8 @@ BlockType Terrain::getBlockAt(int x, int y, int z)
             return EMPTY;
         }
         const uPtr<Chunk> &c = getChunkAt(x, z);
-        glm::vec2 chunkOrigin = glm::vec2(floor(x / 16.f) * 16, floor(z / 16.f) * 16);
+        glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(x / 16.f)),
+                                            16*static_cast<int>(glm::floor(z / 16.f)));
         return c->getBlockAt(static_cast<unsigned int>(x - chunkOrigin.x),
                              static_cast<unsigned int>(y),
                              static_cast<unsigned int>(z - chunkOrigin.y));
@@ -126,9 +127,11 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 {
     if(hasChunkAt(x, z)) {
         uPtr<Chunk> &c = getChunkAt(x, z);
-        c->setBlockAt(static_cast<unsigned int>(x - c->pos.x),
+        glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(x / 16.f)),
+                                            16*static_cast<int>(glm::floor(z / 16.f)));
+        c->setBlockAt(static_cast<unsigned int>(x - chunkOrigin.x),
                       static_cast<unsigned int>(y),
-                      static_cast<unsigned int>(z - c->pos.z),
+                      static_cast<unsigned int>(z - chunkOrigin.y),
                       t);
     }
     else {
@@ -157,8 +160,6 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 
     uPtr<Chunk> chunk = mkU<Chunk>(mp_context);
     Chunk *cPtr = chunk.get();
-
-    cPtr->setPos(x, z);
 
     //biome info to generate with blocktype later
     BiomeType biomeMap[16][16];
@@ -266,7 +267,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     m_chunks[toKey(x, z)] = move(chunk);
     m_chunks_mutex.unlock();
 
-    std::vector<Structure> chunkStructures = getStructureZones(cPtr);
+    std::vector<Structure> chunkStructures = getStructureZones(cPtr, x, z);
 
     //checks if metasubstructures has structures for this chunk and adds them to the list if necessary
     metaSubStructures_mutex.lock();
@@ -344,7 +345,8 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
                     if(!chunk->dataBound){
                         chunk->bindVBOdata();
                     }
-                    shaderProgram->draw(*chunk.get());
+                    shaderProgram->setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(x, 0, z)));
+                    shaderProgram->drawInterleaved(*chunk.get());
                 }
             }
             else {
@@ -439,8 +441,10 @@ void Terrain::buildStructure(const Structure& s) {
     int zz = s.pos.y;
 
     Chunk* c = getChunkAt(xx, zz).get();
-    int x = c->pos.x;
-    int z = c->pos.z;
+    glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(xx / 16.f)),
+                                        16*static_cast<int>(glm::floor(zz / 16.f)));
+    int x = chunkOrigin.x;
+    int z = chunkOrigin.y;
 
     switch(s.type){
     case OAK_TREE: {

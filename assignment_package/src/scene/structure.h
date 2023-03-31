@@ -36,7 +36,7 @@ struct Structure{
 };
 
 
-std::vector<Structure> getStructureZones(Chunk* c);
+std::vector<Structure> getStructureZones(Chunk* c, int x, int z);
 
 std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures(glm::vec2 p);
 

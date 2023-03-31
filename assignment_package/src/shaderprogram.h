@@ -40,6 +40,7 @@ public:
     // Draw the given object to our screen using this ShaderProgram's shaders
     void draw(Drawable &d);
     // Draw the given object to our screen multiple times using instanced rendering
+    void drawInterleaved(Drawable &d);
     void drawInstanced(InstancedDrawable &d);
     // Utility function used in create()
     char* textFileRead(const char*);
