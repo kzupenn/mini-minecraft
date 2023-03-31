@@ -53,10 +53,10 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
     std::vector<std::pair<std::pair<int64_t, int>, StructureType>> ret;
     vec2 villageCenter = vec2(0);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
     //using y = 1000 to indicate surface level generation
-    ret.push_back(std::make_pair(std::make_pair(toKey(villageCenter.x, villageCenter.y), 1000), VILLAGE_CENTER));
+    //ret.push_back(std::make_pair(std::make_pair(toKey(villageCenter.x, villageCenter.y), 1000), VILLAGE_CENTER));
 
     //for demo purposes
-    ret.push_back(std::make_pair(std::make_pair(toKey(200,200), 1000), VILLAGE_CENTER));
+    ret.push_back(std::make_pair(std::make_pair(toKey(150,150), 1000), VILLAGE_CENTER));
 
     return ret;
 }

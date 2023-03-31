@@ -21,7 +21,7 @@
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), mp_context(context), m_generatedTerrain()
 {
-    QThreadPool::globalInstance()->setMaxThreadCount(100);
+    //QThreadPool::globalInstance()->setMaxThreadCount(100);
 }
 
 Terrain::~Terrain() {
