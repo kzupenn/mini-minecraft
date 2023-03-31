@@ -36,7 +36,7 @@ private:
     // so that we can use them as a key for the map, as objects like std::pairs or
     // glm::ivec2s are not hashable by default, so they cannot be used as keys.
     std::unordered_map<int64_t, uPtr<Chunk>> m_chunks;
-    std::mutex m_chunks_mutex;
+    mutable std::mutex m_chunks_mutex;
 
     OpenGLContext* mp_context;
 
@@ -79,7 +79,7 @@ public:
 
     // Do these world-space coordinates lie within
     // a Chunk that exists?
-    bool hasChunkAt(int x, int z);
+    bool hasChunkAt(int x, int z) const;
     // Assuming a Chunk exists at these coords,
     // return a mutable reference to it
     uPtr<Chunk>& getChunkAt(int x, int z);
@@ -88,8 +88,8 @@ public:
     const uPtr<Chunk>& getChunkAt(int x, int z) const;
     // Given a world-space coordinate (which may have negative
     // values) return the block stored at that point in space.
-    BlockType getBlockAt(int x, int y, int z);
-    BlockType getBlockAt(glm::vec3 p);
+    BlockType getBlockAt(int x, int y, int z) const;
+    BlockType getBlockAt(glm::vec3 p) const;
     // Given a world-space coordinate (which may have negative
     // values) set the block at that point in space to the
     // given type.
@@ -117,7 +117,7 @@ public:
     void buildStructure(const Structure&);
 
     bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, float *out_dist,
-                   glm::ivec3 *out_blockHit);
+                   glm::ivec3 *out_blockHit) const;
 };
 
 

@@ -1,7 +1,7 @@
 #include "player.h"
 #include <QString>
 
-Player::Player(glm::vec3 pos, Terrain &terrain)
+Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       m_flightMode(true), mcr_camera(m_camera)
@@ -12,13 +12,12 @@ Player::~Player()
 
 void Player::tick(float dT, InputBundle &input) {
     processInputs(input);
-    computePhysics(dT, mcr_terrain);
+    computePhysics(dT);
 }
 
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
-
     if (inputs.mouseX) {
         rotateOnUpGlobal(-inputs.mouseX);
         inputs.mouseX = 0.f;
@@ -94,8 +93,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
 }
 
-
-void Player::computePhysics(float dT, Terrain &terrain) {
+void Player::computePhysics(float dT) {
     // TODO: Update the PlayerE's position based on its acceleration
     // and velocity, and also perform collision detection.
 
@@ -109,7 +107,7 @@ void Player::computePhysics(float dT, Terrain &terrain) {
         m_velocity += gravity;
         m_velocity += m_acceleration * dT;
 
-        checkCollision(terrain);
+        checkCollision();
     }
 
     moveAlongVector(m_velocity);
@@ -117,7 +115,7 @@ void Player::computePhysics(float dT, Terrain &terrain) {
     m_acceleration = glm::vec3(0);
 }
 
-void Player::checkCollision(Terrain &terrain)
+void Player::checkCollision()
 {
     glm::vec3 p = this->m_position;
     std::vector<glm::vec3> corners = {glm::vec3(p.x+0.5, p.y+2, p.z-0.5),
@@ -138,9 +136,12 @@ void Player::checkCollision(Terrain &terrain)
     for (glm::vec3& origin : corners) {
         float x, y, z;
         glm::ivec3 b;
-        bool xF = terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0), &x, &b);
-        bool yF = terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0), &y, &b);
-        bool zF = terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z), &z, &b);
+        bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
+                                    &x, &b);
+        bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
+                                    &y, &b);
+        bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
+                                    &z, &b);
 
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);

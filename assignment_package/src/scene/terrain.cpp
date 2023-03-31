@@ -63,7 +63,7 @@ glm::ivec2 toCoords(int64_t k) {
 
 // Surround calls to this with try-catch if you don't know whether
 // the coordinates at x, y, z have a corresponding Chunk
-BlockType Terrain::getBlockAt(int x, int y, int z)
+BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if(hasChunkAt(x, z)) {
         // Just disallow action below or above min/max height,
@@ -85,11 +85,12 @@ BlockType Terrain::getBlockAt(int x, int y, int z)
     }
 }
 
-BlockType Terrain::getBlockAt(glm::vec3 p) {
+
+BlockType Terrain::getBlockAt(glm::vec3 p) const {
     return getBlockAt(p.x, p.y, p.z);
 }
 
-bool Terrain::hasChunkAt(int x, int z) {
+bool Terrain::hasChunkAt(int x, int z) const {
     // Map x and z to their nearest Chunk corner
     // By flooring x and z, then multiplying by 16,
     // we clamp (x, z) to its nearest Chunk-space corner,
@@ -976,7 +977,8 @@ void Terrain::buildStructure(const Structure& s) {
 }
 
 bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
-                        float *out_dist, glm::ivec3 *out_blockHit)
+                        float *out_dist, glm::ivec3 *out_blockHit) const
+
 {
 
     float maxLen = glm::length(rayDirection); // Farthest we search
@@ -1016,7 +1018,7 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
             currCell = glm::ivec3(glm::floor(rayOrigin)) + offset;
             // If currCell contains something other than EMPTY, return
             // curr_t
-            BlockType cellType = this->getBlockAt(currCell.x, currCell.y, currCell.z);
+            BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
             if(cellType != EMPTY) {
                 *out_blockHit = currCell;
                 if (count == 0) {
