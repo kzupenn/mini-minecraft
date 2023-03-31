@@ -157,9 +157,9 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,in
         int xFloor = 16*static_cast<int>(glm::floor(x / 16.f));
         int zFloor = 16*static_cast<int>(glm::floor(z / 16.f));
         if(con(x-xFloor, y, z-zFloor, c.get())){
-            c->setBlockAt(static_cast<unsigned int>(x - c->pos.x),
+            c->setBlockAt(static_cast<unsigned int>(x - xFloor),
                           static_cast<unsigned int>(y),
-                          static_cast<unsigned int>(z - c->pos.z),
+                          static_cast<unsigned int>(z - zFloor),
                           t);
         }
     }
@@ -516,7 +516,7 @@ void Terrain::createVBOThread(Chunk* c) {
 }
 
 void Terrain::processMegaStructure(const std::vector<Structure>& s) {
-    for(const Structure st: s) {
+    for(const Structure &st: s) {
         if(hasChunkAt(st.pos.x, st.pos.y)) {
             buildStructure(st);
         }
