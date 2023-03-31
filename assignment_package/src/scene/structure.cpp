@@ -60,7 +60,9 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
 //procedurally generates a village
 std::vector<Structure> generateVillage(vec2 pp) {
     //TO DO: replace this fixed noise seed with a world seed based seed
-    vec3 seeds7 = vec3(5893, 12319, 4394);
+    vec3 seeds7 = vec3(589.3, 125319, 43934);
+    vec3 seeds8 = vec3(583.342, 153984.5, 9385.2);
+    vec3 seeds9 = vec3(1439.342, 648.5, 1940.2);
     qDebug() << "generating village";
     std::vector<Structure> ret;
 
@@ -71,6 +73,7 @@ std::vector<Structure> generateVillage(vec2 pp) {
 
     //stores the 'hitbox' of structures for spawn condition detection
     std::vector<std::pair<vec2, vec2>> hitbox;
+    hitbox.push_back(std::make_pair(villageCenter, vec2(7,7)));
 
     //L-system with roads
     std::queue<std::vector<int>> q;
@@ -87,8 +90,8 @@ std::vector<Structure> generateVillage(vec2 pp) {
         ivec2 len = ivec2(v[4], v[5]);
         ret.emplace_back(VILLAGE_ROAD, pos, vecToDir(vec3(att.x, 0, att.y)));
         q.pop();
-        float f = noise1D(pos, vec3(583.342, 53984.5, 9385.2));
-        float rl = noise1D(pos, vec3(439.342, 648.5, 940.2));
+        float f = noise1D(pos, seeds8);
+        float rl = noise1D(pos, seeds9);
         float p_turn = 0.04;
         float p_branch = 0.04;
         float p_t = 0.01;
@@ -106,7 +109,7 @@ std::vector<Structure> generateVillage(vec2 pp) {
             else {
                 att = ivec2(att.y, -att.x);
             }
-            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+30, 0});
+            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+20, 0});
         }
         else if(f < p_turn+p_branch) {
             pos+=att;
@@ -118,11 +121,11 @@ std::vector<Structure> generateVillage(vec2 pp) {
             else {
                 att = ivec2(att.y, -att.x);
             }
-            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+30, 0});
+            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+20, 0});
         }
         else if(f < p_turn+p_branch+p_t) {
-            toAdd.push_back({pos.x, pos.y, -att.y, att.x, len[0]+30, 0});
-            toAdd.push_back({pos.x, pos.y, att.y, -att.x, len[0]+30, 0});
+            toAdd.push_back({pos.x, pos.y, -att.y, att.x, len[0]+20, 0});
+            toAdd.push_back({pos.x, pos.y, att.y, -att.x, len[0]+20, 0});
         }
         else if(f < p_turn+p_branch+p_t+p_stop) {
             //stop
@@ -160,12 +163,76 @@ std::vector<Structure> generateVillage(vec2 pp) {
         }
     }
 
-    //to do: have it so that we generate node positions for intersections and hotspots, then using a graph algo (A*) to connect em
+    std::vector<std::pair<vec2, Direction>> tries;
+    for(vec2 vv: xdir) {
+        tries.push_back(std::make_pair(vv+vec2(0, 4), ZNEG));
+        tries.push_back(std::make_pair(vv-vec2(0, 4), ZPOS));
+    }
+    for(vec2 vv: zdir) {
+        tries.push_back(std::make_pair(vv+vec2(4, 0), XNEG));
+        tries.push_back(std::make_pair(vv-vec2(4, 0), XPOS));
+    }
+    for(std::pair<vec2, Direction> pp: tries) {
+        float f = noise1D(pp.first, seeds7);
+        if(f<0.4){
+            int towndist = max(abs(pp.first.x-villageCenter.x), abs(pp.first.y-villageCenter.y));
+            StructureType st;
+            int hx, hy;
+            vec2 thisCenter; //shifted center
+            //get the building type
+            if(towndist < 30) {
+                st = VILLAGE_LIBRARY;
+                if(pp.second == ZPOS || pp.second == ZNEG){
+                    hx = 8+1;
+                    hy = 4+1;
+                }
+                else {
+                    hy = 8+1;
+                    hx = 4+1;
+                }
+                thisCenter = pp.first - 5.f * vec2(dirToVec(pp.second).x, dirToVec(pp.second).z);
+            }
+            else {
+                st = VILLAGE_HOUSE_1;
+                hx = 3+1;
+                hy = 3+1;
+                thisCenter = pp.first - 3.f * vec2(dirToVec(pp.second).x, dirToVec(pp.second).z);
+            }
+            //check if the location intersects existing structures
+            bool canUse = true;
+            //streets running +-X
+            for(vec2 vv: xdir) {
+                if(abs(thisCenter.x - vv.x) <= hx && abs(thisCenter.y - vv.y) <= hy+2) {
+                    qDebug() << thisCenter.x << thisCenter.y << "intersects x street" << vv.x << vv.y;
+                    canUse = false;
+                    break;
+                }
+            }
+            if(!canUse) continue;
+            //streets running +-Z
+            for(vec2 vv: zdir) {
+                if(abs(thisCenter.x - vv.x) <= hx+2 && abs(thisCenter.y - vv.y) <= hy) {
+                    canUse = false;
+                    break;
+                }
+            }
+            if(!canUse) continue;
+            //other buildings
+            for(std::pair<vec2, vec2> box: hitbox) {
+                if(abs(thisCenter.x - box.first.x) <= hx+box.second.x && abs(thisCenter.y - box.first.y) <= hy+box.second.y) {
+                    canUse = false;
+                    break;
+                }
+            }
+            if(!canUse) continue;
+            //finally we can add the building
+            ret.emplace_back(st, pp.first, pp.second);
+            hitbox.push_back(std::make_pair(thisCenter, vec2(hx, hy)));
+        }
+    }
 
-    int libraries = 1;
-
-    ret.emplace_back(VILLAGE_HOUSE_1, villageCenter+ivec2(-50, 50), XPOS);
-    ret.emplace_back(VILLAGE_LIBRARY, villageCenter+ivec2(50, 50), XPOS);
+    //ret.emplace_back(VILLAGE_HOUSE_1, villageCenter+ivec2(-50, 50), XPOS);
+    //ret.emplace_back(VILLAGE_LIBRARY, villageCenter+ivec2(50, 50), XPOS);
 
     return ret;
 }

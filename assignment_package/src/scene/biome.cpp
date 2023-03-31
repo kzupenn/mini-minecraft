@@ -8,7 +8,7 @@
 using namespace glm;
 
 //TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed = 2294021;
+int seed = 584254031;
 float getSeed(float f) {
     return seed*f;
 }
@@ -268,7 +268,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048)-0.5)),
+    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2.32), getSeed(114), getSeed(3.1), getSeed(2.4)), 2048)-0.5)),
                  0.f, 1.f);
 }
 
