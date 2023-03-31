@@ -20,7 +20,7 @@ void Player::processInputs(InputBundle &inputs) {
     // state of the inputs.
 
     if (inputs.mouseX) {
-        rotateOnUpLocal(-inputs.mouseX);
+        rotateOnUpGlobal(-inputs.mouseX);
         inputs.mouseX = 0.f;
     }
 
@@ -42,7 +42,6 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration += glm::normalize(
                                 glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
         }
-        inputs.wPressed = false;
     }
 
     if (inputs.sPressed) {
@@ -53,7 +52,6 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration -= glm::normalize(
                                 glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
         }
-        inputs.sPressed = false;
     }
 
     if (inputs.dPressed) {
@@ -64,7 +62,6 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration += glm::normalize(
                                 glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
         }
-        inputs.dPressed = false;
     }
 
     if (inputs.aPressed) {
@@ -75,7 +72,6 @@ void Player::processInputs(InputBundle &inputs) {
             m_acceleration -= glm::normalize(
                                 glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
         }
-        inputs.aPressed = false;
     }
 
     if (inputs.ePressed) {
@@ -83,7 +79,6 @@ void Player::processInputs(InputBundle &inputs) {
         if (m_flightMode) {
             m_acceleration += glm::vec3(0, 1, 0) * SPEED;
         }
-        inputs.ePressed = false;
     }
 
     if (inputs.qPressed) {
@@ -91,13 +86,11 @@ void Player::processInputs(InputBundle &inputs) {
         if (m_flightMode) {
             m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
         }
-        inputs.qPressed = false;
     }
 
     if (inputs.spacePressed) {
         //action
         m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
-        inputs.spacePressed = false;
     }
 }
 
@@ -112,7 +105,7 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     if (m_flightMode) {
         m_velocity += m_acceleration * dT;
     } else {
-        glm::vec3 gravity(0, -0.01f, 0);
+        glm::vec3 gravity(0, -0.02f, 0);
         m_velocity += gravity;
         m_velocity += m_acceleration * dT;
 
