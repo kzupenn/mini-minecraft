@@ -231,16 +231,16 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             case TUNDRA: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                for(; y > maxy-1; y--) cPtr->setBlockAt(xx, y, zz, SNOW);
-                for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
+                for(; y > maxy-3; y--) cPtr->setBlockAt(xx, y, zz, SNOW);
+                for(; y > maxy-6; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
                 for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
                 break;
             }
             case PLAINS: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
-                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                if(y > generateSnowLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else cPtr->setBlockAt(xx, y, zz, GRASS);
                 y--;
                 if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
@@ -258,8 +258,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             case TAIGA: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
-                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                if(y > generateSnowLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else cPtr->setBlockAt(xx, y, zz, GRASS);
                 y--;
                 if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
@@ -269,8 +269,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             case FOREST: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
-                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                if(y > generateSnowLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else cPtr->setBlockAt(xx, y, zz, GRASS);
                 y--;
                 for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
@@ -280,8 +280,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             case SAVANNA: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
-                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                if(y > generateSnowLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else cPtr->setBlockAt(xx, y, zz, GRASS);
                 y--;
                 if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
@@ -291,8 +291,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             case RAINFOREST: {
                 int maxy = cPtr->heightMap[xx][zz]-1;
                 int y = maxy;
-                if(y > 128) cPtr->setBlockAt(xx, y, zz, SNOW);
-                else if(y>100) cPtr->setBlockAt(xx, y, zz, STONE);
+                if(y > generateSnowLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, SNOW);
+                else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else cPtr->setBlockAt(xx, y, zz, GRASS);
                 y--;
                 if(y < 100) for(; y > maxy-4; y--) cPtr->setBlockAt(xx, y, zz, DIRT);

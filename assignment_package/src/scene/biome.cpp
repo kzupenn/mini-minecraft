@@ -280,6 +280,14 @@ float generateRiver(vec2 pp) {
     return fBm(pp*0.25f, 8, heightSeed*4.f, 512);
 }
 
+//
+float generateSnowLayer(vec2 pp) {
+    return 128+20*perlinNoise(pp, heightSeed, 128);
+}
+float generateRockLayer(vec2 pp) {
+    return 100+10*perlinNoise(pp, heightSeed, 256);
+}
+
 //noise distribution tests
 
 void raintempTest() {
