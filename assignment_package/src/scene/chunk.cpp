@@ -143,19 +143,19 @@ void Chunk::createVBOdata() {
                         //bound checking and neighbor
                         bool drawFace = false;
                         if(i+delta[l] < 0){
-                            drawFace = (!m_neighbors[XNEG] || isTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                            drawFace = (m_neighbors.find(XNEG) != m_neighbors.end() || isTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
                         }
                         else if(i+delta[l] > 15){
-                            drawFace = (!m_neighbors[XPOS] || isTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                            drawFace = (m_neighbors.find(XPOS) != m_neighbors.end() || isTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
                         }
                         else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
                             drawFace = true;
                         }
                         else if(k+delta[l+2] < 0){
-                            drawFace = (!m_neighbors[ZNEG] || isTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                            drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end() || isTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
                         }
                         else if(k+delta[l+2] > 15){
-                            drawFace = (!m_neighbors[ZPOS] || isTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                            drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end() || isTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
                         }
                         else if(isTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
                             drawFace = true;
@@ -229,9 +229,6 @@ void Chunk::createVBOdata() {
            VBOinter.push_back(VBOnor[i]);
            VBOinter.push_back(VBOcol[i]);
     }
-
-    //qDebug() << VBOpos.size() << " " << VBOnor.size() << " " << VBOcol.size();
-
     createVBO_mutex.unlock();
 
     //tells the main thread to bind to vbo
@@ -284,18 +281,6 @@ void Chunk::unbindVBOdata() {
     // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
     // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), nullptr, GL_STATIC_DRAW);
-
-//    generatePos();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
-
-//    generateNor();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
-
-//    generateCol();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
 
     generateInter();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);

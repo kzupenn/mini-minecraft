@@ -126,8 +126,8 @@ void MyGL::tick() {
     int miny = floor(m_player.mcr_position.z/64)*64;
 
     //does rendering stuff
-    for(int dx = minx-128; dx <= minx+128; dx+=64) {
-        for(int dy = miny-128; dy <= miny+128; dy+=64) {
+    for(int dx = minx-128; dx <= minx+192; dx+=64) {
+        for(int dy = miny-128; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
@@ -142,8 +142,8 @@ void MyGL::tick() {
 
     //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
     if(time%30 == 0) {
-        for(int dx = minx-128; dx <= minx+192; dx+=64) {
-            for(int dy = miny-128; dy <= miny+192; dy+=64) {
+        for(int dx = minx-128; dx <= minx+128; dx+=64) {
+            for(int dy = miny-128; dy <= miny+128; dy+=64) {
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
                     for(int ddy = dy; ddy < dy + 64; ddy+=16) {
                         if(m_terrain.hasChunkAt(ddx, ddy)){
