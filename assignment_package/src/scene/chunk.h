@@ -4,6 +4,8 @@
 #include <array>
 #include <unordered_map>
 #include <cstddef>
+#include "drawable.h"
+#include "biome.h"
 
 
 //using namespace std;
@@ -14,14 +16,17 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER
-};
+    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW,
+    COBBLESTONE, OAK_PLANKS, OAK_LOG, BOOKSHELF, GLASS};
 
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
 {
     XPOS, XNEG, YPOS, YNEG, ZPOS, ZNEG
 };
+
+glm::vec3 dirToVec(Direction);
+Direction vecToDir(glm::vec3);
 
 // Lets us use any enum class as the key of a
 // std::unordered_map
@@ -40,7 +45,7 @@ struct EnumHash {
 // to render the world block by block.
 
 // TODO have Chunk inherit from Drawable
-class Chunk {
+class Chunk : public Drawable{
 private:
     // All of the blocks contained within this Chunk
     std::array<BlockType, 65536> m_blocks;
@@ -50,10 +55,39 @@ private:
     // These allow us to properly determine
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
 
+
+    //for vbo
+    std::vector<glm::vec4> VBOinter;
+//    std::vector<glm::vec4> VBOpos;
+//    std::vector<glm::vec4> VBOcol;
+//    std::vector<glm::vec4> VBOnor;
+
+    std::vector<int> idx;
+
+    std::mutex setBlock_mutex;
+    std::mutex createVBO_mutex;
 public:
-    Chunk();
+    Chunk(OpenGLContext*);
     BlockType getBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
     BlockType getBlockAt(int x, int y, int z) const;
     void setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
+
+    virtual void createVBOdata();
+    //locks for multithreading stages
+    bool dataBound, dataGen, surfaceGen;
+
+    //for generating structures, don't want to redraw vbo for every single one
+    std::atomic_bool blocksChanged;
+
+    void bindVBOdata();
+    void unbindVBOdata();
+    virtual GLenum drawMode();
+
+    //for debugging
+    glm::vec3 debugColor;
+
+    //for terrain gen
+    BiomeType biome; //biome of chunk, taking 8,8
+    int heightMap[16][16]; //height map of surface level ground, to generate surface structs
 };

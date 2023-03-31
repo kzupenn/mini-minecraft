@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1280</width>
-    <height>960</height>
+    <width>844</width>
+    <height>598</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>2000</width>
+    <height>2000</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Mini Minecraft</string>
@@ -16,7 +22,82 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="MyGL" name="mygl"/>
+     <widget class="QStackedWidget" name="scenesWidget">
+      <property name="maximumSize">
+       <size>
+        <width>2000</width>
+        <height>2000</height>
+       </size>
+      </property>
+      <property name="currentIndex">
+       <number>1</number>
+      </property>
+      <widget class="QWidget" name="game">
+       <widget class="MyGL" name="mygl">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>821</width>
+          <height>561</height>
+         </rect>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>2000</width>
+          <height>2000</height>
+         </size>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="title">
+       <widget class="QPushButton" name="singleplayerButton">
+        <property name="geometry">
+         <rect>
+          <x>380</x>
+          <y>130</y>
+          <width>100</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Singleplayer</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="multiplayerButton">
+        <property name="geometry">
+         <rect>
+          <x>380</x>
+          <y>180</y>
+          <width>100</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Multiplayer</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>350</x>
+          <y>60</y>
+          <width>161</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>MINECRAFT</string>
+        </property>
+        <property name="scaledContents">
+         <bool>false</bool>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,8 +106,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1280</width>
-     <height>21</height>
+     <width>844</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">

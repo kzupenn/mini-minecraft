@@ -30,6 +30,7 @@ private:
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
+    int time; //to get tick number
 
     long long m_currentMSecsSinceEpoch;
     glm::vec2 m_mousePosPrev;
@@ -39,6 +40,8 @@ private:
                               // your mouse stays within the screen bounds and is always read.
 
     void sendPlayerDataToGUI() const;
+
+
 
 
 public:
@@ -55,6 +58,10 @@ public:
     // Called whenever MyGL::update() is called.
     // In the base code, update() is called from tick().
     void paintGL() override;
+
+    //servers
+    void start();
+    std::string ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().

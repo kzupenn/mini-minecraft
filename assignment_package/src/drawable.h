@@ -1,6 +1,7 @@
 #pragma once
 #include <openglcontext.h>
 #include <glm_includes.h>
+#include <mutex>
 
 //This defines a class which can be rendered by our shader program.
 //Make any geometry a subclass of ShaderProgram::Drawable in order to render it with the ShaderProgram class.
@@ -13,11 +14,13 @@ protected:
     GLuint m_bufNor; // A Vertex Buffer Object that we will use to store mesh normals (vec4s)
     GLuint m_bufCol; // Can be used to pass per-vertex color information to the shader, but is currently unused.
                    // Instead, we use a uniform vec4 in the shader to set an overall color for the geometry
+    GLuint m_bufInter;
 
     bool m_idxGenerated; // Set to TRUE by generateIdx(), returned by bindIdx().
     bool m_posGenerated;
     bool m_norGenerated;
     bool m_colGenerated;
+    bool m_interGenerated;
 
     OpenGLContext* mp_context; // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,
                           // we need to pass our OpenGL context to the Drawable in order to call GL functions
@@ -27,7 +30,6 @@ protected:
 public:
     Drawable(OpenGLContext* mp_context);
     virtual ~Drawable();
-
     virtual void createVBOdata() = 0; // To be implemented by subclasses. Populates the VBOs of the Drawable.
     void destroyVBOdata(); // Frees the VBOs of the Drawable.
 
@@ -41,11 +43,13 @@ public:
     void generatePos();
     void generateNor();
     void generateCol();
+    void generateInter();
 
     bool bindIdx();
     bool bindPos();
     bool bindNor();
     bool bindCol();
+    bool bindInter();
 };
 
 // A subclass of Drawable that enables the base code to render duplicates of

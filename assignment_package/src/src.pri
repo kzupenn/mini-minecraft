@@ -2,9 +2,18 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 SOURCES += \
+    $$PWD/algo/fractal.cpp \
+    $$PWD/algo/noise.cpp \
+    $$PWD/algo/worley.cpp \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
+    $$PWD/scene/biome.cpp \
+    $$PWD/scene/runnables.cpp \
+    $$PWD/scene/structure.cpp \
+    $$PWD/scene/transform.cpp \
+    $$PWD/server/client.cpp \
+    $$PWD/server/gamestate.cpp \
     $$PWD/shaderprogram.cpp \
     $$PWD/drawable.cpp \
     $$PWD/cameracontrolshelp.cpp \
@@ -16,11 +25,22 @@ SOURCES += \
     $$PWD/scene/player.cpp \
     $$PWD/scene/camera.cpp \
     $$PWD/playerinfo.cpp \
-    $$PWD/scene/chunk.cpp
+    $$PWD/scene/chunk.cpp \
+    $$PWD/algo/perlin.cpp \
+    $$PWD/server/server.cpp \
 
 HEADERS += \
+    $$PWD/algo/fractal.h \
+    $$PWD/algo/noise.h \
+    $$PWD/algo/worley.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
+    $$PWD/scene/biome.h \
+    $$PWD/scene/runnables.h \
+    $$PWD/scene/structure.h \
+    $$PWD/scene/transform.h \
+    $$PWD/server/client.h \
+    $$PWD/server/gamestate.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \
@@ -34,4 +54,7 @@ HEADERS += \
     $$PWD/scene/player.h \
     $$PWD/scene/camera.h \
     $$PWD/playerinfo.h \
-    $$PWD/scene/chunk.h
+    $$PWD/scene/chunk.h \
+    $$PWD/algo/perlin.h \
+    $$PWD/server/server.h \
+
