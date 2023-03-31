@@ -8,9 +8,12 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
+    bool m_flightMode;
 
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
+
+    void checkCollision(const Terrain &terrain);
 
 public:
     // Readonly public reference to our camera
@@ -23,6 +26,7 @@ public:
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
     void tick(float dT, InputBundle &input) override;
+
 
     // Player overrides all of Entity's movement
     // functions so that it transforms its camera
@@ -47,4 +51,6 @@ public:
     QString velAsQString() const;
     QString accAsQString() const;
     QString lookAsQString() const;
+
+    glm::vec3 getLook();
 };

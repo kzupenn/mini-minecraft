@@ -9,7 +9,7 @@
 #include "algo/perlin.h"
 #include "scene/biome.h"
 #include "scene/structure.h"
-
+#include <QDateTime>
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
@@ -17,6 +17,9 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
       ip("localhost"), time(0)
+      m_terrain(this), m_player(glm::vec3(48.f, 129.5f, 48.f), m_terrain),
+      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_mousePosPrev(0)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -111,6 +114,12 @@ void MyGL::resizeGL(int w, int h) {
 
 void MyGL::tick() {
     time++;
+    long long ct = QDateTime::currentMSecsSinceEpoch();
+    float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
+    m_currentMSecsSinceEpoch = ct;
+
+    m_player.tick(dt, m_inputs);
+
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
@@ -222,24 +231,89 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     } else if (e->key() == Qt::Key_Down) {
         m_player.rotateOnRightLocal(amount);
     } else if (e->key() == Qt::Key_W) {
-        m_player.moveForwardLocal(amount);
+        m_inputs.wPressed = true;
     } else if (e->key() == Qt::Key_S) {
-        m_player.moveForwardLocal(-amount);
+        m_inputs.sPressed = true;
     } else if (e->key() == Qt::Key_D) {
-        m_player.moveRightLocal(amount);
+        m_inputs.dPressed = true;
     } else if (e->key() == Qt::Key_A) {
-        m_player.moveRightLocal(-amount);
+        m_inputs.aPressed = true;
     } else if (e->key() == Qt::Key_Q) {
-        m_player.moveUpGlobal(-amount);
+        m_inputs.qPressed = true;
     } else if (e->key() == Qt::Key_E) {
-        m_player.moveUpGlobal(amount);
+        m_inputs.ePressed = true;
+    } else if (e->key() == Qt::Key_F) {
+        m_inputs.fPressed = true;
+    } else if (e->key() ==Qt::Key_Space) {
+        m_inputs.spacePressed = true;
     }
 }
 
+
+
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
     // TODO
+    glm::vec2 pos(e->pos().x(), e->pos().y());
+    if(e->buttons() & Qt::LeftButton)
+    {
+        // Rotation
+        glm::vec2 diff = 0.2f * (pos - m_mousePosPrev);
+        m_mousePosPrev = pos;
+        m_inputs.mouseX = diff.x;
+        m_inputs.mouseY = diff.y;
+    }
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     // TODO
+    if(e->buttons() & Qt::LeftButton)
+    {
+        m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
+
+        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+        glm::vec3 ray_dir = m_player.getLook() * 3.f;
+
+        float dist;
+        glm::ivec3 block_pos;
+
+        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+            m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+        }
+    }
+
+    if (e->buttons() & Qt::RightButton) {
+        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+        glm::vec3 ray_dir = m_player.getLook() * 3.f;
+
+        float dist;
+        glm::ivec3 block_pos;
+
+        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+            BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
+            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
+                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
+            } else {
+                if (m_terrain.getBlockAt(glm::vec3(block_pos.x-1, block_pos.y, block_pos.z)) == EMPTY) {
+                    m_terrain.setBlockAt(block_pos.x-1, block_pos.y, block_pos.z, b);
+                } else {
+                    if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y+1, block_pos.z)) == EMPTY) {
+                        m_terrain.setBlockAt(block_pos.x, block_pos.y+1, block_pos.z, b);
+                    } else {
+                        if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y-1, block_pos.z)) == EMPTY) {
+                            m_terrain.setBlockAt(block_pos.x, block_pos.y-1, block_pos.z, b);
+                        } else {
+                            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z+1)) == EMPTY) {
+                                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z+1, b);
+                            } else {
+                                if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
+                                    m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
 }
