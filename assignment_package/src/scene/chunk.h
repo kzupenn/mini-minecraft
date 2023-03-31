@@ -17,7 +17,7 @@
 enum BlockType : unsigned char
 {
     EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW,
-    COBBLESTONE, OAK_PLANKS, OAK_LOG, BOOKSHELF, GLASS};
+    COBBLESTONE, OAK_PLANKS, OAK_LOG, OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE};
 
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
@@ -91,3 +91,6 @@ public:
     BiomeType biome; //biome of chunk, taking 8,8
     int heightMap[16][16]; //height map of surface level ground, to generate surface structs
 };
+
+bool isTransparent(int x, int y, int z, Chunk* c);
+bool isEmpty(int x, int y, int z, Chunk* c);

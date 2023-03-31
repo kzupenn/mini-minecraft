@@ -8,7 +8,7 @@
 using namespace glm;
 
 //TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed = 42294021;
+int seed = 584254031;
 float getSeed(float f) {
     return seed*f;
 }
@@ -16,9 +16,9 @@ float getSeed(float f) {
 vec4 heightSeed = vec4(getSeed(4), getSeed(3), getSeed(5), getSeed(2));
 vec4 rainSeed = vec4(getSeed(432), getSeed(1249), getSeed(120.3), getSeed(582.259));
 vec4 tempSeed = vec4(getSeed(593.24), getSeed(52.29), getSeed(623.33), getSeed(5920.2));
-#define river_width 0.008
+#define river_width 0.007
 
-const bool TESTING = true;
+const bool TESTING = false;
 
 //terrain generation
 //makes sporatic divets to make smooth terrain appear with erosion
@@ -61,7 +61,7 @@ float dunes(glm::vec2 pos) {
 
 //mountains
 float mountains(glm::vec2 pos) {
-    return 120*pow(hybridMultifractalM(pos, 8, heightSeed, 256), 2) + 30*fBm(pos, 8, heightSeed, 128);
+    return clamp((float)(200*pow(hybridMultifractalM(pos, 8, heightSeed, 256), 2) + 30*fBm(pos, 8, heightSeed, 128)), 0.f, 255.f);
 }
 
 //UNUSED
@@ -152,12 +152,12 @@ std::map<BiomeType, std::vector<std::pair<vec2, float(*)(vec2)>>> biomeErosion =
 };
 
 std::pair<BiomeType, std::vector<vec2>> biomeSpace[] = {
-    std::make_pair(TUNDRA, std::vector<vec2>{vec2(0.42, 0.3), vec2(0.52, 0.3)}),
-    std::make_pair(PLAINS, std::vector<vec2>{vec2(0.42, 0.5), vec2(0.52, 0.45)}),
+    std::make_pair(TUNDRA, std::vector<vec2>{vec2(0.42, 0.35), vec2(0.52, 0.3)}),
+    std::make_pair(PLAINS, std::vector<vec2>{vec2(0.42, 0.5), vec2(0.52, 0.4)}),
     std::make_pair(DESERT, std::vector<vec2>{vec2(0.42, 0.7)}),
-    std::make_pair(TAIGA, std::vector<vec2>{vec2(0.52, 0.55), vec2(0.57, 0.44)}),
-    std::make_pair(SAVANNA, std::vector<vec2>{vec2(0.52, 0.7)}),
-    std::make_pair(FOREST, std::vector<vec2>{vec2(0.57, 0.56), vec2(0.57, 0.68)}),
+    std::make_pair(TAIGA, std::vector<vec2>{vec2(0.52, 0.5), vec2(0.57, 0.4)}),
+    std::make_pair(SAVANNA, std::vector<vec2>{vec2(0.52, 0.6)}),
+    std::make_pair(FOREST, std::vector<vec2>{vec2(0.57, 0.5), vec2(0.57, 0.68)}),
     std::make_pair(SWAMP, std::vector<vec2>{vec2(0.69, 0.58)}),
     std::make_pair(RAINFOREST, std::vector<vec2>{vec2(0.69, 0.68)})
 };
@@ -247,7 +247,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
             bigw = td;
             bigb = b;
         }
-    }
+    }    
 
     //make rivers here
     float height = output/adjmag;
@@ -268,7 +268,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2), getSeed(1), getSeed(3), getSeed(2)), 2048)-0.5)),
+    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2.32), getSeed(114), getSeed(3.1), getSeed(2.4)), 2048)-0.5)),
                  0.f, 1.f);
 }
 
@@ -277,7 +277,15 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    return fBm(pp, 8, heightSeed*4.f, 1024);
+    return fBm(pp*0.25f, 8, heightSeed*4.f, 512);
+}
+
+//
+float generateSnowLayer(vec2 pp) {
+    return 128+20*perlinNoise(pp, heightSeed, 128);
+}
+float generateRockLayer(vec2 pp) {
+    return 100+10*perlinNoise(pp, heightSeed, 256);
 }
 
 //noise distribution tests
@@ -318,8 +326,45 @@ void bedrockTest() {
         qDebug() << i*5 << foo[i*100000/20];
     }
 }
+void biomeTest() {
+    int b[9] = {0,0,0,0,0,0,0,0,0};
+    for(int i = 0; i < 100000; i++) {
+        vec2 pp = vec2(std::rand()%100000,std::rand()%100000);
+        float rain = fBm(pp, 12, rainSeed, 2048);
+        float temp = fBm(pp, 12, tempSeed, 2048);
+
+        float crain = rain * std::sqrt(1 - 0.5*temp*temp);
+        float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
+
+        float maxmag = -1;
+        int bigb = -1;
+        for(std::pair<BiomeType, std::vector<vec2>> p: biomeSpace) {
+            BiomeType b = p.first;
+            for(vec2 rt: p.second) {
+                float d = length(rt-vec2(crain,ctemp));
+                float thismag = 1/pow(d, 6);
+                if(thismag > maxmag) {
+                    maxmag = thismag;
+                    bigb = b;
+                }
+            }
+        }
+        b[bigb]++;
+    }
+    qDebug() << "TUNDRA" << b[0];
+    qDebug() << "PLAINS" << b[1];
+    qDebug() << "DESERT" << b[2];
+    qDebug() << "TAIGA" << b[3];
+    qDebug() << "SAVANNA" << b[4];
+    qDebug() << "FOREST" << b[5];
+    qDebug() << "SWAMP" << b[6];
+    qDebug() << "RAINFOREST" << b[7];
+    qDebug() << "RIVER" << b[8];
+
+}
 void biomeDist() {
-    bedrockTest();
+    biomeTest();
+    //bedrockTest();
 }
 
 void erosionDist() {
