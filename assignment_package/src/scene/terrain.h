@@ -88,8 +88,8 @@ public:
     const uPtr<Chunk>& getChunkAt(int x, int z) const;
     // Given a world-space coordinate (which may have negative
     // values) return the block stored at that point in space.
-    BlockType getBlockAt(int x, int y, int z) ;
-    BlockType getBlockAt(glm::vec3 p) ;
+    BlockType getBlockAt(int x, int y, int z);
+    BlockType getBlockAt(glm::vec3 p);
     // Given a world-space coordinate (which may have negative
     // values) set the block at that point in space to the
     // given type.
@@ -116,8 +116,8 @@ public:
     //builds the structures
     void buildStructure(const Structure&);
 
-    bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terrain &terrain, float *out_dist,
-                   glm::ivec3 *out_blockHit) const;
+    bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, float *out_dist,
+                   glm::ivec3 *out_blockHit);
 };
 
 

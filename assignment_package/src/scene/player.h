@@ -7,20 +7,20 @@ class Player : public Entity {
 private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
-    const Terrain &mcr_terrain;
+    Terrain &mcr_terrain;
     bool m_flightMode;
 
     void processInputs(InputBundle &inputs);
-    void computePhysics(float dT, const Terrain &terrain);
+    void computePhysics(float dT, Terrain &terrain);
 
-    void checkCollision(const Terrain &terrain);
+    void checkCollision(Terrain &terrain);
 
 public:
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-    Player(glm::vec3 pos, const Terrain &terrain);
+    Player(glm::vec3 pos, Terrain &terrain);
     virtual ~Player() override;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);

@@ -85,7 +85,7 @@ BlockType Terrain::getBlockAt(int x, int y, int z)
     }
 }
 
-BlockType Terrain::getBlockAt(glm::vec3 p)  {
+BlockType Terrain::getBlockAt(glm::vec3 p) {
     return getBlockAt(p.x, p.y, p.z);
 }
 
@@ -975,8 +975,8 @@ void Terrain::buildStructure(const Structure& s) {
     }
 }
 
-bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terrain &terrain,
-                        float *out_dist, glm::ivec3 *out_blockHit) const
+bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
+                        float *out_dist, glm::ivec3 *out_blockHit)
 {
 
     float maxLen = glm::length(rayDirection); // Farthest we search
@@ -1016,7 +1016,7 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, const Terra
             currCell = glm::ivec3(glm::floor(rayOrigin)) + offset;
             // If currCell contains something other than EMPTY, return
             // curr_t
-            BlockType cellType = terrain.getBlockAt(currCell.x, currCell.y, currCell.z);
+            BlockType cellType = this->getBlockAt(currCell.x, currCell.y, currCell.z);
             if(cellType != EMPTY) {
                 *out_blockHit = currCell;
                 if (count == 0) {
