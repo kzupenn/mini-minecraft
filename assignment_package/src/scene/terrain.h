@@ -14,7 +14,11 @@
 struct metadata{
     BlockType type;
     glm::vec3 pos;
-    metadata(BlockType t, glm::vec3 p): type(t), pos(p){
+    bool(*con)(int,int,int,Chunk*);
+    metadata(BlockType t, glm::vec3 p, bool(*c)(int,int,int,Chunk*)): type(t), pos(p), con(c){
+
+    }
+    metadata(BlockType t, glm::vec3 p) : metadata(t, p, nullptr){
 
     }
 };
@@ -94,6 +98,8 @@ public:
     // values) set the block at that point in space to the
     // given type.
     void setBlockAt(int x, int y, int z, BlockType t);
+    // like setblock, but checks a conditional before placing
+    void setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,int,Chunk*));
 
     // Draws every Chunk that falls within the bounding box
     // described by the min and max coords, using the provided

@@ -5,11 +5,15 @@ void printVec(glm::vec4 a) {
     qDebug() << a[0] << a[1] << a[2] << a[3];
 }
 
-bool isTransparent(BlockType b) {
-    if(b == EMPTY){
-        return true;
-    }
-    return false;
+bool isTransparent(int x, int y, int z, Chunk* c) {
+    BlockType bt = c->getBlockAt(x, y, z);
+    return bt == EMPTY || bt == WATER;
+}
+bool checkTransparent(BlockType bt) {
+    return bt == EMPTY || bt == WATER;
+}
+bool isEmpty(int x, int y, int z, Chunk* c) {
+    return c->getBlockAt(x, y, z) == EMPTY;
 }
 
 glm::vec3 dirToVec(Direction d) {
@@ -143,21 +147,21 @@ void Chunk::createVBOdata() {
                         //bound checking and neighbor
                         bool drawFace = false;
                         if(i+delta[l] < 0){
-                            drawFace = (!m_neighbors[XNEG] || isTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                            drawFace = (!m_neighbors[XNEG] || checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
                         }
                         else if(i+delta[l] > 15){
-                            drawFace = (!m_neighbors[XPOS] || isTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                            drawFace = (!m_neighbors[XPOS] || checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
                         }
                         else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
                             drawFace = true;
                         }
                         else if(k+delta[l+2] < 0){
-                            drawFace = (!m_neighbors[ZNEG] || isTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                            drawFace = (!m_neighbors[ZNEG] || checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
                         }
                         else if(k+delta[l+2] > 15){
-                            drawFace = (!m_neighbors[ZPOS] || isTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                            drawFace = (!m_neighbors[ZPOS] || checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
                         }
-                        else if(isTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
+                        else if(checkTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
                             drawFace = true;
                         }
                         if(drawFace){
@@ -188,6 +192,9 @@ void Chunk::createVBOdata() {
                             case DIRT:
                                 this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
                                 break;
+                            case PATH:
+                                this_color = glm::vec4(211.f, 185.f, 120.f, 255.f)/255.f;
+                                break;
                             case STONE:
                                 this_color = glm::vec4(0.5, 0.5, 0.5, 1);
                                 break;
@@ -198,6 +205,9 @@ void Chunk::createVBOdata() {
                                 this_color = glm::vec4(1,1,0,1);
                                 break;
                             case SNOW:
+                                this_color = glm::vec4(1,1,1,1);
+                                break;
+                            case GLASS:
                                 this_color = glm::vec4(1,1,1,1);
                                 break;
                             case COBBLESTONE:

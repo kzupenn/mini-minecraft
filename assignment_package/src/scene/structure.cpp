@@ -21,9 +21,9 @@ std::vector<Structure> getStructureZones(Chunk* c) {
     //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
     case PLAINS:
-        for(int i = 0; i < 16; i+=8) {
-            for(int j = 0; j < 16; j+=8) {
-                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(8.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f));
+        for(int i = 0; i < 16; i+=16) {
+            for(int j = 0; j < 16; j+=16) {
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f));
                 if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS){
                     ret.push_back(Structure(OAK_TREE, pp));
                 }
@@ -54,6 +54,10 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
     vec2 villageCenter = vec2(0);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
     //using y = 1000 to indicate surface level generation
     ret.push_back(std::make_pair(std::make_pair(toKey(villageCenter.x, villageCenter.y), 1000), VILLAGE_CENTER));
+
+    //for demo purposes
+    ret.push_back(std::make_pair(std::make_pair(toKey(200,200), 1000), VILLAGE_CENTER));
+
     return ret;
 }
 
@@ -67,7 +71,7 @@ std::vector<Structure> generateVillage(vec2 pp) {
     std::vector<Structure> ret;
 
     //generates village center
-    ivec2 villageCenter = ivec2(0,0);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
+    ivec2 villageCenter = ivec2(pp);//floor(pp*0.0011f)*900.f + 900.f*random2(floor(pp*0.0011f)*900.f, glm::vec4(125,45356,23,532));
     ret.emplace_back(VILLAGE_CENTER, villageCenter);
     ret.emplace_back(OAK_TREE, villageCenter);
 
@@ -203,7 +207,7 @@ std::vector<Structure> generateVillage(vec2 pp) {
             //streets running +-X
             for(vec2 vv: xdir) {
                 if(abs(thisCenter.x - vv.x) <= hx && abs(thisCenter.y - vv.y) <= hy+2) {
-                    qDebug() << thisCenter.x << thisCenter.y << "intersects x street" << vv.x << vv.y;
+                    //qDebug() << thisCenter.x << thisCenter.y << "intersects x street" << vv.x << vv.y;
                     canUse = false;
                     break;
                 }
@@ -227,12 +231,13 @@ std::vector<Structure> generateVillage(vec2 pp) {
             if(!canUse) continue;
             //finally we can add the building
             ret.emplace_back(st, pp.first, pp.second);
-            hitbox.push_back(std::make_pair(thisCenter, vec2(hx, hy)));
+            //use a slightly larger hitbox for buildings
+            hitbox.push_back(std::make_pair(thisCenter, vec2(hx+2, hy+2)));
         }
     }
 
     //ret.emplace_back(VILLAGE_HOUSE_1, villageCenter+ivec2(-50, 50), XPOS);
     //ret.emplace_back(VILLAGE_LIBRARY, villageCenter+ivec2(50, 50), XPOS);
-
+    qDebug() << "finished village gen";
     return ret;
 }

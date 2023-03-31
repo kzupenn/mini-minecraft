@@ -247,7 +247,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
             bigw = td;
             bigb = b;
         }
-    }
+    }    
 
     //make rivers here
     float height = output/adjmag;

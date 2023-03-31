@@ -147,6 +147,33 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
     }
 }
 
+void Terrain::setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,int,Chunk*)) {
+    if(hasChunkAt(x, z)) {
+        uPtr<Chunk> &c = getChunkAt(x, z);
+        int xFloor = 16*static_cast<int>(glm::floor(x / 16.f));
+        int zFloor = 16*static_cast<int>(glm::floor(z / 16.f));
+        if(con(x-xFloor, y, z-zFloor, c.get())){
+            c->setBlockAt(static_cast<unsigned int>(x - c->pos.x),
+                          static_cast<unsigned int>(y),
+                          static_cast<unsigned int>(z - c->pos.z),
+                          t);
+        }
+    }
+    else {
+        int xFloor = static_cast<int>(glm::floor(x / 16.f));
+        int zFloor = static_cast<int>(glm::floor(z / 16.f));
+        int64_t key = toKey(16 * xFloor, 16 * zFloor);
+        metaData_mutex.lock();
+        if(metaData.find(key) == metaData.end()){
+            metaData[key] = std::vector<metadata>();
+        }
+        metaData[key].emplace_back(t, glm::vec3(x-16*xFloor, y, z-16*zFloor), con);
+        metaData_mutex.unlock();
+//        throw std::out_of_range("Coordinates " + std::to_string(x) +
+//                                " " + std::to_string(y) + " " +
+//                                std::to_string(z) + " have no Chunk!");
+    }
+}
 
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
     //semaphore blocking to limit thread count
@@ -368,7 +395,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     metaData_mutex.lock();
     if(metaData.find(key) != metaData.end()) {
         for(metadata md: metaData[key]){
-            cPtr->setBlockAt(md.pos.x, md.pos.y, md.pos.z, md.type);
+            if(md.con == nullptr || md.con(md.pos.x, md.pos.y, md.pos.z, cPtr))
+                cPtr->setBlockAt(md.pos.x, md.pos.y, md.pos.z, md.type);
         }
     }
     metaData.erase(key);
@@ -523,56 +551,56 @@ void Terrain::buildStructure(const Structure& s) {
             int yat = ymin+ymax-dy;
             switch(dy) {
                 case 0:
-                    setBlockAt(xx, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx-1, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx+1, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx, yat, zz-1, OAK_LEAVES);
-                    setBlockAt(xx, yat, zz+1, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
                     break;
                 case 1:
-                    setBlockAt(xx, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx-1, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx+1, yat, zz, OAK_LEAVES);
-                    setBlockAt(xx, yat, zz-1, OAK_LEAVES);
-                    setBlockAt(xx, yat, zz+1, OAK_LEAVES);
+                    setBlockAt(xx, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
                     if(noise1D(glm::vec3(xx+1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
                         setBlockAt(xx+1, yat, zz+1, OAK_LEAVES);
                     }
                     if(noise1D(glm::vec3(xx+1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+1, yat, zz-1, OAK_LEAVES);
+                        setBlockAt(xx+1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
                     if(noise1D(glm::vec3(xx-1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-1, yat, zz+1, OAK_LEAVES);
+                        setBlockAt(xx-1, yat, zz+1, OAK_LEAVES, isEmpty);
                     }
                     if(noise1D(glm::vec3(xx-1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-1, yat, zz-1, OAK_LEAVES);
+                        setBlockAt(xx-1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
                     break;
                 default: //2, 3
                     for(int dx = xx-2; dx <= xx+2; dx++) {
                         for(int dz = zz-1; dz <= zz+1; dz++) {
                             if(dx != xx || dz != zz) {
-                                setBlockAt(dx, yat, dz, OAK_LEAVES);
+                                setBlockAt(dx, yat, dz, OAK_LEAVES, isEmpty);
                             }
                         }
                     }
-                    setBlockAt(xx-1, yat, zz+2, OAK_LEAVES);
-                    setBlockAt(xx, yat, zz+2, OAK_LEAVES);
-                    setBlockAt(xx+1, yat, zz+2, OAK_LEAVES);
-                    setBlockAt(xx-1, yat, zz-2, OAK_LEAVES);
+                    setBlockAt(xx-1, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz-2, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz-2, OAK_LEAVES);
-                    setBlockAt(xx+1, yat, zz-2, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz-2, OAK_LEAVES, isEmpty);
                     if(noise1D(glm::vec3(xx+2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+2, yat, zz+2, OAK_LEAVES);
+                        setBlockAt(xx+2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
                     if(noise1D(glm::vec3(xx+2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx+2, yat, zz-2, OAK_LEAVES);
+                        setBlockAt(xx+2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
                     if(noise1D(glm::vec3(xx-2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-2, yat, zz+2, OAK_LEAVES);
+                        setBlockAt(xx-2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
                     if(noise1D(glm::vec3(xx-2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
-                        setBlockAt(xx-2, yat, zz-2, OAK_LEAVES);
+                        setBlockAt(xx-2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
                     break;
             }
@@ -641,25 +669,60 @@ void Terrain::buildStructure(const Structure& s) {
             for(int j = -5; j <= 5; j++) {
                 float f = noise1D(glm::vec2(xx+i, zz+j), glm::vec3(57091, 850135, 323));
                 if(f < 0.33)
-                    setBlockAt(xx+i, 1000-1, zz+j, DIRT);
+                    setBlockAt(xx+i, 1000-1, zz+j, PATH);
                 else if(f < 0.66)
                     setBlockAt(xx+i, 1000-1, zz+j, STONE);
+                else
+                    setBlockAt(xx+i, 1000-1, zz+j, GRASS);
             }
         }
         break;
     case VILLAGE_ROAD:{
         glm::vec2 perp = glm::vec2(dirToVec(s.orient).z, dirToVec(s.orient).x);
-        for(int i = -1; i <= 1; i++) {
-            setBlockAt(xx+i*perp.x, 1000-1, zz+i*perp.y, DIRT);
+        if(c->getBlockAt(xx-x, c->heightMap[xx-x][zz-z]-1, zz-z) == WATER) {
+            for(int i = -1; i <= 1; i++) {
+                setBlockAt(xx+i*perp.x, 1000-1, zz+i*perp.y, OAK_PLANKS);
+            }
+        }
+        else{
+            for(int i = -1; i <= 1; i++) {
+                setBlockAt(xx+i*perp.x, 1000-1, zz+i*perp.y, PATH);
+            }
         }
         break;
     }
-        // TO DO: recenter the house so the position corresponds to the door
     case VILLAGE_HOUSE_1: {
         int floorh = c->heightMap[xx-x][zz-z];
         glm::vec2 perp = glm::vec2(-dirToVec(s.orient).z, dirToVec(s.orient).x);
         glm::vec2 back = glm::vec2(-perp.y, perp.x);
         glm::vec2 pp;
+        //clear the area, base
+        for(int i = -1; i <= 5; i++) {
+            for(int j = -3; j <= 3; j++) {
+                for(int y = 0; y < 8; y++) {
+                    pp = glm::vec2(xx, zz) + perp*(float)j + back*(float)i;
+                    setBlockAt(pp.x, floorh+y, pp.y, EMPTY);
+                }
+            }
+        }
+        for(int i = -1; i <= 5; i++) {
+            for(int j = -3; j <= 3; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)j + back*(float)i;
+                setBlockAt(pp.x, floorh-1, pp.y, DIRT, isTransparent);
+            }
+        }
+        for(int i = 0; i <= 4; i++) {
+            for(int j = -2; j <= 2; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)j + back*(float)i;
+                setBlockAt(pp.x, floorh-2, pp.y, DIRT, isTransparent);
+            }
+        }
+        for(int i = 1; i <= 3; i++) {
+            for(int j = -1; j <= 1; j++) {
+                pp = glm::vec2(xx, zz) + perp*(float)j + back*(float)i;
+                setBlockAt(pp.x, floorh-3, pp.y, DIRT, isTransparent);
+            }
+        }
         //floor
         for(int i = -1; i <= 1; i++) {
             for(int j = 1; j <= 3; j++) {
@@ -735,6 +798,23 @@ void Terrain::buildStructure(const Structure& s) {
         glm::vec2 perp = glm::vec2(-dirToVec(s.orient).z, dirToVec(s.orient).x);
         glm::vec2 back = glm::vec2(-perp.y, perp.x);
         glm::vec2 pp;
+        //clearing and setting ground
+        for(int i = -8; i <= 8; i++) {
+            for(int j = -1; j <= 9; j++) {
+                for(int y = 0; y < 10; y++){
+                     pp = glm::vec2(xx, zz) + perp*(float)i+back*(float)j;
+                    setBlockAt(pp.x, floorh+y, pp.y, EMPTY);
+                }
+            }
+        }
+        for(int y = 0; y <= 2; y++) {
+            for(int i = -8+y; i <= 8-y; i++) {
+                for(int j = -1+y; j <= 9-y; j++) {
+                    pp = glm::vec2(xx, zz) + perp*(float)i+back*(float)j;
+                    setBlockAt(pp.x, floorh-y-1, pp.y, DIRT, isTransparent);
+                }
+            }
+        }
         //layer 1
         for(int i = -1; i <= 1; i++) {
             pp = glm::vec2(xx, zz) + perp*(float)i;
