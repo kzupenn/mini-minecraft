@@ -71,7 +71,7 @@ protected:
     // Automatically invoked when the user
     // presses a key on the keyboard
     void keyPressEvent(QKeyEvent *e);
-
+    void keyReleaseEvent(QKeyEvent *e);
 
     // Automatically invoked when the user
     // moves the mouse
@@ -79,6 +79,7 @@ protected:
     // Automatically invoked when the user
     // presses a mouse button
     void mousePressEvent(QMouseEvent *e);
+
 
 private slots:
     void tick(); // Slot that gets called ~60 times per second by m_timer firing.

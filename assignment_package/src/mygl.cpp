@@ -248,7 +248,25 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     }
 }
 
-
+void MyGL::keyReleaseEvent(QKeyEvent *e) {
+    if (e->key() == Qt::Key_W) {
+        m_inputs.wPressed = false;
+    } else if (e->key() == Qt::Key_S) {
+        m_inputs.sPressed = false;
+    } else if (e->key() == Qt::Key_D) {
+        m_inputs.dPressed = false;
+    } else if (e->key() == Qt::Key_A) {
+        m_inputs.aPressed = false;
+    } else if (e->key() == Qt::Key_Q) {
+        m_inputs.qPressed = false;
+    } else if (e->key() == Qt::Key_E) {
+        m_inputs.ePressed = false;
+    } else if (e->key() == Qt::Key_F) {
+        m_inputs.fPressed = false;
+    } else if (e->key() ==Qt::Key_Space) {
+        m_inputs.spacePressed = false;
+    }
+}
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
     // TODO
