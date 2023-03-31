@@ -11,9 +11,9 @@ private:
     bool m_flightMode;
 
     void processInputs(InputBundle &inputs);
-    void computePhysics(float dT, const Terrain &terrain);
+    void computePhysics(float dT);
 
-    void checkCollision(const Terrain &terrain);
+    void checkCollision();
 
 public:
     // Readonly public reference to our camera

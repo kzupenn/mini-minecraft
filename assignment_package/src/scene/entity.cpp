@@ -65,7 +65,6 @@ void Entity::rotateOnUpLocal(float degrees) {
     m_forward = glm::vec3(rot * glm::vec4(m_forward, 0.f));
 }
 
-
 void Entity::rotateOnForwardGlobal(float degrees) {
     float rad = glm::radians(degrees);
     m_forward = glm::vec3(glm::rotate(glm::mat4(), rad, glm::vec3(0,0,1)) * glm::vec4(m_forward, 0.f));

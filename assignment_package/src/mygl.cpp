@@ -16,8 +16,7 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      ip("localhost"), time(0)
-      m_terrain(this), m_player(glm::vec3(48.f, 129.5f, 48.f), m_terrain),
+      ip("localhost"), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(0)
 {
@@ -276,7 +275,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float dist;
         glm::ivec3 block_pos;
 
-        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
         }
     }
@@ -288,7 +287,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float dist;
         glm::ivec3 block_pos;
 
-        if (m_terrain.gridMarch(cam_pos, ray_dir, m_terrain, &dist, &block_pos)) {
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
             BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
             if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
                 m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
