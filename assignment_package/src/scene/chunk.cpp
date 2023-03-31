@@ -57,7 +57,7 @@ Direction vecToDir(glm::vec3 v) {
     }
 }
 
-Chunk::Chunk(OpenGLContext* mp_context) : Drawable(mp_context), m_blocks(), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
+Chunk::Chunk(OpenGLContext* mp_context) : Drawable(mp_context), m_blocks(),
     dataBound(false), dataGen(false), surfaceGen(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
@@ -141,95 +141,120 @@ void Chunk::createVBOdata() {
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 256; j++) {
             for(int k = 0; k < 16; k++) {
-                if(getBlockAt(i, j, k)!=EMPTY) {
-                    //check in all 6 directions
-                    for(int l = 0; l < 6*3; l+=3) {
-                        //bound checking and neighbor
-                        bool drawFace = false;
-                        if(i+delta[l] < 0){
-                            drawFace = (m_neighbors.find(XNEG) != m_neighbors.end() || checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                //check in all 6 directions
+                for(int l = 0; l < 6*3; l+=3) {
+                    //bound checking and neighbor
+                    BlockType curr = getBlockAt(i, j, k);
+                    BlockType oth;
+                    bool drawFace = false;
+                    if(i+delta[l] < 0){
+                        if (curr != EMPTY) drawFace = (m_neighbors.find(XNEG) != m_neighbors.end()
+                                && checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                        else {
+                            drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
+                                && m_neighbors[XNEG]->getBlockAt(15, j, k) != EMPTY;
+                            if (m_neighbors.find(XNEG) != m_neighbors.end()) oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
                         }
-                        else if(i+delta[l] > 15){
-                            drawFace = (m_neighbors.find(XPOS) != m_neighbors.end() || checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                    }
+                    else if(i+delta[l] > 15){
+                        if (curr != EMPTY) drawFace = (m_neighbors.find(XPOS) != m_neighbors.end()
+                                && checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                        else {
+                            drawFace = m_neighbors.find(XPOS) != m_neighbors.end()
+                                && m_neighbors[XPOS]->getBlockAt(0, j, k) != EMPTY;
+                            if (m_neighbors.find(XPOS) != m_neighbors.end()) oth = m_neighbors[XPOS]->getBlockAt(0, j, k);
                         }
-                        else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
-                            drawFace = true;
+                    }
+                    else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
+                        if (curr != EMPTY) drawFace = true;
+                    }
+                    else if(k+delta[l+2] < 0){
+                        if (curr != EMPTY) drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end()
+                                && checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                        else {
+                            drawFace = m_neighbors.find(ZNEG) != m_neighbors.end()
+                                && m_neighbors[ZNEG]->getBlockAt(i, j, 15) != EMPTY;
+                            if (m_neighbors.find(ZNEG) != m_neighbors.end()) oth = m_neighbors[ZNEG]->getBlockAt(i, j, 15);
                         }
-                        else if(k+delta[l+2] < 0){
-                            drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end() || checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                    }
+                    else if(k+delta[l+2] > 15){
+                        if (curr != EMPTY) drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end()
+                                && checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                        else {
+                            drawFace = m_neighbors.find(ZPOS) != m_neighbors.end()
+                                && m_neighbors[ZPOS]->getBlockAt(i, j, 0) != EMPTY;
+                            if (m_neighbors.find(ZPOS) != m_neighbors.end()) oth = m_neighbors[ZPOS]->getBlockAt(i, j, 0);
                         }
-                        else if(k+delta[l+2] > 15){
-                            drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end() || checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                    }
+                    else if(checkTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
+                        if (curr != EMPTY) drawFace = true;
+                    }
+                    if(drawFace){
+                        //set indices
+                        idx.push_back(VBOpos.size());
+                        idx.push_back(VBOpos.size()+1);
+                        idx.push_back(VBOpos.size()+2);
+                        idx.push_back(VBOpos.size()+2);
+                        idx.push_back(VBOpos.size()+3);
+                        idx.push_back(VBOpos.size());
+                        //set surface positions
+                        glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
+                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
+                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
+                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
+                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
+                        //set surface normals
+                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        //colors, TODO
+                        glm::vec4 this_color;
+                        if (curr == EMPTY) curr = oth;
+                        switch(curr){
+                        case GRASS:
+                            this_color = glm::vec4(0, 1, 0, 1);
+                            break;
+                        case DIRT:
+                            this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
+                            break;
+                        case PATH:
+                            this_color = glm::vec4(211.f, 185.f, 120.f, 255.f)/255.f;
+                            break;
+                        case STONE:
+                            this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            break;
+                        case WATER:
+                            this_color = glm::vec4(0, 0, 1, 0.5);
+                            break;
+                        case SAND:
+                            this_color = glm::vec4(1,1,0,1);
+                            break;
+                        case SNOW:
+                            this_color = glm::vec4(1,1,1,1);
+                            break;
+                        case GLASS:
+                            this_color = glm::vec4(1,1,1,1);
+                            break;
+                        case COBBLESTONE:
+                            this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            break;
+                        case OAK_PLANKS:
+                            this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
+                            break;
+                        case OAK_LOG:
+                            this_color = glm::vec4(151.f, 125.f, 60.f, 255.f)/255.f;
+                            break;
+                        case OAK_LEAVES:
+                            this_color = glm::vec4(0, 0.5, 0, 1);
+                            break;
+                        default:
+                            this_color = glm::vec4(0);
+                            break;
                         }
-                        else if(checkTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
-                            drawFace = true;
-                        }
-                        if(drawFace){
-                            //set indices
-                            idx.push_back(VBOpos.size());
-                            idx.push_back(VBOpos.size()+1);
-                            idx.push_back(VBOpos.size()+2);
-                            idx.push_back(VBOpos.size()+2);
-                            idx.push_back(VBOpos.size()+3);
-                            idx.push_back(VBOpos.size());
-                            //set surface positions
-                            glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
-                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
-                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
-                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
-                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
-                            //set surface normals
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            //colors, TODO
-                            glm::vec4 this_color;
-                            switch(getBlockAt(i, j, k)){
-                            case GRASS:
-                                this_color = glm::vec4(0, 1, 0, 1);
-                                break;
-                            case DIRT:
-                                this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
-                                break;
-                            case PATH:
-                                this_color = glm::vec4(211.f, 185.f, 120.f, 255.f)/255.f;
-                                break;
-                            case STONE:
-                                this_color = glm::vec4(0.5, 0.5, 0.5, 1);
-                                break;
-                            case WATER:
-                                this_color = glm::vec4(0, 0, 1, 0.5);
-                                break;
-                            case SAND:
-                                this_color = glm::vec4(1,1,0,1);
-                                break;
-                            case SNOW:
-                                this_color = glm::vec4(1,1,1,1);
-                                break;
-                            case GLASS:
-                                this_color = glm::vec4(1,1,1,1);
-                                break;
-                            case COBBLESTONE:
-                                this_color = glm::vec4(0.5, 0.5, 0.5, 1);
-                                break;
-                            case OAK_PLANKS:
-                                this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
-                                break;
-                            case OAK_LOG:
-                                this_color = glm::vec4(151.f, 125.f, 60.f, 255.f)/255.f;
-                                break;
-                            case OAK_LEAVES:
-                                this_color = glm::vec4(0, 0.5, 0, 1);
-                                break;
-                            default:
-                                this_color = glm::vec4(0);
-                                break;
-                            }
-                            //std::cout << glm::to_string(this_color);
-                            for(int foo = 0; foo < 4; foo++) {
-                                VBOcol.push_back(this_color);
-                            }
+                        //std::cout << glm::to_string(this_color);
+                        for(int foo = 0; foo < 4; foo++) {
+                            VBOcol.push_back(this_color);
                         }
                     }
                 }
@@ -261,18 +286,6 @@ void Chunk::bindVBOdata() {
     // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
     // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
-
-//    generatePos();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
-
-//    generateNor();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), VBOnor.data(), GL_STATIC_DRAW);
-
-//    generateCol();
-//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), VBOcol.data(), GL_STATIC_DRAW);
 
     generateInter();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
