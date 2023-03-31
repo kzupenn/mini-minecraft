@@ -2,26 +2,27 @@
 #include "glm_includes.h"
 
 struct InputBundle {
-    bool wPressed, aPressed, sPressed, dPressed;
+    bool wPressed, aPressed, sPressed, dPressed, qPressed, ePressed, fPressed;
     bool spacePressed;
     float mouseX, mouseY;
 
     InputBundle()
         : wPressed(false), aPressed(false), sPressed(false),
-          dPressed(false), spacePressed(false), mouseX(0.f), mouseY(0.f)
+          dPressed(false), qPressed(false), ePressed(false), fPressed(false),
+          spacePressed(false), mouseX(0.f), mouseY(0.f)
     {}
 };
 
 class Entity {
 protected:
-    // Vectors that define the axes of our local coordinate system
-    glm::vec3 m_forward, m_right, m_up;
     // The origin of our local coordinate system
     glm::vec3 m_position;
 
 public:
     // A readonly reference to position for external use
     const glm::vec3& mcr_position;
+    // Vectors that define the axes of our local coordinate system
+    glm::vec3 m_forward, m_right, m_up;
 
     // Various constructors
     Entity();

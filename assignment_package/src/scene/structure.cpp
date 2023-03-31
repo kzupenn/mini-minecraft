@@ -15,9 +15,9 @@ float getSeed2(float f) {
     return seed2*f;
 }
 
-std::vector<Structure> getStructureZones(Chunk* c) {
+std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
     std::vector<Structure> ret;
-    ivec2 cp = ivec2(c->pos.x, c->pos.z);
+    ivec2 cp = ivec2(x, z);
     //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
     case PLAINS:

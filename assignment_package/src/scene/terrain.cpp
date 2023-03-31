@@ -63,7 +63,7 @@ glm::ivec2 toCoords(int64_t k) {
 
 // Surround calls to this with try-catch if you don't know whether
 // the coordinates at x, y, z have a corresponding Chunk
-BlockType Terrain::getBlockAt(int x, int y, int z)
+BlockType Terrain::getBlockAt(int x, int y, int z) const
 {
     if(hasChunkAt(x, z)) {
         // Just disallow action below or above min/max height,
@@ -72,7 +72,8 @@ BlockType Terrain::getBlockAt(int x, int y, int z)
             return EMPTY;
         }
         const uPtr<Chunk> &c = getChunkAt(x, z);
-        glm::vec2 chunkOrigin = glm::vec2(floor(x / 16.f) * 16, floor(z / 16.f) * 16);
+        glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(x / 16.f)),
+                                            16*static_cast<int>(glm::floor(z / 16.f)));
         return c->getBlockAt(static_cast<unsigned int>(x - chunkOrigin.x),
                              static_cast<unsigned int>(y),
                              static_cast<unsigned int>(z - chunkOrigin.y));
@@ -84,11 +85,12 @@ BlockType Terrain::getBlockAt(int x, int y, int z)
     }
 }
 
-BlockType Terrain::getBlockAt(glm::vec3 p)  {
+
+BlockType Terrain::getBlockAt(glm::vec3 p) const {
     return getBlockAt(p.x, p.y, p.z);
 }
 
-bool Terrain::hasChunkAt(int x, int z) {
+bool Terrain::hasChunkAt(int x, int z) const {
     // Map x and z to their nearest Chunk corner
     // By flooring x and z, then multiplying by 16,
     // we clamp (x, z) to its nearest Chunk-space corner,
@@ -126,9 +128,11 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t)
 {
     if(hasChunkAt(x, z)) {
         uPtr<Chunk> &c = getChunkAt(x, z);
-        c->setBlockAt(static_cast<unsigned int>(x - c->pos.x),
+        glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(x / 16.f)),
+                                            16*static_cast<int>(glm::floor(z / 16.f)));
+        c->setBlockAt(static_cast<unsigned int>(x - chunkOrigin.x),
                       static_cast<unsigned int>(y),
-                      static_cast<unsigned int>(z - c->pos.z),
+                      static_cast<unsigned int>(z - chunkOrigin.y),
                       t);
     }
     else {
@@ -184,8 +188,6 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 
     uPtr<Chunk> chunk = mkU<Chunk>(mp_context);
     Chunk *cPtr = chunk.get();
-
-    cPtr->setPos(x, z);
 
     //biome info to generate with blocktype later
     BiomeType biomeMap[16][16];
@@ -361,7 +363,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     m_chunks[toKey(x, z)] = move(chunk);
     m_chunks_mutex.unlock();
 
-    std::vector<Structure> chunkStructures = getStructureZones(cPtr);
+    std::vector<Structure> chunkStructures = getStructureZones(cPtr, x, z);
 
     //checks if metasubstructures has structures for this chunk and adds them to the list if necessary
     metaSubStructures_mutex.lock();
@@ -440,7 +442,8 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
                     if(!chunk->dataBound){
                         chunk->bindVBOdata();
                     }
-                    shaderProgram->draw(*chunk.get());
+                    shaderProgram->setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(x, 0, z)));
+                    shaderProgram->drawInterleaved(*chunk.get());
                 }
             }
             else {
@@ -535,8 +538,10 @@ void Terrain::buildStructure(const Structure& s) {
     int zz = s.pos.y;
 
     Chunk* c = getChunkAt(xx, zz).get();
-    int x = c->pos.x;
-    int z = c->pos.z;
+    glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(xx / 16.f)),
+                                        16*static_cast<int>(glm::floor(zz / 16.f)));
+    int x = chunkOrigin.x;
+    int z = chunkOrigin.y;
 
     switch(s.type){
     case OAK_TREE: {
@@ -1134,3 +1139,59 @@ void Terrain::buildStructure(const Structure& s) {
     }
 }
 
+bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
+                        float *out_dist, glm::ivec3 *out_blockHit) const
+
+{
+    float maxLen = glm::length(rayDirection); // Farthest we search
+        glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
+        rayDirection = glm::normalize(rayDirection); // Now all t values represent world dist.
+
+        float curr_t = 0.f;
+        int count = 0;
+        while(curr_t < maxLen) {
+            float min_t = glm::sqrt(3.f);
+            float interfaceAxis = -1; // Track axis for which t is smallest
+            for(int i = 0; i < 3; ++i) { // Iterate over the three axes
+                if(rayDirection[i] != 0) { // Is ray parallel to axis i?
+                    float offset = glm::max(0.f, glm::sign(rayDirection[i]));
+                    // If the player is *exactly* on an interface then
+                    // they'll never move if they're looking in a negative direction
+                    if(currCell[i] == rayOrigin[i] && offset == 0.f) {
+                        offset = -1.f;
+                    }
+                    int nextIntercept = currCell[i] + offset;
+                    float axis_t = (nextIntercept - rayOrigin[i]) / rayDirection[i];
+                    axis_t = glm::min(axis_t, maxLen); // Clamp to max len to avoid super out of bounds errors
+                    if(axis_t < min_t) {
+                        min_t = axis_t;
+                        interfaceAxis = i;
+                    }
+                }
+            }
+            if(interfaceAxis == -1) {
+                throw std::out_of_range("interfaceAxis was -1 after the for loop in gridMarch!");
+            }
+            curr_t += min_t; // min_t is declared in slide 7 algorithm
+            rayOrigin += rayDirection * min_t;
+            glm::ivec3 offset = glm::ivec3(0,0,0);
+            // Sets it to 0 if sign is +, -1 if sign is -
+            offset[interfaceAxis] = glm::min(0.f, glm::sign(rayDirection[interfaceAxis]));
+            currCell = glm::ivec3(glm::floor(rayOrigin)) + offset;
+            // If currCell contains something other than EMPTY, return
+            // curr_t
+            BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
+            if(cellType != EMPTY) {
+                *out_blockHit = currCell;
+                if (count == 0) {
+                    *out_dist = 0;
+                } else {
+                    *out_dist = glm::min(maxLen, curr_t);
+                }
+                return true;
+            }
+            count++;
+        }
+        *out_dist = glm::min(maxLen, curr_t);
+        return false;
+}

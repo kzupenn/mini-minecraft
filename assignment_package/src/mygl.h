@@ -32,6 +32,9 @@ private:
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int time; //to get tick number
 
+    long long m_currentMSecsSinceEpoch;
+    glm::vec2 m_mousePosPrev;
+
     void moveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.
@@ -68,12 +71,15 @@ protected:
     // Automatically invoked when the user
     // presses a key on the keyboard
     void keyPressEvent(QKeyEvent *e);
+    void keyReleaseEvent(QKeyEvent *e);
+
     // Automatically invoked when the user
     // moves the mouse
     void mouseMoveEvent(QMouseEvent *e);
     // Automatically invoked when the user
     // presses a mouse button
     void mousePressEvent(QMouseEvent *e);
+
 
 private slots:
     void tick(); // Slot that gets called ~60 times per second by m_timer firing.

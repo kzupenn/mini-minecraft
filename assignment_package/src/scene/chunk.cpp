@@ -1,5 +1,6 @@
 #include "chunk.h"
 #include <QDebug>
+#include <iostream>
 
 void printVec(glm::vec4 a) {
     qDebug() << a[0] << a[1] << a[2] << a[3];
@@ -131,12 +132,11 @@ const int facedeltas[] = {
     0, 1, 0
 };
 void Chunk::createVBOdata() {
-//    int faces = 0;
     createVBO_mutex.lock();
-    VBOpos.clear();
-    VBOnor.clear();
+    std::vector<glm::vec4> VBOpos;
+    std::vector<glm::vec4> VBOnor;
+    std::vector<glm::vec4> VBOcol;
     idx.clear();
-    VBOcol.clear();
 
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 256; j++) {
@@ -147,19 +147,19 @@ void Chunk::createVBOdata() {
                         //bound checking and neighbor
                         bool drawFace = false;
                         if(i+delta[l] < 0){
-                            drawFace = (!m_neighbors[XNEG] || checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                            drawFace = (m_neighbors.find(XNEG) != m_neighbors.end() || isTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
                         }
                         else if(i+delta[l] > 15){
-                            drawFace = (!m_neighbors[XPOS] || checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                            drawFace = (m_neighbors.find(XPOS) != m_neighbors.end() || isTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
                         }
                         else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
                             drawFace = true;
                         }
                         else if(k+delta[l+2] < 0){
-                            drawFace = (!m_neighbors[ZNEG] || checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                            drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end() || isTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
                         }
                         else if(k+delta[l+2] > 15){
-                            drawFace = (!m_neighbors[ZPOS] || checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                            drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end() || isTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
                         }
                         else if(checkTransparent(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]))){
                             drawFace = true;
@@ -173,7 +173,7 @@ void Chunk::createVBOdata() {
                             idx.push_back(VBOpos.size()+3);
                             idx.push_back(VBOpos.size());
                             //set surface positions
-                            glm::vec4 faceref = pos + glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
+                            glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
                             VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
                             VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
                             VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
@@ -226,19 +226,10 @@ void Chunk::createVBOdata() {
                                 this_color = glm::vec4(0);
                                 break;
                             }
+                            //std::cout << glm::to_string(this_color);
                             for(int foo = 0; foo < 4; foo++) {
                                 VBOcol.push_back(this_color);
-                                //VBOcol.push_back(glm::vec4(j/256.f, j/256.f, j/256.f, 1));
                             }
-
-//                            VBOcol.push_back(glm::vec4(abs(delta[l]), abs(delta[l+1]), abs(delta[l+2]), 1));
-//                            VBOcol.push_back(glm::vec4(abs(delta[l]), abs(delta[l+1]), abs(delta[l+2]), 1));
-//                            VBOcol.push_back(glm::vec4(abs(delta[l]), abs(delta[l+1]), abs(delta[l+2]), 1));
-//                            VBOcol.push_back(glm::vec4(abs(delta[l]), abs(delta[l+1]), abs(delta[l+2]), 1));
-//                            VBOcol.push_back(glm::vec4(debugColor, 1));
-//                            VBOcol.push_back(glm::vec4(debugColor, 1));
-//                            VBOcol.push_back(glm::vec4(debugColor, 1));
-//                            VBOcol.push_back(glm::vec4(debugColor, 1));
                         }
                     }
                 }
@@ -246,6 +237,11 @@ void Chunk::createVBOdata() {
         }
     }
 
+    for (int i = 0; i < VBOpos.size(); i++) {
+           VBOinter.push_back(VBOpos[i]);
+           VBOinter.push_back(VBOnor[i]);
+           VBOinter.push_back(VBOcol[i]);
+    }
     createVBO_mutex.unlock();
 
     //tells the main thread to bind to vbo
@@ -266,17 +262,21 @@ void Chunk::bindVBOdata() {
     // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
 
-    generatePos();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
+//    generatePos();
+//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
 
-    generateNor();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), VBOnor.data(), GL_STATIC_DRAW);
+//    generateNor();
+//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
+//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), VBOnor.data(), GL_STATIC_DRAW);
 
-    generateCol();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), VBOcol.data(), GL_STATIC_DRAW);
+//    generateCol();
+//    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+//    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), VBOcol.data(), GL_STATIC_DRAW);
+
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOinter.size() * sizeof(glm::vec4), VBOinter.data(), GL_STATIC_DRAW);
 
     dataBound = true;
     createVBO_mutex.unlock();
@@ -295,24 +295,12 @@ void Chunk::unbindVBOdata() {
     // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size() * sizeof(GLuint), nullptr, GL_STATIC_DRAW);
 
-    generatePos();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
-
-    generateNor();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOnor.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
-
-    generateCol();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOcol.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOinter.size() * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
 
     dataBound = false;
     createVBO_mutex.unlock();
-}
-
-void Chunk::setPos(int x, int z) {
-    pos = glm::vec4(x, 0, z, 0);
 }
 
 //void Chunk::setBiome(BiomeType input) {
