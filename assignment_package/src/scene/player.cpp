@@ -4,91 +4,73 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      m_flightMode(true), mcr_camera(m_camera)
+      m_flightMode(true), theta(0), phi(0), mcr_camera(m_camera)
 {}
 
 Player::~Player()
 {}
 
 void Player::tick(float dT, InputBundle &input) {
+    orientCamera();
     processInputs(input);
     computePhysics(dT);
+}
+
+void Player::orientCamera() {
+    glm::mat4 trot = glm::rotate(glm::mat4(1.f), glm::radians(theta), glm::vec3(0, 1, 0));
+    glm::mat4 prot = glm::rotate(glm::mat4(1.f), glm::radians(phi), glm::vec3(1, 0, 0));
+    m_camera.m_forward = glm::vec3(trot * prot * glm::vec4(0, 0, -1, 0));
+    m_camera.m_right = glm::vec3(trot * prot * glm::vec4(1, 0, 0, 0));
+    m_camera.m_up = glm::vec3(trot * prot * glm::vec4(0, 1, 0, 0));
+    m_forward = m_camera.m_forward;
+    m_right = m_camera.m_right;
+    m_up = m_camera.m_up;
 }
 
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
+    float SPEED = 4;
     if (inputs.mouseX) {
-        rotateOnUpGlobal(-inputs.mouseX);
+        theta -= inputs.mouseX;
+        if (theta > 360 || theta < -360) theta = 0;
         inputs.mouseX = 0.f;
     }
-
     if (inputs.mouseY) {
-        rotateOnRightLocal(-inputs.mouseY);
+        phi = glm::clamp(phi - inputs.mouseY, -90.f, 90.f);
         inputs.mouseY = 0.f;
     }
-    float SPEED = 4.f;
     if (inputs.fPressed) {
         m_flightMode = !m_flightMode;
         inputs.fPressed = false;
     }
-
     if (inputs.wPressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration += m_forward * SPEED;
-        } else {
-            m_acceleration += glm::normalize(
+        if (m_flightMode) m_acceleration += m_forward * SPEED;
+        else m_acceleration += glm::normalize(
                                 glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
-        }
     }
-
     if (inputs.sPressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration -= m_forward * SPEED;
-        } else {
-            m_acceleration -= glm::normalize(
+        if (m_flightMode) m_acceleration -= m_forward * SPEED;
+        else m_acceleration -= glm::normalize(
                                 glm::vec3(m_forward.x, 0, m_forward.z)) * SPEED;
-        }
     }
-
     if (inputs.dPressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration += m_right * SPEED;
-        } else {
-            m_acceleration += glm::normalize(
+        if (m_flightMode) m_acceleration += m_right * SPEED;
+        else m_acceleration += glm::normalize(
                                 glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
-        }
     }
-
     if (inputs.aPressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration -= m_right * SPEED;
-        } else {
-            m_acceleration -= glm::normalize(
+        if (m_flightMode) m_acceleration -= m_right * SPEED;
+        else m_acceleration -= glm::normalize(
                                 glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
-        }
     }
-
-    if (inputs.ePressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration += glm::vec3(0, 1, 0) * SPEED;
-        }
+    if (inputs.ePressed && m_flightMode) {
+        m_acceleration += glm::vec3(0, 1, 0) * SPEED;
     }
-
-    if (inputs.qPressed) {
-        //action
-        if (m_flightMode) {
-            m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
-        }
+    if (inputs.qPressed && m_flightMode) {
+        m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
     }
-
     if (inputs.spacePressed) {
-        //action
         m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
     }
 }
@@ -98,20 +80,16 @@ void Player::computePhysics(float dT) {
     // and velocity, and also perform collision detection.
 
     //to simulate friction and drag
-    m_velocity = m_velocity * 0.85f;
+    m_velocity *= 0.85f;
 
     if (m_flightMode) {
         m_velocity += m_acceleration * dT;
     } else {
-        glm::vec3 gravity(0, -0.02f, 0);
-        m_velocity += gravity;
+        m_velocity += glm::vec3(0, -0.031f, 0);
         m_velocity += m_acceleration * dT;
-
         checkCollision();
     }
-
     moveAlongVector(m_velocity);
-
     m_acceleration = glm::vec3(0);
 }
 
@@ -136,11 +114,11 @@ void Player::checkCollision()
     for (glm::vec3& origin : corners) {
         float x, y, z;
         glm::ivec3 b;
-        bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
+        bool xF = mcr_terrain.gridMarch(origin, glm::vec3(min.x, 0, 0),
                                     &x, &b);
-        bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
+        bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, min.y, 0),
                                     &y, &b);
-        bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
+        bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, min.z),
                                     &z, &b);
 
         if (xF && x < glm::abs(min.x)) {

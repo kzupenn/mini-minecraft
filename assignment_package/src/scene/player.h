@@ -9,10 +9,13 @@ private:
     Camera m_camera;
     const Terrain &mcr_terrain;
     bool m_flightMode;
+    float theta, phi; //horiz, vert
+    const float maxVelo = 6;
+    const float acc = 3;
 
+    void orientCamera();
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT);
-
     void checkCollision();
 
 public:

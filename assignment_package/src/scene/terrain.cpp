@@ -980,7 +980,6 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
                         float *out_dist, glm::ivec3 *out_blockHit) const
 
 {
-
     float maxLen = glm::length(rayDirection); // Farthest we search
         glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
         rayDirection = glm::normalize(rayDirection); // Now all t values represent world dist.
