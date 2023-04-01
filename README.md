@@ -8,7 +8,7 @@ Enabled rotation about global y axis whenever the mouse is clicked and dragged i
 ## Player Physics
 Checked for collisions between player and blocks by casting a ray from each of the 12 corners of the imaginary player blocks, 4 representing the top, 4 for the middle and 4 for the bottom. I checked for each of the 3 axis seperately to allow the player to slide on walls when moving against them.
 Added a negative y-acceleration to the velocity of the player each tick to simulate gravity and reduced the players velocity by 15 percent every tick to simulate drag.
-##Blocks
+## Blocks
 Enabled the player to remove the block at the center of the screen by casting a ray from the center and grid matching to see if any block was hit, and if so, placing an empty block.
 Enabled the player to add a block to the block at the center of the screen by using the same method to grid match then replicating that block.
 # Aaron Cheng
