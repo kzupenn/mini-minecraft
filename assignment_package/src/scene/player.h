@@ -23,7 +23,7 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-    Player(glm::vec3 pos, const Terrain &terrain);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
     virtual ~Player() override;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);

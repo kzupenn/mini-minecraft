@@ -4,6 +4,7 @@ DEPENDPATH += $$PWD
 SOURCES += \
     $$PWD/algo/fractal.cpp \
     $$PWD/algo/noise.cpp \
+    $$PWD/algo/seed.cpp \
     $$PWD/algo/worley.cpp \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
@@ -32,6 +33,7 @@ SOURCES += \
 HEADERS += \
     $$PWD/algo/fractal.h \
     $$PWD/algo/noise.h \
+    $$PWD/algo/seed.h \
     $$PWD/algo/worley.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \

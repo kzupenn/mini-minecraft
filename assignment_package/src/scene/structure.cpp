@@ -3,17 +3,12 @@
 #include "algo/worley.h"
 #include "algo/noise.h"
 #include "scene/terrain.h"
+#include "algo/seed.h"
 #include <queue>
 
 using namespace glm;
 
 #define mp(a, b) std::make_pair(a, b)
-
-//TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed2 = 2294021;
-float getSeed2(float f) {
-    return seed2*f;
-}
 
 std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
     std::vector<Structure> ret;
@@ -23,7 +18,7 @@ std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
     case PLAINS:
         for(int i = 0; i < 16; i+=16) {
             for(int j = 0; j < 16; j+=16) {
-                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, vec4(getSeed2(1),getSeed2(1.2),getSeed2(1.4),getSeed2(1.1))), 0.f, 15.f));
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
                 if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS){
                     ret.push_back(Structure(OAK_TREE, pp));
                 }
@@ -63,10 +58,10 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
 
 //procedurally generates a village
 std::vector<Structure> generateVillage(vec2 pp) {
-    //TO DO: replace this fixed noise seed with a world seed based seed
-    vec3 seeds7 = vec3(589.3, 125319, 43934);
-    vec3 seeds8 = vec3(583.342, 153984.5, 9385.2);
-    vec3 seeds9 = vec3(1439.342, 648.5, 1940.2);
+    vec3 seeds7 = SEED.getSeed(9023.546,9229.34,5261.512);
+    vec3 seeds8 = SEED.getSeed(1774.997,5413.448,9679.795);
+    qDebug() << seeds8.x << seeds8.y << seeds8.z;
+    vec3 seeds9 = SEED.getSeed(201.85,7788.957,822.752);
     qDebug() << "generating village";
     std::vector<Structure> ret;
 

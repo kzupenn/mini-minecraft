@@ -9,6 +9,7 @@
 #include <thread>
 #include <queue>
 #include "algo/noise.h"
+#include "algo/seed.h"
 
 
 #define TEST_RADIUS 256
@@ -546,10 +547,9 @@ void Terrain::buildStructure(const Structure& s) {
     switch(s.type){
     case OAK_TREE: {
         //how tall the tree is off the ground
-        //TO DO: replace the noise seed with a seed based vec3
         //TO DO: replace GRASS with LEAVES block once implemented
         //TO DO: replace DIRT with WOOD block once implemented
-        int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), glm::vec3(3,2,1));
+        int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), SEED.getSeed(8654.512,8568.53,3163.562));
         //find base of tree
         int ymin = c->heightMap[xx-x][zz-z];
         for(int dy = 0; dy < 4; dy++) {
@@ -568,16 +568,16 @@ void Terrain::buildStructure(const Structure& s) {
                     setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
-                    if(noise1D(glm::vec3(xx+1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+1, yat, zz+1), SEED.getSeed(7785.015,5766.378,649.792,6102.897)) > 0.5) {
                         setBlockAt(xx+1, yat, zz+1, OAK_LEAVES);
                     }
-                    if(noise1D(glm::vec3(xx+1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+1, yat, zz-1), SEED.getSeed(1420.159,7503.537,1373.417,2979.007)) > 0.5) {
                         setBlockAt(xx+1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-1, yat, zz+1), SEED.getSeed(464.713,1450.085,4383.409,6818.919)) > 0.5) {
                         setBlockAt(xx-1, yat, zz+1, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-1, yat, zz-1), SEED.getSeed(8513.165,8543.726,1277.831,9162.371)) > 0.5) {
                         setBlockAt(xx-1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
                     break;
@@ -595,16 +595,16 @@ void Terrain::buildStructure(const Structure& s) {
                     setBlockAt(xx-1, yat, zz-2, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz-2, OAK_LEAVES);
                     setBlockAt(xx+1, yat, zz-2, OAK_LEAVES, isEmpty);
-                    if(noise1D(glm::vec3(xx+2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+2, yat, zz+2), SEED.getSeed(7798.159,7306.237,4491.404,966.212)) > 0.5) {
                         setBlockAt(xx+2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx+2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+2, yat, zz-2), SEED.getSeed(3953.665,7624.82,5599.103,4681.367)) > 0.5) {
                         setBlockAt(xx+2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-2, yat, zz+2), SEED.getSeed(431.931,9230.515,2698.152,3252.572)) > 0.5) {
                         setBlockAt(xx-2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-2, yat, zz-2), SEED.getSeed(2799.543,9511.908,2472.754,4812.237)) > 0.5) {
                         setBlockAt(xx-2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
                     break;
@@ -620,15 +620,14 @@ void Terrain::buildStructure(const Structure& s) {
         break;
     }
         //creates a spruce tree
-        //TO DO: replace the seed with an actual seed-dependent seed
         //TO DO: replace block types with appropriate leaves and wood
     case SPRUCE_TREE:{
         int ymin = c->heightMap[xx-x][zz-z];
-        int ymax = 5+7*noise1D(glm::vec2(xx,zz), glm::vec3(3,2,1));
+        int ymax = 5+7*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
         float leaves = 1;
         setBlockAt(xx, ymax, zz, DIRT);
         for(int y = ymax+ymin-1; y > ymax; y--) {
-            float transition = noise1D(glm::vec3(xx, y, zz), glm::vec4(32,24,10, 12));
+            float transition = noise1D(glm::vec3(xx, y, zz), SEED.getSeed(7656.579,4083.936,4656.875,8280.13));
             if(leaves == 0){
                 leaves++;
             }
@@ -672,7 +671,7 @@ void Terrain::buildStructure(const Structure& s) {
         }
         for(int i = -5; i <= 5; i++) {
             for(int j = -5; j <= 5; j++) {
-                float f = noise1D(glm::vec2(xx+i, zz+j), glm::vec3(57091, 850135, 323));
+                float f = noise1D(glm::vec2(xx+i, zz+j), SEED.getSeed(57091, 850135, 323));
                 if(f < 0.33)
                     setBlockAt(xx+i, 1000-1, zz+j, PATH);
                 else if(f < 0.66)

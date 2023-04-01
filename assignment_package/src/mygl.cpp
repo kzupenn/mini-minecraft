@@ -15,7 +15,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
       ip("localhost"), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(0)
@@ -33,7 +33,7 @@ void MyGL::start() {
 
     //distribution tests
     //distTest();
-    //biomeDist();
+    biomeDist();
     //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
     //m_terrain.createInitScene();
 
@@ -126,8 +126,8 @@ void MyGL::tick() {
     int miny = floor(m_player.mcr_position.z/64)*64;
 
     //does rendering stuff
-    for(int dx = minx-128; dx <= minx+192; dx+=64) {
-        for(int dy = miny-128; dy <= miny+192; dy+=64) {
+    for(int dx = minx-192; dx <= minx+192; dx+=64) {
+        for(int dy = miny-192; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {

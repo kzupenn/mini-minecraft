@@ -1,8 +1,8 @@
 #include "player.h"
 #include <QString>
 
-Player::Player(glm::vec3 pos, const Terrain &terrain)
-    : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
+Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
+    : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       m_flightMode(true), theta(0), phi(0), mcr_camera(m_camera)
 {}

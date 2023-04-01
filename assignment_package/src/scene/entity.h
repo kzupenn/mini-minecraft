@@ -1,5 +1,6 @@
 #pragma once
 #include "glm_includes.h"
+#include "drawable.h"
 
 struct InputBundle {
     bool wPressed, aPressed, sPressed, dPressed, qPressed, ePressed, fPressed;
@@ -13,7 +14,7 @@ struct InputBundle {
     {}
 };
 
-class Entity {
+class Entity: public Drawable {
 protected:
     // The origin of our local coordinate system
     glm::vec3 m_position;
@@ -25,13 +26,17 @@ public:
     glm::vec3 m_forward, m_right, m_up;
 
     // Various constructors
-    Entity();
-    Entity(glm::vec3 pos);
-    Entity(const Entity &e);
+    //Entity();
+    Entity(glm::vec3 pos, OpenGLContext* mp_context);
+    Entity(const Entity &e, OpenGLContext* mp_context);
     virtual ~Entity();
 
     // To be called by MyGL::tick()
     virtual void tick(float dT, InputBundle &input) = 0;
+
+    // To be called to draw
+    virtual void createVBOdata();
+    virtual GLenum drawMode();
 
     // Translate along the given vector
     virtual void moveAlongVector(glm::vec3 dir);

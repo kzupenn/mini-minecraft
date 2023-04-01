@@ -11,7 +11,7 @@ bool isTransparent(int x, int y, int z, Chunk* c) {
     return bt == EMPTY || bt == WATER;
 }
 bool checkTransparent(BlockType bt) {
-    return bt == EMPTY || bt == WATER;
+    return bt == EMPTY;// || bt == WATER;
 }
 bool isEmpty(int x, int y, int z, Chunk* c) {
     return c->getBlockAt(x, y, z) == EMPTY;
