@@ -12,6 +12,8 @@ Added a negative y-acceleration to the velocity of the player each tick to simul
 Enabled the player to remove the block at the center of the screen by casting a ray from the center and grid matching to see if any block was hit, and if so, placing an empty block.
 Enabled the player to add a block to the block at the center of the screen by using the same method to grid match then replicating that block.
 # Aaron Cheng
+## Chunk Optimization
+Created interleaved VBOs (pos/nor/col) and created new draw() in ShaderProgram accordingly. VBO data only consists of faces that are adjacent to an empty block. Also implemented terrain generation radius checks (check if chunk should be generated based off player position). Worked on resolving conflicts in merging all parts together.
 
 # Kevin Zhang
 ## Biomes
