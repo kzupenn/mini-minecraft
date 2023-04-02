@@ -66,7 +66,7 @@ public:
     void paintGL() override;
 
     //servers
-    void start();
+    void start(bool isMultiplayer);
     char* ip;
 
     // Called from paintGL().

@@ -18,7 +18,7 @@ private:
 public:
     Client(char*);
     void start();
-    bool sendPacket(char buffer[BUFFER_SIZE]);
+    bool sendPacket(char* c);
     void close();
 };
 

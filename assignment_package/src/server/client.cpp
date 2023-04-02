@@ -51,7 +51,6 @@ Client::Client(char* address)
     // connect to server
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT);
-    //TO dO: change 127.0.0.1 to a variable address
     if (inet_pton(AF_INET, address, &server_address.sin_addr) <= 0)
     {
         cout << "Invalid server address" << endl;
@@ -68,7 +67,7 @@ Client::Client(char* address)
     QThreadPool::globalInstance()->start(cw);
 }
 
-bool Client::sendPacket(char buffer[BUFFER_SIZE]) {
+bool Client::sendPacket(char* buffer) {
     int bytes_sent = send(client_fd, buffer, strlen(buffer), 0);
     return (bytes_sent >= 0);
 }

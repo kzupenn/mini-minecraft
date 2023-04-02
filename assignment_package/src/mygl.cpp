@@ -25,7 +25,7 @@ MyGL::MyGL(QWidget *parent)
 }
 
 //move stuff from constructor to here so that it can be called upon entering game scene
-void MyGL::start() {
+void MyGL::start(bool joinServer) {
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
@@ -34,12 +34,11 @@ void MyGL::start() {
     //distribution tests
     //distTest();
     //biomeDist();
-    //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
-    //m_terrain.createInitScene();
-    SERVER = mkU<Server>(1);
-    qDebug() << "server on";
-    while(!SERVER->setup);
-    qDebug() << "server up";
+
+    if(!joinServer) {
+        SERVER = mkU<Server>(1);
+        while(!SERVER->setup);
+    }
     CLIENT = mkU<Client>(ip);
 
     // Tell the timer to redraw 60 times per second
