@@ -126,8 +126,8 @@ void MyGL::tick() {
     int miny = floor(m_player.mcr_position.z/64)*64;
 
     //does rendering stuff
-    for(int dx = minx-128; dx <= minx+192; dx+=64) {
-        for(int dy = miny-128; dy <= miny+192; dy+=64) {
+    for(int dx = minx-192; dx <= minx+192; dx+=64) {
+        for(int dy = miny-192; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
                 m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
@@ -142,8 +142,8 @@ void MyGL::tick() {
 
     //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
     if(time%30 == 0) {
-        for(int dx = minx-128; dx <= minx+128; dx+=64) {
-            for(int dy = miny-128; dy <= miny+128; dy+=64) {
+        for(int dx = minx-192; dx <= minx+192; dx+=64) {
+            for(int dy = miny-192; dy <= miny+192; dy+=64) {
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
                     for(int ddy = dy; ddy < dy + 64; ddy+=16) {
                         if(m_terrain.hasChunkAt(ddx, ddy)){
@@ -236,6 +236,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.fPressed = true;
     } else if (e->key() ==Qt::Key_Space) {
         m_inputs.spacePressed = true;
+        if (!m_player.m_flightMode && !m_player.airtime && !m_player.checkAirborne()) {
+            m_player.airtime = m_player.maxair;
+        }
     }
 }
 
@@ -283,7 +286,11 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float dist;
         glm::ivec3 block_pos;
         if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
+            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+            glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(block_pos.x / 16.f)),
+                                                16*static_cast<int>(glm::floor(block_pos.z / 16.f)));
+            m_terrain.getChunkAt(chunkOrigin.x, chunkOrigin.y)->createVBOdata();
         }
     }
 

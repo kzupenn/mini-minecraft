@@ -8,10 +8,7 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
-    bool m_flightMode;
     float theta, phi; //horiz, vert
-    const float maxVelo = 6;
-    const float acc = 3;
 
     void orientCamera();
     void processInputs(InputBundle &inputs);
@@ -22,6 +19,10 @@ public:
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
+
+    float airtime, maxair;
+    bool m_flightMode;
+    bool checkAirborne();
 
     Player(glm::vec3 pos, const Terrain &terrain);
     virtual ~Player() override;

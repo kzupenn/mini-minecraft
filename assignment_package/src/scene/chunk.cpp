@@ -6,13 +6,15 @@ void printVec(glm::vec4 a) {
     qDebug() << a[0] << a[1] << a[2] << a[3];
 }
 
+bool checkTransparent(BlockType bt) {
+    return bt == EMPTY/* || bt == WATER*/;
+}
+
 bool isTransparent(int x, int y, int z, Chunk* c) {
     BlockType bt = c->getBlockAt(x, y, z);
-    return bt == EMPTY || bt == WATER;
+    return checkTransparent(bt);
 }
-bool checkTransparent(BlockType bt) {
-    return bt == EMPTY || bt == WATER;
-}
+
 bool isEmpty(int x, int y, int z, Chunk* c) {
     return c->getBlockAt(x, y, z) == EMPTY;
 }
@@ -204,10 +206,18 @@ void Chunk::createVBOdata() {
                         VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
                         VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
                         //set surface normals
-                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                        VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        if (curr != EMPTY) {
+                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        } else {
+                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                        }
+
                         //colors, TODO
                         glm::vec4 this_color;
                         if (curr == EMPTY) curr = oth;
