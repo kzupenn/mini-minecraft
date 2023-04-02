@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <pthread.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -14,8 +13,8 @@
 
 using namespace std;
 
-Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false){
-    m_clients.setMaxThreadCount(10); //allow at most 10 clients for now
+Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
+    m_clients.setMaxThreadCount(MAX_CLIENTS);
     ServerConnectionWorker* sw = new ServerConnectionWorker(this);
     QThreadPool::globalInstance()->start(sw);
 }
@@ -23,7 +22,7 @@ Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false){
 void Server::handle_client(int client_fd)
 {
     char buffer[BUFFER_SIZE];
-    while (true)
+    while (open)
     {
         memset(buffer, 0, BUFFER_SIZE);
         int valread = read(client_fd, buffer, BUFFER_SIZE);
@@ -32,13 +31,14 @@ void Server::handle_client(int client_fd)
             // client has disconnected
             cout << "Client " << client_fd << " disconnected" << endl;
             close(client_fd);
-            pthread_exit(NULL);
+            break;
         }
         else
         {
             // broadcast message to all clients
             cout << "Client " << client_fd << " says: " << buffer << endl;
-            for (int i = 0; i < MAX_CLIENTS; i++)
+            client_fds_mutex.lock();
+            for (int i = 0; i < client_fds.size(); i++)
             {
                 if (client_fds[i] != 0 && client_fds[i] != client_fd)
                 {
@@ -46,6 +46,7 @@ void Server::handle_client(int client_fd)
                     send(client_fds[i], toSend, strlen(buffer), 0);
                 }
             }
+            client_fds_mutex.unlock();
         }
     }
 }
@@ -55,6 +56,9 @@ std::string Server::process_packet(char* c) {
 }
 
 void Server::initClient(int i) {
+    client_fds_mutex.lock();
+    client_fds.push_back(i);
+    client_fds_mutex.unlock();
     //send(client_fds[i], "see" , 3, 0);
 }
 
@@ -112,5 +116,9 @@ int Server::start()
     }
 
     return 0;
+}
+
+void Server::shutdown() {
+    open = false;
 }
 

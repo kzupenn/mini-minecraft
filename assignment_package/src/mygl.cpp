@@ -37,7 +37,9 @@ void MyGL::start() {
     //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
     //m_terrain.createInitScene();
     SERVER = mkU<Server>(1);
+    qDebug() << "server on";
     while(!SERVER->setup);
+    qDebug() << "server up";
     CLIENT = mkU<Client>(ip);
 
     // Tell the timer to redraw 60 times per second
@@ -47,6 +49,8 @@ void MyGL::start() {
 MyGL::~MyGL() {
     makeCurrent();
     glDeleteVertexArrays(1, &vao);
+    CLIENT->close();
+    SERVER->shutdown();
 }
 
 void MyGL::moveMouseToCenter() {

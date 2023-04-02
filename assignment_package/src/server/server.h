@@ -7,12 +7,13 @@
 #include "scene/entity.h"
 
 #define PORT 3078
-#define MAX_CLIENTS 10
 #define BUFFER_SIZE 1024
+#define MAX_CLIENTS 10
 
 class Server{
 private:
     int server_fd;
+    std::mutex client_fds_mutex;
     std::vector<int> client_fds;
 
     static std::string process_packet(char*);
@@ -32,6 +33,7 @@ public:
     Server(int);
     int start();
     void handle_client(int);
-    bool setup;
+    bool setup, open;
+    void shutdown();
 };
 
