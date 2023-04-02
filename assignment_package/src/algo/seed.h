@@ -3,7 +3,7 @@
 
 class Seed {
 private:
-    int64_t seed;
+    int seed;
 public:
     Seed(int s);
     void setSeed(int s) const;
@@ -12,4 +12,4 @@ public:
     glm::vec4 getSeed(float f1, float f2, float f3, float f4) const;
 };
 
-const static Seed SEED(5.342);
+const static Seed SEED(420);

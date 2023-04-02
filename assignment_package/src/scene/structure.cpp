@@ -58,10 +58,6 @@ std::vector<std::pair<std::pair<int64_t, int>, StructureType>> getMetaStructures
 
 //procedurally generates a village
 std::vector<Structure> generateVillage(vec2 pp) {
-    vec3 seeds7 = SEED.getSeed(9023.546,9229.34,5261.512);
-    vec3 seeds8 = SEED.getSeed(1774.997,5413.448,9679.795);
-    qDebug() << seeds8.x << seeds8.y << seeds8.z;
-    vec3 seeds9 = SEED.getSeed(201.85,7788.957,822.752);
     qDebug() << "generating village";
     std::vector<Structure> ret;
 
@@ -89,50 +85,38 @@ std::vector<Structure> generateVillage(vec2 pp) {
         ivec2 len = ivec2(v[4], v[5]);
         ret.emplace_back(VILLAGE_ROAD, pos, vecToDir(vec3(att.x, 0, att.y)));
         q.pop();
-        float f = noise1D(pos, seeds8);
-        float rl = noise1D(pos, seeds9);
-        float p_turn = 0.04;
-        float p_branch = 0.04;
-        float p_t = 0.01;
-        float p_stop = len[0]*0.00005;
-        if(len[0] < 64) p_stop = 0;
-        if(len[0] < 64) p_branch = 0.06;
-        if(len[1] < 16) p_turn = p_branch = p_t = 0;
-        if(len[0] >= 200) p_stop = 1;
+        float f_left = noise1D(vec2(pos), SEED.getSeed(1774,54.13,967.9));
+        float f_right = noise1D(vec2(pos), SEED.getSeed(201.85,778.8,822));
+        float f_for = noise1D(vec2(pos), SEED.getSeed(206.72,19.385,58.73));
+        //qDebug() << f_left << f_right << f_for;
+        float p_left = 0.02;
+        float p_right = 0.02;
+        float p_for = 1-len[0]*0.0005;
+        if(len[0] < 16) {
+            p_left = 0.1;
+            p_right = 0.1;
+            p_for = 1;
+        }
+        if(len[1] < 16) {
+            p_left = p_right = 0;
+            p_for = 0.99;
+        }
+        if(len[0] >= 200){
+            p_left = p_right = p_for = 0;
+        }
 
         std::vector<std::vector<int>> toAdd;
-        if(f < p_turn) {
-            if(rl<0.5){
-                att = ivec2(-att.y, att.x);
-            }
-            else {
-                att = ivec2(att.y, -att.x);
-            }
-            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+20, 0});
-        }
-        else if(f < p_turn+p_branch) {
-            pos+=att;
-            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+1, len[1]+1});
-            pos-=att;
-            if(rl<0.5){
-                att = ivec2(-att.y, att.x);
-            }
-            else {
-                att = ivec2(att.y, -att.x);
-            }
-            toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+20, 0});
-        }
-        else if(f < p_turn+p_branch+p_t) {
+        if(f_left < p_left) {
             toAdd.push_back({pos.x, pos.y, -att.y, att.x, len[0]+20, 0});
+        }
+        if(f_right < p_right) {
             toAdd.push_back({pos.x, pos.y, att.y, -att.x, len[0]+20, 0});
         }
-        else if(f < p_turn+p_branch+p_t+p_stop) {
-            //stop
-        }
-        else {
+        if(f_for < p_for){
             pos+=att;
             toAdd.push_back({pos.x, pos.y, att.x, att.y, len[0]+1, len[1]+1});
         }
+
         for(std::vector<int> vv: toAdd) {
             bool canAdd = true;
             if(vv[2] != 0) {
@@ -172,7 +156,7 @@ std::vector<Structure> generateVillage(vec2 pp) {
         tries.push_back(std::make_pair(vv-vec2(4, 0), XPOS));
     }
     for(std::pair<vec2, Direction> pp: tries) {
-        float f = noise1D(pp.first, seeds7);
+        float f = noise1D(pp.first, SEED.getSeed(20672.2,8081.3001,19385.78));
         if(f<0.4){
             int towndist = max(abs(pp.first.x-villageCenter.x), abs(pp.first.y-villageCenter.y));
             StructureType st;

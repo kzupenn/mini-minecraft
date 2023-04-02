@@ -14,7 +14,7 @@
 
 #define TEST_RADIUS 256
 
-#define ocean_level 0.53
+#define ocean_level 0.4
 #define OCEAN_LEVEL 64
 #define BEDROCK_LEVEL 32
 #define beach_level 0.1
