@@ -34,7 +34,7 @@ void Client::start()
         else
         {
             buffer[bytes_received] = '\0';
-            qDebug() << "Client" << client_fd << ":" << buffer;
+            qDebug() << "Server packet: " << buffer;
         }
     }
 }

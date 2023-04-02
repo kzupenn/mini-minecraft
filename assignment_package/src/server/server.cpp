@@ -36,14 +36,14 @@ void Server::handle_client(int client_fd)
         else
         {
             // broadcast message to all clients
-            cout << "Client " << client_fd << " says: " << buffer << endl;
+            //cout << "Client " << client_fd << " says: " << buffer << endl;
             client_fds_mutex.lock();
             for (int i = 0; i < client_fds.size(); i++)
             {
-                if (client_fds[i] != 0 && client_fds[i] != client_fd)
+                if (client_fds[i] != client_fd)
                 {
-                    const char* toSend = process_packet(buffer).c_str();
-                    send(client_fds[i], toSend, strlen(buffer), 0);
+                    std::string toSend = (std::to_string(client_fd) + process_packet(buffer));
+                    send(client_fds[i], &toSend[0], strlen(buffer), 0);
                 }
             }
             client_fds_mutex.unlock();
@@ -52,7 +52,7 @@ void Server::handle_client(int client_fd)
 }
 
 std::string Server::process_packet(char* c) {
-    return "lmao";
+    return c;
 }
 
 void Server::initClient(int i) {
