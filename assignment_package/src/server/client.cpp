@@ -39,7 +39,7 @@ void Client::start()
     }
 }
 
-Client::Client(char* address)
+Client::Client(std::string address)
 {
     // create client socket
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
@@ -51,7 +51,7 @@ Client::Client(char* address)
     // connect to server
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT);
-    if (inet_pton(AF_INET, address, &server_address.sin_addr) <= 0)
+    if (inet_pton(AF_INET, &address[0], &server_address.sin_addr) <= 0)
     {
         cout << "Invalid server address" << endl;
         return;

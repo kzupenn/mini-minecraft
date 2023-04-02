@@ -15,6 +15,7 @@ SOURCES += \
     $$PWD/scene/transform.cpp \
     $$PWD/server/client.cpp \
     $$PWD/server/gamestate.cpp \
+    $$PWD/server/getip.cpp \
     $$PWD/shaderprogram.cpp \
     $$PWD/drawable.cpp \
     $$PWD/cameracontrolshelp.cpp \
@@ -43,6 +44,7 @@ HEADERS += \
     $$PWD/scene/transform.h \
     $$PWD/server/client.h \
     $$PWD/server/gamestate.h \
+    $$PWD/server/getip.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \

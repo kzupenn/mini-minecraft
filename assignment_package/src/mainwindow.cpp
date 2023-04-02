@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :
     //home screen
     connect(ui->singleplayerButton, SIGNAL(clicked()), SLOT(slot_setSceneSinglePlayer()));
     connect(ui->multiplayerButton, SIGNAL(clicked()), SLOT(slot_setSceneMultiPlayer()));
+    connect(ui->hostServerButton, SIGNAL(clicked()), SLOT(slot_setSceneHostServer()));
+    connect(ui->joinServerButton, SIGNAL(clicked()), SLOT(slot_setSceneJoinServer()));
 
     connect(ui->mygl, SIGNAL(sig_sendPlayerPos(QString)), &playerInfoWindow, SLOT(slot_setPosText(QString)));
     connect(ui->mygl, SIGNAL(sig_sendPlayerVel(QString)), &playerInfoWindow, SLOT(slot_setVelText(QString)));
@@ -26,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->mygl, SIGNAL(sig_sendPlayerLook(QString)), &playerInfoWindow, SLOT(slot_setLookText(QString)));
     connect(ui->mygl, SIGNAL(sig_sendPlayerChunk(QString)), &playerInfoWindow, SLOT(slot_setChunkText(QString)));
     connect(ui->mygl, SIGNAL(sig_sendPlayerTerrainZone(QString)), &playerInfoWindow, SLOT(slot_setZoneText(QString)));
+    connect(ui->mygl, SIGNAL(sig_sendServerIP(QString)), &playerInfoWindow, SLOT(slot_setServerIP(QString)));
 }
 
 MainWindow::~MainWindow()
@@ -46,14 +49,27 @@ void MainWindow::on_actionCamera_Controls_triggered()
 void MainWindow::slot_setSceneSinglePlayer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
-    ui->mygl->start();
+    ui->mygl->start(false);
 }
 
 void MainWindow::slot_setSceneMultiPlayer() {
     scene = 2;
     // change to something else
+    ui->scenesWidget->setCurrentIndex(2);
+    //ui->mygl->start(false);
+}
+
+void MainWindow::slot_setSceneHostServer() {
+    scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
-    ui->mygl->start();
+    ui->mygl->start(false);
+}
+
+void MainWindow::slot_setSceneJoinServer() {
+    scene = 1;
+    ui->scenesWidget->setCurrentIndex(0);
+    ui->mygl->ip = ui->serverIPText->displayText().toStdString();
+    ui->mygl->start(true);
 }
 
 void MainWindow::slot_setSeed() {

@@ -9,14 +9,14 @@
 #include "algo/perlin.h"
 #include "scene/biome.h"
 #include "scene/structure.h"
+#include "server/getip.h"
 #include <QDateTime>
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
-      ip("127.0.0.1"), time(0),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(0)
 {
@@ -38,6 +38,7 @@ void MyGL::start(bool joinServer) {
     if(!joinServer) {
         SERVER = mkU<Server>(1);
         while(!SERVER->setup);
+        ip = getIP().data();
     }
     CLIENT = mkU<Client>(ip);
 
@@ -168,6 +169,8 @@ void MyGL::tick() {
 }
 
 void MyGL::sendPlayerDataToGUI() const {
+    CLIENT->sendPacket(m_player.posAsQString().toLocal8Bit().data());
+    emit sig_sendServerIP(QString::fromStdString(ip));
     emit sig_sendPlayerPos(m_player.posAsQString());
     emit sig_sendPlayerVel(m_player.velAsQString());
     emit sig_sendPlayerAcc(m_player.accAsQString());

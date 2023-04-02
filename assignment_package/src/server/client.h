@@ -16,7 +16,7 @@ private:
     pthread_t receive_thread;
 
 public:
-    Client(char*);
+    Client(std::string);
     void start();
     bool sendPacket(char* c);
     void close();

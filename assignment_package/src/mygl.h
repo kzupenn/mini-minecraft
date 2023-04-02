@@ -67,7 +67,7 @@ public:
 
     //servers
     void start(bool isMultiplayer);
-    char* ip;
+    std::string ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().
@@ -97,6 +97,7 @@ signals:
     void sig_sendPlayerLook(QString) const;
     void sig_sendPlayerChunk(QString) const;
     void sig_sendPlayerTerrainZone(QString) const;
+    void sig_sendServerIP(QString) const;
 };
 
 
