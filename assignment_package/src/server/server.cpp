@@ -9,16 +9,19 @@
 
 #include "server.h"
 #include "gamestate.h"
+#include "scene/runnables.h"
+#include <QThreadPool>
 
 using namespace std;
 
-int server_fd;
-int client_fds[MAX_CLIENTS];
-pthread_t threads[MAX_CLIENTS];
+Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false){
+    m_clients.setMaxThreadCount(10); //allow at most 10 clients for now
+    ServerConnectionWorker* sw = new ServerConnectionWorker(this);
+    QThreadPool::globalInstance()->start(sw);
+}
 
-void* Server::handle_client(void* arg)
+void Server::handle_client(int client_fd)
 {
-    int client_fd = *(int*)arg;
     char buffer[BUFFER_SIZE];
     while (true)
     {
@@ -51,6 +54,10 @@ std::string Server::process_packet(char* c) {
     return "lmao";
 }
 
+void Server::initClient(int i) {
+    //send(client_fds[i], "see" , 3, 0);
+}
+
 int Server::start()
 {
     struct sockaddr_in address;
@@ -62,14 +69,6 @@ int Server::start()
         cout << "Failed to create server socket" << endl;
         return -1;
     }
-
-    // set socket options
-    // int opt = 1;
-    // if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
-    // {
-    //     cout << "Failed to set socket options" << endl;
-    //     return -1;
-    // }
 
     // bind server socket to address
     address.sin_family = AF_INET;
@@ -90,6 +89,8 @@ int Server::start()
 
     cout << "Server started listening on port " << PORT << endl;
 
+    setup = true;
+
     // wait for incoming connections and handle each one in a separate thread
     while (true)
     {
@@ -101,30 +102,12 @@ int Server::start()
         }
         else
         {
-            // find an available slot in the client_fds array
-            int i;
-            for (i = 0; i < MAX_CLIENTS; i++)
-            {
-                if (client_fds[i] == 0)
-                {
-                    client_fds[i] = client_fd;
-                    break;
-                }
-            }
-
-            // check if the array is full
-            if (i == MAX_CLIENTS)
-            {
-                cout << "Maximum number of clients reached" << endl;
-                close(client_fd);
-            }
-            else
-            {
-                // create a new thread to handle the client
-                pthread_create(&threads[i], NULL, this->handle_client, (void*)&client_fd);
-                pthread_detach(threads[i]);
-                cout << "New client connected: " << inet_ntoa(address.sin_addr) << endl;
-            }
+            // do initial actions
+            initClient(client_fd);
+            // create a new thread to handle the client
+            ServerThreadWorker* stw = new ServerThreadWorker(this, client_fd);
+            m_clients.start(stw);
+            cout << "New client connected: " << inet_ntoa(address.sin_addr) << endl;
         }
     }
 

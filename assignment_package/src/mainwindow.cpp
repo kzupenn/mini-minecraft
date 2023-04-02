@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //home screen
     connect(ui->singleplayerButton, SIGNAL(clicked()), SLOT(slot_setSceneSinglePlayer()));
+    connect(ui->multiplayerButton, SIGNAL(clicked()), SLOT(slot_setSceneMultiPlayer()));
 
     connect(ui->mygl, SIGNAL(sig_sendPlayerPos(QString)), &playerInfoWindow, SLOT(slot_setPosText(QString)));
     connect(ui->mygl, SIGNAL(sig_sendPlayerVel(QString)), &playerInfoWindow, SLOT(slot_setVelText(QString)));
@@ -50,7 +51,9 @@ void MainWindow::slot_setSceneSinglePlayer() {
 
 void MainWindow::slot_setSceneMultiPlayer() {
     scene = 2;
-    ui->scenesWidget->setCurrentIndex(1);
+    // change to something else
+    ui->scenesWidget->setCurrentIndex(0);
+    ui->mygl->start();
 }
 
 void MainWindow::slot_setSeed() {

@@ -16,7 +16,7 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
-      ip("localhost"), time(0),
+      ip("127.0.0.1"), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(0)
 {
@@ -33,9 +33,12 @@ void MyGL::start() {
 
     //distribution tests
     //distTest();
-    biomeDist();
+    //biomeDist();
     //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
     //m_terrain.createInitScene();
+    SERVER = mkU<Server>(1);
+    while(!SERVER->setup);
+    CLIENT = mkU<Client>(ip);
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);

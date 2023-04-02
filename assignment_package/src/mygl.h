@@ -7,6 +7,8 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "server/server.h"
+#include "server/client.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -36,6 +38,9 @@ private:
     long long m_currentMSecsSinceEpoch;
     glm::vec2 m_mousePosPrev;
 
+    uPtr<Server> SERVER;
+    uPtr<Client> CLIENT;
+
     void moveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
                               // from within a mouse move event after reading the mouse movement so that
                               // your mouse stays within the screen bounds and is always read.
@@ -62,7 +67,7 @@ public:
 
     //servers
     void start();
-    std::string ip;
+    char* ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().
