@@ -1178,15 +1178,20 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
         currCell = glm::ivec3(glm::floor(rayOrigin)) + offset;
         // If currCell contains something other than EMPTY, return
         // curr_t
-        BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
-        if(cellType != EMPTY) {
-            *out_blockHit = currCell;
-            if (count == 0) {
-                *out_dist = 0;
-            } else {
-                *out_dist = glm::min(maxLen, curr_t);
+        if (hasChunkAt(currCell.x, currCell.z)) {
+            BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
+            if(cellType != EMPTY) {
+                *out_blockHit = currCell;
+                if (count == 0) {
+                    *out_dist = 0;
+                } else {
+                    *out_dist = glm::min(maxLen, curr_t);
+                }
+                return true;
             }
-            return true;
+        } else {
+            *out_dist = glm::min(maxLen, curr_t);
+            return false;
         }
         count++;
     }

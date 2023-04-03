@@ -288,13 +288,9 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-            glm::ivec2 chunkOrigin = glm::ivec2(16*static_cast<int>(glm::floor(block_pos.x / 16.f)),
-                                                16*static_cast<int>(glm::floor(block_pos.z / 16.f)));
-            m_terrain.getChunkAt(chunkOrigin.x, chunkOrigin.y)->createVBOdata();
+            qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
         }
-    }
-
-    if (e->buttons() & Qt::RightButton) {
+    } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
         glm::vec3 ray_dir = m_player.getLook() * bound;
