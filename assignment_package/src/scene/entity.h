@@ -60,4 +60,7 @@ public:
     virtual void rotateOnForwardGlobal(float degrees);
     virtual void rotateOnRightGlobal(float degrees);
     virtual void rotateOnUpGlobal(float degrees);
+
+    //getter function
+    glm::vec3 getPos();
 };

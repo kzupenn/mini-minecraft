@@ -29,7 +29,7 @@ private:
 
     Terrain m_terrain; // All of the Chunks that currently comprise the world.
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
-    std::vector<Entity> m_entities; //collection of all non-player entities
+
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
@@ -38,8 +38,13 @@ private:
     long long m_currentMSecsSinceEpoch;
     glm::vec2 m_mousePosPrev;
 
+    //multiplayer stuffs
     uPtr<Server> SERVER;
     uPtr<Client> CLIENT;
+
+    std::map<int, Player> m_multiplayers;
+    std::vector<Entity> m_entities; //collection of all non-player entities
+
 
     void moveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
                               // from within a mouse move event after reading the mouse movement so that
@@ -72,6 +77,9 @@ public:
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
+
+    //processes server packets
+    static void processPacket(Packet);
 
 protected:
     // Automatically invoked when the user

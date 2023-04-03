@@ -11,16 +11,19 @@
 #include <QDebug>
 
 #define PORT 3078
+#define BUFFER_SIZE 5000
 
 
 using namespace std;
 
 void Client::start()
 {
-    char buffer[BUFFER_SIZE];
+    QByteArray buffer;
+    qDebug() << "client listening";
+    buffer.resize(BUFFER_SIZE);
     while (open)
     {
-        int bytes_received = recv(client_fd, buffer, BUFFER_SIZE, 0);
+        int bytes_received = recv(client_fd, &buffer[0], buffer.size(), 0);
         if (bytes_received < 0)
         {
             qDebug() << "Failed to receive message";
@@ -33,18 +36,19 @@ void Client::start()
         }
         else
         {
-            buffer[bytes_received] = '\0';
+            buffer.resize(bytes_received);
             qDebug() << "Server packet: " << buffer;
+            packet_parser(bufferToPacket(buffer));
         }
     }
 }
 
-Client::Client(std::string address)
+Client::Client(std::string address, void (*pp)(Packet)) : packet_parser(pp)
 {
     // create client socket
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        cout << "Failed to create client socket" << endl;
+        qDebug() << "Failed to create client socket";
         return;
     }
 
@@ -53,22 +57,25 @@ Client::Client(std::string address)
     server_address.sin_port = htons(PORT);
     if (inet_pton(AF_INET, &address[0], &server_address.sin_addr) <= 0)
     {
-        cout << "Invalid server address" << endl;
+        qDebug() << "Invalid server address";
         return;
     }
     if (connect(client_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0)
     {
-        cout << "Failed to connect to server" << endl;
+        qDebug() << "Failed to connect to server";
         return;
     }
 
     // create thread to receive messages
+    open = true;
     ClientWorker* cw = new ClientWorker(this);
     QThreadPool::globalInstance()->start(cw);
 }
 
-bool Client::sendPacket(char* buffer) {
-    int bytes_sent = send(client_fd, buffer, strlen(buffer), 0);
+bool Client::sendPacket(Packet packet) {
+    QByteArray buffer = packet.packetToBuffer();
+    int bytes_sent = send(client_fd, &buffer, buffer.size(), 0);
+    //qDebug() << bytes_sent;
     return (bytes_sent >= 0);
 }
 

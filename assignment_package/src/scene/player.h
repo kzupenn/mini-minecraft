@@ -56,4 +56,10 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+
+    float getTheta();
+    float getPhi();
+
+    virtual GLenum drawMode();
+    virtual void createVBOdata();
 };

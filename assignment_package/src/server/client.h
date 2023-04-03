@@ -2,8 +2,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <string>
-
-#define BUFFER_SIZE 1024
+#include "server/packet.h"
 
 class Client
 {
@@ -15,10 +14,12 @@ private:
     bool open;
     pthread_t receive_thread;
 
+    void (*packet_parser) (Packet);
+
 public:
-    Client(std::string);
+    Client(std::string, void (*packet_parser) (Packet));
     void start();
-    bool sendPacket(char* c);
+    bool sendPacket(Packet);
     void close();
 };
 

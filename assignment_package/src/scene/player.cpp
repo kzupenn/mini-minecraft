@@ -215,3 +215,131 @@ glm::vec3 Player::getLook()
 {
     return this->m_forward;
 }
+
+float Player::getPhi() {
+    return phi;
+}
+
+float Player::getTheta() {
+    return theta;
+}
+
+void Player::createVBOdata() {
+    std::vector<glm::vec4> pos, nor, col;
+    std::vector<int> idx;
+    //Front face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+
+    //Right face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+
+    //Left face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Back face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+
+    //Top face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Bottom face
+    //UR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+
+    for(int i = 0; i < pos.size(); i++) {
+        pos[i] += glm::vec4(m_position, 1.f);
+    }
+
+    //Front
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,1,0);
+    }
+    //Right
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(1,0,0,0);
+    }
+    //Left
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(-1,0,0,0);
+    }
+    //Back
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,-1,0);
+    }
+    //Top
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,1,0,0);
+    }
+    //Bottom
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,-1,0,0);
+    }
+
+    for(int i = 0; i < 6; i++){
+        idx.push_back(i*4);
+        idx.push_back(i*4+1);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4+3);
+    }
+
+    m_count = idx.size();
+
+    generateIdx();
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER,  idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+    generatePos();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, pos.size() * sizeof(glm::vec4), pos.data(), GL_STATIC_DRAW);
+
+    generateNor();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, nor.size() * sizeof(glm::vec4), nor.data(), GL_STATIC_DRAW);
+
+}
+GLenum Player::drawMode() {
+    return GL_TRIANGLES;
+}

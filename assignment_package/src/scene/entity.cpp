@@ -92,3 +92,7 @@ void Entity::rotateOnUpGlobal(float degrees) {
     m_right = glm::vec3(glm::rotate(glm::mat4(), rad, glm::vec3(0,1,0)) * glm::vec4(m_right, 0.f));
     m_up = glm::vec3(glm::rotate(glm::mat4(), rad, glm::vec3(0,1,0)) * glm::vec4(m_up, 0.f));
 }
+
+glm::vec3 Entity::getPos() {
+    return glm::vec3(m_position);
+}

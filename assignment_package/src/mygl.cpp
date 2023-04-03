@@ -40,7 +40,7 @@ void MyGL::start(bool joinServer) {
         while(!SERVER->setup);
         ip = getIP().data();
     }
-    CLIENT = mkU<Client>(ip);
+    CLIENT = mkU<Client>(ip, processPacket);
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -126,6 +126,8 @@ void MyGL::tick() {
     m_player.tick(dt, m_inputs);
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
+    CLIENT->sendPacket(PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi()));
+
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
     //zone player is in
@@ -168,8 +170,7 @@ void MyGL::tick() {
     }
 }
 
-void MyGL::sendPlayerDataToGUI() const {
-    CLIENT->sendPacket(m_player.posAsQString().toLocal8Bit().data());
+void MyGL::sendPlayerDataToGUI() const{
     emit sig_sendServerIP(QString::fromStdString(ip));
     emit sig_sendPlayerPos(m_player.posAsQString());
     emit sig_sendPlayerVel(m_player.velAsQString());
@@ -194,6 +195,11 @@ void MyGL::paintGL() {
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
 
     renderTerrain();
+
+    for(std::map<int, Player>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second.createVBOdata();
+        m_progLambert.draw(it->second);
+    }
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setModelMatrix(glm::mat4());
@@ -320,4 +326,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             }
         }
     }
+}
+
+void MyGL::processPacket(Packet packet) {
+
 }
