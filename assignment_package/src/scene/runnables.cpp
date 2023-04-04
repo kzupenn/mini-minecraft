@@ -44,10 +44,10 @@ void ServerThreadWorker:: run() {
     s->handle_client(t);
 }
 
-ClientWorker::ClientWorker(Client* ss): s(ss){}
+ClientWorker::ClientWorker(MyGL* ss): s(ss){}
 ClientWorker::~ClientWorker(){};
 
 void ClientWorker:: run() {
-    s->start();
+    s->run_client();
 }
 

@@ -2,12 +2,18 @@
 #include <glm_includes.h>
 
 #include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <QApplication>
 #include <QKeyEvent>
-#include <thread>
 
 #include "algo/perlin.h"
 #include "scene/biome.h"
+#include "scene/runnables.h"
 #include "scene/structure.h"
 #include "server/getip.h"
 #include <QDateTime>
@@ -40,7 +46,8 @@ void MyGL::start(bool joinServer) {
         while(!SERVER->setup);
         ip = getIP().data();
     }
-    CLIENT = mkU<Client>(ip, processPacket);
+
+    init_client();
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -49,7 +56,7 @@ void MyGL::start(bool joinServer) {
 MyGL::~MyGL() {
     makeCurrent();
     glDeleteVertexArrays(1, &vao);
-    CLIENT->close();
+    close_client();
     SERVER->shutdown();
 }
 
@@ -128,7 +135,7 @@ void MyGL::tick() {
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
     PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi());
-    CLIENT->sendPacket(&pp);
+    send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
@@ -198,9 +205,10 @@ void MyGL::paintGL() {
 
     renderTerrain();
 
-    for(std::map<int, Player>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        it->second.createVBOdata();
-        m_progLambert.draw(it->second);
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second->createVBOdata();
+        qDebug() << it->second ->posAsQString();
+        m_progLambert.draw(*(it->second));
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -330,6 +338,91 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
     }
 }
 
-void MyGL::processPacket(Packet packet) {
+void MyGL::run_client() {
+    QByteArray buffer;
+    qDebug() << "client listening";
+    buffer.resize(BUFFER_SIZE);
+    while (open)
+    {
+        int bytes_received = recv(client_fd, buffer.data(), buffer.size(), 0);
+        if (bytes_received < 0)
+        {
+            qDebug() << "Failed to receive message";
+            break;
+        }
+        else if (bytes_received == 0)
+        {
+            qDebug() << "Connection closed by server";
+            break;
+        }
+        else
+        {
+            buffer.resize(bytes_received);
+            packet_processer(bufferToPacket(buffer));
+            buffer.resize(BUFFER_SIZE);
+        }
+    }
+}
 
+void MyGL::init_client() {
+    // create client socket
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        qDebug() << "Failed to create client socket";
+        return;
+    }
+
+    // connect to server
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, &ip[0], &server_address.sin_addr) <= 0)
+    {
+        qDebug() << "Invalid server address";
+        return;
+    }
+    if (::connect(client_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0)
+    {
+        qDebug() << "Failed to connect to server";
+        return;
+    }
+
+    // create thread to receive messages
+    open = true;
+    ClientWorker* cw = new ClientWorker(this);
+    QThreadPool::globalInstance()->start(cw);
+}
+
+void MyGL::send_packet(Packet* packet) {
+    QByteArray buffer;
+        switch(packet->type) {
+        case PLAYER_STATE:{
+            buffer = (dynamic_cast<PlayerStatePacket*>(packet))->packetToBuffer();
+            break;
+        }
+        default:
+            break;
+        }
+        int bytes_sent = send(client_fd, buffer.data(), buffer.size(), 0);
+        //qDebug() << bytes_sent;
+//        return (bytes_sent >= 0);
+}
+
+void MyGL::close_client() {
+    open = false;
+}
+
+void MyGL::packet_processer(Packet* packet) {
+    switch(packet->type) {
+    case PLAYER_STATE:{
+        PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
+        m_multiplayers_mutex.lock();
+        if(m_multiplayers.find(thispack->player_id) == m_multiplayers.end()) {
+            m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this));
+        }
+        m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi);
+        m_multiplayers_mutex.unlock();
+    }
+    default:
+        break;
+    }
 }

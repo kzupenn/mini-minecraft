@@ -224,6 +224,12 @@ float Player::getTheta() {
     return theta;
 }
 
+void Player::setState(glm::vec3 p, float f1, float f2) {
+    m_position = p;
+    theta = f1;
+    phi = f2;
+}
+
 void Player::createVBOdata() {
     std::vector<glm::vec4> pos, nor, col;
     std::vector<int> idx;
@@ -316,6 +322,11 @@ void Player::createVBOdata() {
         nor.emplace_back(0,-1,0,0);
     }
 
+    //colors
+    for(int i = 0; i < pos.size(); i++) {
+        col.emplace_back(1, 0, 0, 1);
+    }
+
     for(int i = 0; i < 6; i++){
         idx.push_back(i*4);
         idx.push_back(i*4+1);
@@ -338,6 +349,10 @@ void Player::createVBOdata() {
     generateNor();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
     mp_context->glBufferData(GL_ARRAY_BUFFER, nor.size() * sizeof(glm::vec4), nor.data(), GL_STATIC_DRAW);
+
+    generateCol();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
 
 }
 GLenum Player::drawMode() {

@@ -38,7 +38,7 @@ struct ChunkChangePacket: Packet {
 //sends over the position and attitude state of the player
 //Server: send player state updates and player creation to client
 //Client: send over movement input updates to server
-struct PlayerStatePacket : virtual public Packet{
+struct PlayerStatePacket : public Packet{
     int player_id; //id by server assigned client_fd
     vec3 player_pos;
     float player_phi, player_theta;
@@ -56,6 +56,6 @@ struct PlayerStatePacket : virtual public Packet{
     }
 };
 
-Packet bufferToPacket(QByteArray buffer);
+Packet* bufferToPacket(QByteArray buffer);
 
 

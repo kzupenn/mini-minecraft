@@ -8,12 +8,14 @@
 #include "scene/terrain.h"
 #include "scene/player.h"
 #include "server/server.h"
-#include "server/client.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include <netinet/in.h>
 #include <smartpointerhelp.h>
 
+#define PORT 3078
+#define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
 {
@@ -39,10 +41,26 @@ private:
     glm::vec2 m_mousePosPrev;
 
     //multiplayer stuffs
-    uPtr<Server> SERVER;
-    uPtr<Client> CLIENT;
+    //client vars
+    void receive_messages(void*arg);
 
-    std::map<int, Player> m_multiplayers;
+    int client_fd;
+    struct sockaddr_in server_address;
+    bool open;
+    pthread_t receive_thread;
+
+    void packet_parser(Packet*);
+    void init_client(); //initializes the client
+    void send_packet(Packet*);
+    void close_client(); //closes client
+
+    //server, if hosting
+    uPtr<Server> SERVER;
+
+    //info from server
+    std::mutex m_multiplayers_mutex;
+    std::map<int, uPtr<Player>> m_multiplayers;
+    std::mutex m_entites_mutex;
     std::vector<Entity> m_entities; //collection of all non-player entities
 
 
@@ -71,15 +89,15 @@ public:
     void paintGL() override;
 
     //servers
-    void start(bool isMultiplayer);
+    void start(bool isMultiplayer); //starts the client
+    void run_client(); //runs the client
+    void packet_processer(Packet*);
     std::string ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
 
-    //processes server packets
-    static void processPacket(Packet);
 
 protected:
     // Automatically invoked when the user

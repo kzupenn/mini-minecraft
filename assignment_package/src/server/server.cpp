@@ -21,7 +21,6 @@ Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
 void Server::handle_client(int client_fd)
 {
     QByteArray buffer;
-    Packet p;
     buffer.resize(BUFFER_SIZE);
     while (open)
     {
@@ -43,26 +42,25 @@ void Server::handle_client(int client_fd)
     }
 }
 
-void Server::process_packet(Packet packet, int sender) {
-    switch(packet.type) {
+void Server::process_packet(Packet* packet, int sender) {
+    switch(packet->type) {
     case PLAYER_STATE: {
-        PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(&packet);
+        PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
-        qDebug() << sender;
-        qDebug() << (m_players.find(sender) == m_players.end());
-        m_players[sender].pos = glm::vec3(thispack->player_pos);
+        m_players[sender].pos = thispack->player_pos;
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
+        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_theta, thispack->player_phi).get(), sender);
         break;
     }
     default:
-        qDebug() << "unexpected packet type found" << packet.type;
+        qDebug() << "unexpected packet type found" << packet->type;
         break;
     }
 }
 
-void Server::send_packet(Packet* packet, int exclude) { //use exclude = 0 if you dont want to exclude
+void Server::broadcast_packet(Packet* packet, int exclude) { //use exclude = 0 if you dont want to exclude
     client_fds_mutex.lock();
     for (int i = 0; i < client_fds.size(); i++)
     {

@@ -25,8 +25,8 @@ private:
     std::mutex client_fds_mutex;
     std::vector<int> client_fds;
 
-    void process_packet(Packet, int);
-    void send_packet(Packet*, int);
+    void process_packet(Packet*, int);
+    void broadcast_packet(Packet*, int);
     void target_packet(Packet*, int);
 
     //actions to do when a client joins

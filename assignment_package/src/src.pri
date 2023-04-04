@@ -13,7 +13,6 @@ SOURCES += \
     $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
     $$PWD/scene/transform.cpp \
-    $$PWD/server/client.cpp \
     $$PWD/server/getip.cpp \
     $$PWD/server/packet.cpp \
     $$PWD/shaderprogram.cpp \
@@ -42,7 +41,6 @@ HEADERS += \
     $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
     $$PWD/scene/transform.h \
-    $$PWD/server/client.h \
     $$PWD/server/getip.h \
     $$PWD/server/packet.h \
     $$PWD/shaderprogram.h \

@@ -60,6 +60,8 @@ public:
     float getTheta();
     float getPhi();
 
+    void setState(glm::vec3, float, float); //use this to set the state of other players from server packet
+
     virtual GLenum drawMode();
     virtual void createVBOdata();
 };
