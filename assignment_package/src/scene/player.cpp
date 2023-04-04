@@ -231,7 +231,7 @@ void Player::setState(glm::vec3 p, float f1, float f2) {
 }
 
 void Player::createVBOdata() {
-    std::vector<glm::vec4> pos, nor, col;
+    std::vector<glm::vec4> pos, nor, col, inter;
     std::vector<int> idx;
     //Front face
     //UR
@@ -295,6 +295,7 @@ void Player::createVBOdata() {
 
     for(int i = 0; i < pos.size(); i++) {
         pos[i] += glm::vec4(m_position, 1.f);
+        qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
     }
 
     //Front
@@ -338,21 +339,19 @@ void Player::createVBOdata() {
 
     m_count = idx.size();
 
+    for (int i = 0; i < pos.size(); i++) {
+       inter.push_back(pos[i]);
+       inter.push_back(nor[i]);
+       inter.push_back(col[i]);
+    }
+
     generateIdx();
     mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
-    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER,  idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
 
-    generatePos();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, pos.size() * sizeof(glm::vec4), pos.data(), GL_STATIC_DRAW);
-
-    generateNor();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, nor.size() * sizeof(glm::vec4), nor.data(), GL_STATIC_DRAW);
-
-    generateCol();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
 
 }
 GLenum Player::drawMode() {

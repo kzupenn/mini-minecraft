@@ -204,11 +204,12 @@ void MyGL::paintGL() {
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
 
     renderTerrain();
-
+    m_player.createVBOdata();
+    m_progLambert.drawInterleaved(m_player);
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
         qDebug() << it->second ->posAsQString();
-        m_progLambert.draw(*(it->second));
+        m_progLambert.drawInterleaved(*(it->second));
     }
 
     glDisable(GL_DEPTH_TEST);
