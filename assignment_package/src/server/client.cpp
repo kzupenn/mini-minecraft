@@ -72,9 +72,19 @@ Client::Client(std::string address, void (*pp)(Packet)) : packet_parser(pp)
     QThreadPool::globalInstance()->start(cw);
 }
 
-bool Client::sendPacket(Packet packet) {
-    QByteArray buffer = packet.packetToBuffer();
-    int bytes_sent = send(client_fd, &buffer, buffer.size(), 0);
+bool Client::sendPacket(Packet* packet) {
+    QByteArray buffer;
+    qDebug() << "piqDebug" << packet->type;
+    switch(packet->type) {
+    case PLAYER_STATE:{
+        buffer = (dynamic_cast<PlayerStatePacket*>(packet))->packetToBuffer();
+        qDebug() << "???" << buffer.size() << dynamic_cast<PlayerStatePacket*>(packet)->player_id;
+        break;
+    }
+    default:
+        break;
+    }
+    int bytes_sent = send(client_fd, buffer.data(), buffer.size(), 0);
     //qDebug() << bytes_sent;
     return (bytes_sent >= 0);
 }

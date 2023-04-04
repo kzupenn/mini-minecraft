@@ -17,9 +17,9 @@ private:
     void (*packet_parser) (Packet);
 
 public:
-    Client(std::string, void (*packet_parser) (Packet));
+    Client(std::string, void (*pp) (Packet));
     void start();
-    bool sendPacket(Packet);
+    bool sendPacket(Packet*);
     void close();
 };
 

@@ -126,7 +126,9 @@ void MyGL::tick() {
     m_player.tick(dt, m_inputs);
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
-    CLIENT->sendPacket(PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi()));
+
+    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi());
+    CLIENT->sendPacket(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position

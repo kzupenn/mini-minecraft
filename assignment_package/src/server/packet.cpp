@@ -4,6 +4,7 @@ Packet bufferToPacket(QByteArray buffer) {
     QDataStream in(&buffer, QIODevice::ReadWrite);
     PacketType pt;
     in >> pt;
+    qDebug() << "packet parser has packet of type: " << pt;
     switch(pt) {
     case PLAYER_STATE:
         int pid;

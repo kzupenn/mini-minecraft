@@ -13,10 +13,10 @@ enum PacketType: unsigned char {
 
 struct Packet{
     PacketType type;
-    virtual QByteArray packetToBuffer() {
-        return NULL;
-    };
+    virtual QByteArray packetToBuffer() { return QByteArray(0);}
     Packet(PacketType t) : type(t) {}
+    Packet(){}
+    ~Packet(){};
 };
 
 //World Init packet
@@ -38,14 +38,15 @@ struct ChunkChangePacket: Packet {
 //sends over the position and attitude state of the player
 //Server: send player state updates and player creation to client
 //Client: send over movement input updates to server
-struct PlayerStatePacket : Packet{
+struct PlayerStatePacket : virtual public Packet{
     int player_id; //id by server assigned client_fd
     vec3 player_pos;
     float player_phi, player_theta;
 
     PlayerStatePacket(int i, glm::vec3 p, int t, int ph) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_theta(t), player_phi(ph) {}
-    PlayerStatePacket(glm::vec3 p, int t, int ph) : PlayerStatePacket(-1, p, t, ph) {}
-    QByteArray packetToBuffer(Packet) {
+    PlayerStatePacket(glm::vec3 p, int t, int ph) : PlayerStatePacket(0, p, t, ph) {}
+    ~PlayerStatePacket(){}
+    QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         out << PLAYER_STATE << player_id

@@ -9,8 +9,6 @@
 #include "scene/runnables.h"
 #include <QThreadPool>
 
-#define BUFFER_SIZE 5000
-
 using namespace std;
 
 
@@ -23,10 +21,11 @@ Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
 void Server::handle_client(int client_fd)
 {
     QByteArray buffer;
+    Packet p;
     buffer.resize(BUFFER_SIZE);
     while (open)
     {
-        int valread = read(client_fd, &buffer[0], BUFFER_SIZE);
+        int valread = read(client_fd, buffer.data(), BUFFER_SIZE);
         if (valread == 0)
         {
             // client has disconnected
@@ -36,49 +35,53 @@ void Server::handle_client(int client_fd)
         }
         else
         {
-            qDebug() << "Client " << client_fd << " says: " << buffer;
+            //qDebug() << "Client " << client_fd << " says: " << buffer;
             buffer.resize(valread);
-            process_packet(bufferToPacket(buffer));
+            process_packet(bufferToPacket(buffer), client_fd);
             buffer.resize(BUFFER_SIZE);
         }
     }
 }
 
-void Server::process_packet(Packet packet) {
+void Server::process_packet(Packet packet, int sender) {
     switch(packet.type) {
     case PLAYER_STATE: {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(&packet);
         m_players_mutex.lock();
-        m_players[thispack->player_id].pos = thispack->player_pos;
-        m_players[thispack->player_id].phi = thispack->player_phi;
-        m_players[thispack->player_id].theta = thispack->player_theta;
+        qDebug() << sender;
+        qDebug() << (m_players.find(sender) == m_players.end());
+        m_players[sender].pos = glm::vec3(thispack->player_pos);
+        m_players[sender].phi = thispack->player_phi;
+        m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
+        break;
     }
     default:
-        qDebug() << "unexpected packet type found";
+        qDebug() << "unexpected packet type found" << packet.type;
+        break;
     }
 }
 
-void Server::send_packet(Packet packet, int exclude) { //use exclude = 0 if you dont want to exclude
+void Server::send_packet(Packet* packet, int exclude) { //use exclude = 0 if you dont want to exclude
     client_fds_mutex.lock();
     for (int i = 0; i < client_fds.size(); i++)
     {
         if (client_fds[i] != exclude)
         {
-            QByteArray buffer = packet.packetToBuffer();
+            QByteArray buffer = packet->packetToBuffer();
             send(client_fds[i], buffer, buffer.size(), 0);
         }
     }
     client_fds_mutex.unlock();
 }
 
-void Server::target_packet(Packet packet, int target) {
+void Server::target_packet(Packet* packet, int target) {
     client_fds_mutex.lock();
     for (int i = 0; i < client_fds.size(); i++)
     {
         if (client_fds[i] == target)
         {
-            QByteArray buffer = packet.packetToBuffer();
+            QByteArray buffer = packet->packetToBuffer();
             send(client_fds[i], buffer, buffer.size(), 0);
             client_fds_mutex.unlock();
             return;
@@ -91,7 +94,9 @@ void Server::target_packet(Packet packet, int target) {
 void Server::initClient(int i) {
     client_fds_mutex.lock();
     client_fds.push_back(i);
-    m_players.push_back(PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f));
+    m_players_mutex.lock();
+    m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f);
+    m_players_mutex.unlock();
     client_fds_mutex.unlock();
 }
 

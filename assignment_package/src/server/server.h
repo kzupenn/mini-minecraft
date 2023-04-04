@@ -16,6 +16,7 @@ struct PlayerState {
     glm::vec3 pos;
     PlayerState(glm::vec3 p, float t, float ph)
         : phi(ph), theta(t), pos(p){};
+    PlayerState(){};
 };
 
 class Server{
@@ -24,9 +25,9 @@ private:
     std::mutex client_fds_mutex;
     std::vector<int> client_fds;
 
-    void process_packet(Packet);
-    void send_packet(Packet, int);
-    void target_packet(Packet, int);
+    void process_packet(Packet, int);
+    void send_packet(Packet*, int);
+    void target_packet(Packet*, int);
 
     //actions to do when a client joins
     //send over world seed, entity and player list, etc
@@ -34,7 +35,7 @@ private:
 
     Terrain m_terrain;
     std::mutex m_players_mutex;
-    std::vector<PlayerState> m_players;
+    std::map<int, PlayerState> m_players;
     std::mutex m_entities_mutex;
     std::vector<Entity> m_entities;
 
