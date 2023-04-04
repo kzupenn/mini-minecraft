@@ -5,8 +5,8 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      theta(0), phi(0), mcr_camera(m_camera), airtime(0),
-      maxair(45), m_flightMode(true)
+      theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
+      airtime(0), maxair(45)
 {}
 
 Player::~Player()
@@ -75,7 +75,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
     if (inputs.spacePressed) {
         if (m_flightMode) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
-        resetAir();
+        else if (!checkAirborne()) airtime = maxair;
     }
 }
 
@@ -92,10 +92,6 @@ bool Player::checkAirborne() {
     return true;
 }
 
-void Player::resetAir() {
-    if (!m_flightMode && !airtime && !checkAirborne()) airtime = maxair;
-}
-
 void Player::computePhysics(float dT) {
     // TODO: Update the PlayerE's position based on its acceleration
     // and velocity, and also perform collision detection.
@@ -110,7 +106,7 @@ void Player::computePhysics(float dT) {
         checkCollision();
     }
     moveAlongVector(m_velocity);
-    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
+//    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
     m_acceleration = glm::vec3(0);
 }
 

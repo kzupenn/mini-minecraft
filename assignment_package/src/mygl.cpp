@@ -16,9 +16,8 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      ip("localhost"), time(0),
-      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_mousePosPrev(glm::vec2(width() / 2, height() / 2))
+      ip("localhost"), m_time(0), mouseMove(false),
+      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -111,21 +110,26 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 
 void MyGL::tick() {
-    time++;
+    m_time++;
     long long ct = QDateTime::currentMSecsSinceEpoch();
     float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
 
+    if (mouseMove) updateMouse();
     m_player.tick(dt, m_inputs);
+    setupTerrainThreads();
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
     //zone player is in
+
+}
+
+void MyGL::setupTerrainThreads() {
+    //does rendering stuff
     int minx = floor(m_player.mcr_position.x/64)*64;
     int miny = floor(m_player.mcr_position.z/64)*64;
-
-    //does rendering stuff
     for(int dx = minx-192; dx <= minx+192; dx+=64) {
         for(int dy = miny-192; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
@@ -141,7 +145,7 @@ void MyGL::tick() {
     }
 
     //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
-    if(time%30 == 0) {
+    if(m_time%30 == 0) {
         for(int dx = minx-192; dx <= minx+192; dx+=64) {
             for(int dy = miny-192; dy <= miny+192; dy+=64) {
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
@@ -158,6 +162,7 @@ void MyGL::tick() {
 
             }
         }
+        m_time = 0;
     }
 }
 
@@ -209,10 +214,6 @@ void MyGL::renderTerrain() {
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
-    float amount = 2.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
-    }
     // http://doc.qt.io/qt-5/qt.html#Key-enum
     // This could all be much more efficient if a switch
     // statement were used, but I really dislike their
@@ -234,8 +235,18 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = true;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = true;
+    } else if (e->key() == Qt::Key_Right) {
+        m_inputs.mouseX = 5.f;
+    } else if (e->key() == Qt::Key_Left) {
+        m_inputs.mouseX = -5.f;
+    } else if (e->key() == Qt::Key_Up) {
+        m_inputs.mouseY = 5.f;
+    } else if (e->key() == Qt::Key_Down) {
+        m_inputs.mouseY = -5.f;
+    } else if (e->key() == Qt::Key_M) {
+        mouseMove = !mouseMove;
     }
 }
 
@@ -254,27 +265,24 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
         m_inputs.ePressed = false;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = false;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = false;
     }
 }
 
-void MyGL::mouseMoveEvent(QMouseEvent *e) {
-    // TODO
-    const float spd = 0.6;
-    glm::vec2 pos(e->pos().x(), e->pos().y());
-    glm::vec2 diff = spd * (pos - m_mousePosPrev);
-    m_mousePosPrev = pos;
-    m_inputs.mouseX = diff.x;
-    m_inputs.mouseY = diff.y;
+void MyGL::updateMouse() {
+    float sens = 0.15;
+    QPoint cur = QWidget::mapFromGlobal(QCursor::pos());
+    m_inputs.mouseX = sens * (cur.x() - width() / 2);
+    m_inputs.mouseY = sens * (cur.y() - height() / 2);
+    //qDebug() << m_inputs.mouseX << " " << m_inputs.mouseY;
+    moveMouseToCenter();
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     // TODO
     if(e->buttons() & Qt::LeftButton)
     {
-        m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
-
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
         glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
