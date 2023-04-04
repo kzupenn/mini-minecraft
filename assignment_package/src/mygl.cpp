@@ -205,11 +205,13 @@ void MyGL::paintGL() {
 
     renderTerrain();
     m_player.createVBOdata();
+    m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
     m_progLambert.drawInterleaved(m_player);
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
         qDebug() << it->second ->posAsQString();
-        m_progLambert.drawInterleaved(*(it->second));
+        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->mcr_position)));
+        m_progFlat.drawInterleaved(*(it->second));
     }
 
     glDisable(GL_DEPTH_TEST);
