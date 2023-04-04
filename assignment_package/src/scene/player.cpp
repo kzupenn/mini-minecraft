@@ -13,8 +13,8 @@ Player::~Player()
 {}
 
 void Player::tick(float dT, InputBundle &input) {
-    orientCamera();
     processInputs(input);
+    orientCamera();
     computePhysics(dT);
 }
 
@@ -75,6 +75,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
     if (inputs.spacePressed) {
         if (m_flightMode) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
+        resetAir();
     }
 }
 
@@ -91,6 +92,10 @@ bool Player::checkAirborne() {
     return true;
 }
 
+void Player::resetAir() {
+    if (!m_flightMode && !airtime && !checkAirborne()) airtime = maxair;
+}
+
 void Player::computePhysics(float dT) {
     // TODO: Update the PlayerE's position based on its acceleration
     // and velocity, and also perform collision detection.
@@ -98,14 +103,14 @@ void Player::computePhysics(float dT) {
     m_velocity += m_acceleration * dT;
     if (!m_flightMode) {
         if (airtime > 0) {
-            m_velocity += glm::vec3(0, 1, 0) * 4.2f * dT * airtime / (maxair / 1.5f);
+            m_velocity += glm::vec3(0, 1, 0) * 3.85f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
         m_velocity += glm::vec3(0, -3.8f, 0) * dT;
         checkCollision();
     }
     moveAlongVector(m_velocity);
-    qDebug() << m_velocity.y;
+    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
     m_acceleration = glm::vec3(0);
 }
 

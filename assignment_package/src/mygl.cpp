@@ -18,7 +18,7 @@ MyGL::MyGL(QWidget *parent)
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
       ip("localhost"), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_mousePosPrev(0)
+      m_mousePosPrev(glm::vec2(width() / 2, height() / 2))
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -236,9 +236,6 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.fPressed = true;
     } else if (e->key() ==Qt::Key_Space) {
         m_inputs.spacePressed = true;
-        if (!m_player.m_flightMode && !m_player.airtime && !m_player.checkAirborne()) {
-            m_player.airtime = m_player.maxair;
-        }
     }
 }
 
@@ -264,14 +261,12 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
     // TODO
-    if (e->buttons() & Qt::LeftButton) {
-        const float SPD = 0.15;
-        glm::vec2 pos(e->pos().x(), e->pos().y());
-        glm::vec2 diff = SPD * (pos - m_mousePosPrev);
-        m_mousePosPrev = pos;
-        m_inputs.mouseX = diff.x;
-        m_inputs.mouseY = diff.y;
-    }
+    const float spd = 0.6;
+    glm::vec2 pos(e->pos().x(), e->pos().y());
+    glm::vec2 diff = spd * (pos - m_mousePosPrev);
+    m_mousePosPrev = glm::vec2(width() / 2, height() / 2);
+    m_inputs.mouseX = diff.x;
+    m_inputs.mouseY = diff.y;
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
