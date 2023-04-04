@@ -5,8 +5,8 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      m_flightMode(true), theta(0), phi(0), mcr_camera(m_camera),
-      airtime(0), maxair(45)
+      theta(0), phi(0), mcr_camera(m_camera), airtime(0),
+      maxair(45), m_flightMode(true)
 {}
 
 Player::~Player()
@@ -80,10 +80,10 @@ void Player::processInputs(InputBundle &inputs) {
 }
 
 bool Player::checkAirborne() {
-    std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.5, m_position.y, m_position.z + 0.5),
-                                     glm::vec3(m_position.x - 0.5, m_position.y, m_position.z + 0.5),
-                                     glm::vec3(m_position.x + 0.5, m_position.y, m_position.z - 0.5),
-                                     glm::vec3(m_position.x - 0.5, m_position.y, m_position.z - 0.5)};
+    std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.3, m_position.y, m_position.z + 0.3),
+                                     glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
+                                     glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
+                                     glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
     glm::vec3 down(0, -0.0001, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock;
@@ -117,18 +117,18 @@ void Player::computePhysics(float dT) {
 void Player::checkCollision()
 {
     glm::vec3 p = m_position;
-    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.5, p.y+2, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+2, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+2, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+2, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+1, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+1, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+1, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+1, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y, p.z-0.5)};
+    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+1.8f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1.8f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y, p.z-0.3)};
 
     glm::vec3 min = glm::vec3(m_velocity.x, m_velocity.y, m_velocity.z);
 
