@@ -264,7 +264,7 @@ void MyGL::mouseMoveEvent(QMouseEvent *e) {
     const float spd = 0.6;
     glm::vec2 pos(e->pos().x(), e->pos().y());
     glm::vec2 diff = spd * (pos - m_mousePosPrev);
-    m_mousePosPrev = glm::vec2(width() / 2, height() / 2);
+    m_mousePosPrev = pos;
     m_inputs.mouseX = diff.x;
     m_inputs.mouseY = diff.y;
 }
