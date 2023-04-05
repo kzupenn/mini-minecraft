@@ -21,8 +21,8 @@ uniform sampler2D u_Texture; // The texture to be read from by this shader
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-//in vec4 fs_Col;
-in vec3 fs_UV;
+in vec4 fs_Col;
+//in vec3 fs_UV;
 
 in float time;
 
@@ -78,7 +78,7 @@ void main()
 {
     // Material base color (before shading)
 
-        vec4 diffuseColor = texture(u_Texture, vec2(fs_UV));
+        vec4 diffuseColor = fs_Col;
 
         //vec4 diffuseColor = fs_Col;
         diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);

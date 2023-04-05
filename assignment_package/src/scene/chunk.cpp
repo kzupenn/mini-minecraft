@@ -138,16 +138,18 @@ void Chunk::createVBOdata() {
     std::vector<glm::vec4> VBOpos;
     std::vector<glm::vec4> VBOnor;
     std::vector<glm::vec4> VBOcol;
+    std::vector<glm::vec4> VBOuv;
     idx.clear();
 
     for(int i = 0; i < 16; i++) {
         for(int j = 0; j < 256; j++) {
             for(int k = 0; k < 16; k++) {
                 //check in all 6 directions
+                int Face = 0; //0, 1, 4, 5 for side, 2 for top & 3 bottom
                 for(int l = 0; l < 6*3; l+=3) {
                     //bound checking and neighbor
                     BlockType curr = getBlockAt(i, j, k);
-                    BlockType oth;
+                    BlockType oth = EMPTY;                   
                     bool drawFace = false;
                     if(i+delta[l] < 0){
                         if (curr != EMPTY) drawFace = (m_neighbors.find(XNEG) != m_neighbors.end()
@@ -155,7 +157,8 @@ void Chunk::createVBOdata() {
                         else {
                             drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
                                 && m_neighbors[XNEG]->getBlockAt(15, j, k) != EMPTY;
-                            if (m_neighbors.find(XNEG) != m_neighbors.end()) oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
+                            if (m_neighbors.find(XNEG) != m_neighbors.end())
+                                oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
                         }
                     }
                     else if(i+delta[l] > 15){
@@ -224,42 +227,121 @@ void Chunk::createVBOdata() {
                         switch(curr){
                         case GRASS:
                             this_color = glm::vec4(0, 1, 0, 1);
+                            if (Face != 2 && Face != 3) { //side
+                                VBOuv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0.f, 1.f));
+                            } else { //top & bottom
+                                VBOuv.push_back(glm::vec4(8.f/16.f, 13.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(9.f/16.f, 13.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(9.f/16.f, 14.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(8.f/16.f, 14.f/16.f, 0.f, 1.f));
+                            }
                             break;
                         case DIRT:
                             this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0.f, 1.f));
                             break;
                         case PATH:
                             this_color = glm::vec4(211.f, 185.f, 120.f, 255.f)/255.f;
+                            if (Face != 2 && Face != 3) { //side is dirt
+                                VBOuv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(3.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(3.f/16.f, 16.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0.f, 1.f));
+                            } else { //top is path
+                                VBOuv.push_back(glm::vec4(14.f/16.f, 8.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(15.f/16.f, 8.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(15.f/16.f, 9.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(14.f/16.f, 9.f/16.f, 0.f, 1.f));
+                            }
                             break;
                         case STONE:
                             this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 16.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 16.f/16.f, 0.f, 1.f));
                             break;
                         case WATER:
                             this_color = glm::vec4(0, 0, 1, 0.5);
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 3.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 3.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 4.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 4.f/16.f, 1.f, 1.f));
                             break;
                         case SAND:
                             this_color = glm::vec4(1,1,0,1);
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 7.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(15.f/16.f, 7.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(15.f/16.f, 8.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 8.f/16.f, 0.f, 1.f));
                             break;
                         case SNOW:
                             this_color = glm::vec4(1,1,1,1);
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 11.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(3.f/16.f, 11.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(3.f/16.f, 12.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 12.f/16.f, 0.f, 1.f));
                             break;
                         case GLASS:
                             this_color = glm::vec4(1,1,1,1);
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 12.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 12.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 13.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 13.f/16.f, 0.f, 1.f));
                             break;
                         case COBBLESTONE:
                             this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 14.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 14.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(2.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(1.f/16.f, 15.f/16.f, 0.f, 1.f));
                             break;
                         case OAK_PLANKS:
                             this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
+                            VBOuv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(5.f/16.f, 16.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(4.f/16.f, 16.f/16.f, 0.f, 1.f));
                             break;
                         case OAK_LOG:
                             this_color = glm::vec4(151.f, 125.f, 60.f, 255.f)/255.f;
+                            if (Face != 2 && Face != 3) { //side
+                                VBOuv.push_back(glm::vec4(4.f/16.f, 14.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            } else { //top and bottom
+                                VBOuv.push_back(glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(6.f/16.f, 14.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(6.f/16.f, 15.f/16.f, 0.f, 1.f));
+                                VBOuv.push_back(glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f));
+                            }
                             break;
                         case OAK_LEAVES:
                             this_color = glm::vec4(0, 0.5, 0, 1);
+                            VBOuv.push_back(glm::vec4(5.f/16.f, 12.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(6.f/16.f, 12.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(6.f/16.f, 13.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(5.f/16.f, 13.f/16.f, 0.f, 1.f));
                             break;
+                        case LAVA:
+                            this_color = glm::vec4(1, 0, 0, 1);
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 2.f/16.f, 1.f, 1.f));
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 2.f/16.f, 1.f, 1.f));
                         default:
-                            this_color = glm::vec4(0);
+                            this_color = glm::vec4(0, 0, 0, 1);
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 0.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 0.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(14.f/16.f, 1.f/16.f, 0.f, 1.f));
+                            VBOuv.push_back(glm::vec4(13.f/16.f, 1.f/16.f, 0.f, 1.f));
                             break;
                         }
                         //std::cout << glm::to_string(this_color);
@@ -267,6 +349,7 @@ void Chunk::createVBOdata() {
                             VBOcol.push_back(this_color);
                         }
                     }
+                    Face++;
                 }
             }
         }
@@ -276,6 +359,7 @@ void Chunk::createVBOdata() {
            VBOinter.push_back(VBOpos[i]);
            VBOinter.push_back(VBOnor[i]);
            VBOinter.push_back(VBOcol[i]);
+           VBOinter.push_back(VBOuv[i]);
     }
     createVBO_mutex.unlock();
 

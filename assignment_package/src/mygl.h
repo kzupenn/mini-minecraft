@@ -7,6 +7,7 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "texture.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -31,6 +32,8 @@ private:
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int time; //to get tick number
+
+    Texture m_texture;
 
     long long m_currentMSecsSinceEpoch;
     glm::vec2 m_mousePosPrev;
