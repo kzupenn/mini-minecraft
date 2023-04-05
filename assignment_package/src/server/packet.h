@@ -8,15 +8,15 @@
 using namespace glm;
 
 enum PacketType: unsigned char {
-    PLAYER_STATE, PLAYER_INFO, GAME_INIT
+    PLAYER_STATE, PLAYER_INFO, WORLD_INIT
 };
 
 struct Packet{
     PacketType type;
-    virtual QByteArray packetToBuffer() { return QByteArray(0);}
+    virtual QByteArray packetToBuffer() { return QByteArray();}
     Packet(PacketType t) : type(t) {}
     Packet(){}
-    ~Packet(){};
+    virtual ~Packet(){};
 };
 
 //World Init packet
@@ -24,7 +24,15 @@ struct Packet{
 //Server: send world seed info to client for consistency
 struct WorldInitPacket : Packet {
     int seed;
-    vec2 spawn;
+    vec3 spawn;
+    WorldInitPacket(int s, glm::vec3 p) : Packet(WORLD_INIT), seed(s), spawn(p) {}
+    ~WorldInitPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer,QIODevice::ReadWrite);
+        out << WORLD_INIT << seed << spawn.x << spawn.y << spawn.z;
+        return buffer;
+    }
 };
 
 //Chunk changes packet
@@ -32,6 +40,10 @@ struct WorldInitPacket : Packet {
 struct ChunkChangePacket: Packet {
     int64_t chunkPos;
     std::vector<std::pair<vec2, BlockType>> changes;
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer,QIODevice::ReadWrite);
+    }
 };
 
 //PlayerState packet

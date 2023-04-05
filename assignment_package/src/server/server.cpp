@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "algo/seed.h"
 #include "server.h"
 #include "scene/runnables.h"
 #include <QThreadPool>
@@ -36,7 +37,9 @@ void Server::handle_client(int client_fd)
         {
             //qDebug() << "Client " << client_fd << " says: " << buffer;
             buffer.resize(valread);
-            process_packet(bufferToPacket(buffer), client_fd);
+            Packet* pp = bufferToPacket(buffer);
+            process_packet(pp, client_fd);
+            delete(pp);
             buffer.resize(BUFFER_SIZE);
         }
     }
@@ -75,17 +78,8 @@ void Server::broadcast_packet(Packet* packet, int exclude) { //use exclude = 0 i
 
 void Server::target_packet(Packet* packet, int target) {
     client_fds_mutex.lock();
-    for (int i = 0; i < client_fds.size(); i++)
-    {
-        if (client_fds[i] == target)
-        {
-            QByteArray buffer = packet->packetToBuffer();
-            send(client_fds[i], buffer, buffer.size(), 0);
-            client_fds_mutex.unlock();
-            return;
-        }
-    }
-    qDebug() << "target for packet not found: " << target;
+    QByteArray buffer = packet->packetToBuffer();
+    send(target, buffer, buffer.size(), 0);
     client_fds_mutex.unlock();
 }
 
@@ -96,6 +90,7 @@ void Server::initClient(int i) {
     m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f);
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
+    target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn).get(), i);
 }
 
 int Server::start()
@@ -128,6 +123,9 @@ int Server::start()
     }
 
     cout << "Server started listening on port " << PORT << endl;
+
+    //initialize spawn chunks, and select a spawn point
+    m_terrain.createSpawn();
 
     setup = true;
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "glm_includes.h"
+#include <mutex>
 
 class Seed {
 private:
@@ -12,4 +13,4 @@ public:
     glm::vec4 getSeed(float f1, float f2, float f3, float f4) const;
 };
 
-const static Seed SEED(420);
+static Seed SEED(69);

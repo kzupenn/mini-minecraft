@@ -47,7 +47,11 @@ void MyGL::start(bool joinServer) {
         ip = getIP().data();
     }
 
+    verified_server = false;
     init_client();
+    //block until we get world spawn info
+    while(!verified_server);
+    m_player.setState(m_terrain.worldSpawn, 0, 0);
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -210,6 +214,7 @@ void MyGL::paintGL() {
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
         qDebug() << it->second ->posAsQString();
+        it->second->createVBOdata();
         m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->mcr_position)));
         m_progFlat.drawInterleaved(*(it->second));
     }
@@ -361,7 +366,9 @@ void MyGL::run_client() {
         else
         {
             buffer.resize(bytes_received);
-            packet_processer(bufferToPacket(buffer));
+            Packet* pp = bufferToPacket(buffer);
+            packet_processer(pp);
+            delete(pp);
             buffer.resize(BUFFER_SIZE);
         }
     }
@@ -424,8 +431,17 @@ void MyGL::packet_processer(Packet* packet) {
         }
         m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi);
         m_multiplayers_mutex.unlock();
+        break;
+    }
+    case WORLD_INIT:{
+        WorldInitPacket* thispack = dynamic_cast<WorldInitPacket*>(packet);
+        //TO do: set seed somewhere
+        m_terrain.worldSpawn = thispack->spawn;
+        verified_server = true;
+        break;
     }
     default:
+        qDebug() << "unknown packet type: " << packet->type;
         break;
     }
 }

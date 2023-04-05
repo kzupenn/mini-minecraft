@@ -58,6 +58,7 @@ private:
     uPtr<Server> SERVER;
 
     //info from server
+    std::atomic_bool verified_server;
     std::mutex m_multiplayers_mutex;
     std::map<int, uPtr<Player>> m_multiplayers;
     std::mutex m_entites_mutex;

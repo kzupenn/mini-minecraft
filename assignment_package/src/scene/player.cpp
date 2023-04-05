@@ -226,6 +226,7 @@ float Player::getTheta() {
 
 void Player::setState(glm::vec3 p, float f1, float f2) {
     m_position = p;
+    m_camera.setPos(p);
     theta = f1;
     phi = f2;
 }
@@ -293,10 +294,10 @@ void Player::createVBOdata() {
     //UL
     pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
 
-    for(int i = 0; i < pos.size(); i++) {
-        pos[i] += glm::vec4(m_position, 1.f);
-        qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
-    }
+//    for(int i = 0; i < pos.size(); i++) {
+//        pos[i] += glm::vec4(m_position, 1.f);
+//        //qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
+//    }
 
     //Front
     for(int i = 0; i < 4; i++){

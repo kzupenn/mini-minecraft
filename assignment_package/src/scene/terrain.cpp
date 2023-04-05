@@ -20,7 +20,7 @@
 #define beach_level 0.1
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), mp_context(context), m_generatedTerrain()
+    : m_chunks(), mp_context(context), m_generatedTerrain(), setSpawn(false)
 {
     //QThreadPool::globalInstance()->setMaxThreadCount(100);
 }
@@ -405,33 +405,39 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     metaData.erase(key);
     metaData_mutex.unlock();
 
-
-    createVBOThread(cPtr);
+    cPtr->dataGen = true;
+    cPtr->blocksChanged = true;
+    //createVBOThread(cPtr);
     // Set the neighbor pointers of itself and its neighbors
     if(hasChunkAt(x, z + 16)) {
+        m_chunks_mutex.lock();
         auto &chunkNorth = m_chunks[toKey(x, z + 16)];
         cPtr->linkNeighbor(chunkNorth, ZPOS);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x, z - 16)) {
+         m_chunks_mutex.lock();
         auto &chunkSouth = m_chunks[toKey(x, z - 16)];
         cPtr->linkNeighbor(chunkSouth, ZNEG);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x + 16, z)) {
+         m_chunks_mutex.lock();
         auto &chunkEast = m_chunks[toKey(x + 16, z)];
         cPtr->linkNeighbor(chunkEast, XPOS);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x - 16, z)) {
+         m_chunks_mutex.lock();
         auto &chunkWest = m_chunks[toKey(x - 16, z)];
         cPtr->linkNeighbor(chunkWest, XNEG);
+         m_chunks_mutex.unlock();
     }
 
 
     return cPtr;
 }
 
-// TODO: When you make Chunk inherit from Drawable, change this code so
-// it draws each Chunk with the given ShaderProgram, remembering to set the
-// model matrix to the proper X and Z translation!
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
     for(int x = minX; x < maxX; x += 16) {
         for(int z = minZ; z < maxZ; z += 16) {
@@ -484,21 +490,64 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
     }
 }
 
-void Terrain::createInitScene()
+void Terrain::createSpawn()
 {
-    // mark one semaphor immediately to signal start
-    // Tell our existing terrain set that
-    // the "generated terrain zone" at (0,0)
-    // now exists.
-    // We'll do this part somewhat synchronously since doing it async will result in 500+ threads and crash
-
-    for(int dx = -256; dx <= 256; dx+=64) {
-        for(int dy = -256; dy <= 256; dy+=64) {
-            m_generatedTerrain.insert(toKey(dx, dy));
-            for(int ddx = dx; ddx < dx + 64; ddx+=16) {
-                for(int ddy = dy; ddy < dy + 64; ddy+=16) {
-                    createGroundThread(glm::vec2(ddx, ddy));
+    //instantiate chunks in a spiral pattern
+    std::vector<glm::vec2> spiral;
+    createGroundThread(glm::vec2(0, 0));
+    spiral.emplace_back(0, 0);
+    for(int sl = 16; sl <= 11*16; sl+=16) {
+        for(int dx = -sl; dx <= sl; dx+= sl*2) {
+            for(int dy = -sl; dy <= sl; dy+=16) {
+                createGroundThread(glm::vec2(dx, dy));
+                spiral.emplace_back(dx, dy);
+            }
+        }
+        for(int dy = -sl; dy <= sl; dy+= sl*2) {
+            for(int dx = -sl+16; dx <= sl-16; dx+=16) {
+                createGroundThread(glm::vec2(dx, dy));
+                spiral.emplace_back(dx, dy);
+            }
+        }
+    }
+    qDebug() << "creating" << spiral.size() << "spawn chunks";
+    //block until all chunks are loaded
+    while(!setSpawn){
+        bool done = true;
+        for(int dx = -176; dx <= 176; dx+=16) {
+            for(int dy = -176; dy <= 176; dy+=16) {
+                if(!hasChunkAt(dx, dy)){
+                    done = false;
+                    break;
                 }
+            }
+        }
+        //finds available spawn chunks in same spiral pattern
+        if(done) {
+            for(glm::vec2 pp: spiral) {
+                Chunk* c = getChunkAt(pp.x, pp.y).get();
+                //checks if it is a water biome
+                if(c->biome!= OCEAN && c->biome!=RIVER){
+                    for(int dx = 0; dx < 16; dx++) {
+                        for(int dy = 0; dy < 16; dy++) {
+                            //checks if the top block is a solid
+                            if(!isTransparent(dx, c->heightMap[dx][dy]-1, dy, c)) {
+                                worldSpawn = glm::vec3(pp.x+dx, c->heightMap[dx][dy]+1, pp.y+dy);
+                                setSpawn = true;
+                                break;
+                            }
+                        }
+                        if(setSpawn) break;
+                    }
+                }
+                if(setSpawn) break;
+            }
+            if(setSpawn) qDebug() << "found spawn at" << worldSpawn.x << worldSpawn.y << worldSpawn.z;
+            else qDebug() << "no spawn found?";
+            //worse case, set spawn to 0,0
+            if(!setSpawn) {
+                worldSpawn = glm::vec3(0, getChunkAt(0,0)->heightMap[0][0]+1, 0);
+                setSpawn = true;
             }
         }
     }
