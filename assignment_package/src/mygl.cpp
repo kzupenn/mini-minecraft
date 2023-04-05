@@ -211,13 +211,13 @@ void MyGL::paintGL() {
     m_player.createVBOdata();
     m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
     m_progLambert.drawInterleaved(m_player);
+    m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
-        qDebug() << it->second ->posAsQString();
-        it->second->createVBOdata();
-        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->mcr_position)));
-        m_progFlat.drawInterleaved(*(it->second));
+        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
+        m_progLambert.drawInterleaved(*(it->second));
     }
+    m_multiplayers_mutex.unlock();
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setModelMatrix(glm::mat4());

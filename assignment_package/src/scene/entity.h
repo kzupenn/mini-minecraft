@@ -17,9 +17,10 @@ struct InputBundle {
 class Entity: public Drawable {
 protected:
     // The origin of our local coordinate system
-    glm::vec3 m_position;
 
 public:
+    glm::vec3 m_position;
+
     // A readonly reference to position for external use
     const glm::vec3& mcr_position;
     // Vectors that define the axes of our local coordinate system

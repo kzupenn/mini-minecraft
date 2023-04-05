@@ -9,7 +9,6 @@ private:
     Camera m_camera;
     const Terrain &mcr_terrain;
     bool m_flightMode;
-    float theta, phi; //horiz, vert
     const float maxVelo = 6;
     const float acc = 3;
 
@@ -19,6 +18,8 @@ private:
     void checkCollision();
 
 public:
+    float theta, phi; //horiz, vert
+
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
