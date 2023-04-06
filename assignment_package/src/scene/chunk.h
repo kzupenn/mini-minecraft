@@ -58,10 +58,6 @@ private:
 
     //for vbo
     std::vector<glm::vec4> VBOinter;
-//    std::vector<glm::vec4> VBOpos;
-//    std::vector<glm::vec4> VBOcol;
-//    std::vector<glm::vec4> VBOnor;
-
     std::vector<int> idx;
 
     std::mutex setBlock_mutex;
@@ -72,6 +68,7 @@ public:
     BlockType getBlockAt(int x, int y, int z) const;
     void setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
+    Chunk* getNeighborChunk(Direction);
 
     virtual void createVBOdata();
     //locks for multithreading stages

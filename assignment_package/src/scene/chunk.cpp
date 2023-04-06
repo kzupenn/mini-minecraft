@@ -111,6 +111,10 @@ void Chunk::linkNeighbor(uPtr<Chunk> &neighbor, Direction dir) {
     }
 }
 
+Chunk* Chunk::getNeighborChunk(Direction d) {
+    return m_neighbors[d];
+}
+
 const int delta[] = {1, 0, 0,
                -1, 0, 0,
                0, 1, 0,
@@ -138,6 +142,7 @@ void Chunk::createVBOdata() {
     std::vector<glm::vec4> VBOpos;
     std::vector<glm::vec4> VBOnor;
     std::vector<glm::vec4> VBOcol;
+    VBOinter.clear();
     idx.clear();
 
     for(int i = 0; i < 16; i++) {

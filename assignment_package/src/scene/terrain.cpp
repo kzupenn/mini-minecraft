@@ -1140,7 +1140,7 @@ void Terrain::buildStructure(const Structure& s) {
 }
 
 bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
-                        float *out_dist, glm::ivec3 *out_blockHit) const
+                        float *out_dist, glm::ivec3 *out_blockHit, bool empty) const
 {
     float maxLen = glm::length(rayDirection); // Farthest we search
     glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
@@ -1180,7 +1180,7 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
         // curr_t
         if (hasChunkAt(currCell.x, currCell.z)) {
             BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
-            if(cellType != EMPTY) {
+            if((!empty && cellType != EMPTY) || (empty && cellType == EMPTY)) {
                 *out_blockHit = currCell;
                 if (count == 0) {
                     *out_dist = 0;

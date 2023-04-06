@@ -123,7 +123,7 @@ public:
     void buildStructure(const Structure&);
 
     bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, float *out_dist,
-                   glm::ivec3 *out_blockHit) const;
+                   glm::ivec3 *out_blockHit, bool empty) const;
 };
 
 

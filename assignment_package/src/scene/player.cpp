@@ -87,7 +87,7 @@ bool Player::checkAirborne() {
     glm::vec3 down(0, -0.0001, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock;
-        if (mcr_terrain.gridMarch(c, down, &dist, &outblock)) return false;
+        if (mcr_terrain.gridMarch(c, down, &dist, &outblock, false)) return false;
     }
     return true;
 }
@@ -99,10 +99,10 @@ void Player::computePhysics(float dT) {
     m_velocity += m_acceleration * dT;
     if (!m_flightMode) {
         if (airtime > 0) {
-            m_velocity += glm::vec3(0, 1, 0) * 3.85f * dT * airtime / (maxair / 1.5f);
+            m_velocity += glm::vec3(0, 1, 0) * 3.8f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
-        m_velocity += glm::vec3(0, -3.8f, 0) * dT;
+        m_velocity += glm::vec3(0, -4.1f, 0) * dT;
         checkCollision();
     }
     moveAlongVector(m_velocity);
@@ -132,11 +132,11 @@ void Player::checkCollision()
         float x, y, z;
         glm::ivec3 b;
         bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
-                                    &x, &b);
+                                    &x, &b, false);
         bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
-                                    &y, &b);
+                                    &y, &b, false);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
-                                    &z, &b);
+                                    &z, &b, false);
 
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);

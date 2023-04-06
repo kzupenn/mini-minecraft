@@ -242,9 +242,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     } else if (e->key() == Qt::Key_Left) {
         m_inputs.mouseX = -5.f;
     } else if (e->key() == Qt::Key_Up) {
-        m_inputs.mouseY = 5.f;
-    } else if (e->key() == Qt::Key_Down) {
         m_inputs.mouseY = -5.f;
+    } else if (e->key() == Qt::Key_Down) {
+        m_inputs.mouseY = 5.f;
     } else if (e->key() == Qt::Key_M) {
         mouseMove = !mouseMove;
     }
@@ -275,7 +275,6 @@ void MyGL::updateMouse() {
     QPoint cur = QWidget::mapFromGlobal(QCursor::pos());
     m_inputs.mouseX = sens * (cur.x() - width() / 2);
     m_inputs.mouseY = sens * (cur.y() - height() / 2);
-    //qDebug() << m_inputs.mouseX << " " << m_inputs.mouseY;
     moveMouseToCenter();
 }
 
@@ -288,32 +287,36 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+            Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+            if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+            if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+            if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+            if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
             qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
         }
     } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = m_player.getLook() * bound;
+        glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
-            BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
-            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x-1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x-1, block_pos.y, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y+1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y+1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y-1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y-1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z+1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z+1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
+        if (found) {
+            BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+            glm::vec3 backward = -glm::normalize(ray_dir);
+            glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
+            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+            qDebug() << QString::fromStdString(glm::to_string(restart));
+            qDebug() << dist;
+            glm::ivec3 bpos;
+            if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
+                m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
+            } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
+                m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
             }
         }
     }
