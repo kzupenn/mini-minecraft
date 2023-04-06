@@ -25,7 +25,7 @@ MyGL::MyGL(QWidget *parent)
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
       m_time(0), mouseMove(false),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_mousePosPrev(0), m_crosshair(this)
+      m_crosshair(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));

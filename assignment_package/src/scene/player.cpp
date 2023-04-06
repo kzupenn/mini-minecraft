@@ -243,7 +243,7 @@ float Player::getTheta() {
 
 void Player::setState(glm::vec3 p, float f1, float f2) {
     m_position = p;
-    m_camera.setPos(p);
+    m_camera.setPos(p + glm::vec3(0, 1.5f, 0));
     theta = f1;
     phi = f2;
 }
