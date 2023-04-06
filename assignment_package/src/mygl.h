@@ -38,10 +38,10 @@ private:
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
-    int time; //to get tick number
+    int m_time; //to get tick number
+    bool mouseMove;
 
     long long m_currentMSecsSinceEpoch;
-    glm::vec2 m_mousePosPrev;
 
     //multiplayer stuffs
     //client vars
@@ -101,6 +101,7 @@ public:
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
+    void setupTerrainThreads();
 
 
 protected:
@@ -111,7 +112,7 @@ protected:
 
     // Automatically invoked when the user
     // moves the mouse
-    void mouseMoveEvent(QMouseEvent *e);
+    void updateMouse();
     // Automatically invoked when the user
     // presses a mouse button
     void mousePressEvent(QMouseEvent *e);

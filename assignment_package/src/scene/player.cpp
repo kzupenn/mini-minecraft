@@ -1,18 +1,20 @@
 #include "player.h"
 #include <QString>
+#include <iostream>
 
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
     : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      m_flightMode(true), theta(0), phi(0), mcr_camera(m_camera)
+      theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
+      airtime(0), maxair(45)
 {}
 
 Player::~Player()
 {}
 
 void Player::tick(float dT, InputBundle &input) {
-    orientCamera();
     processInputs(input);
+    orientCamera();
     computePhysics(dT);
 }
 
@@ -30,7 +32,8 @@ void Player::orientCamera() {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
-    float SPEED = 4;
+    float SPEED = 2;
+    if (m_flightMode) SPEED *= 5;
     if (inputs.mouseX) {
         theta -= inputs.mouseX;
         if (theta > 360 || theta < -360) theta = 0;
@@ -71,55 +74,69 @@ void Player::processInputs(InputBundle &inputs) {
         m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
     }
     if (inputs.spacePressed) {
-        m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
+        if (m_flightMode) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
+        else if (!checkAirborne()) airtime = maxair;
     }
+}
+
+bool Player::checkAirborne() {
+    std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.3, m_position.y, m_position.z + 0.3),
+                                     glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
+                                     glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
+                                     glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
+    glm::vec3 down(0, -0.0001, 0);
+    for (auto &c : corners) {
+        float dist; glm::ivec3 outblock;
+        if (mcr_terrain.gridMarch(c, down, &dist, &outblock, false)) return false;
+    }
+    return true;
 }
 
 void Player::computePhysics(float dT) {
     // TODO: Update the PlayerE's position based on its acceleration
     // and velocity, and also perform collision detection.
-
-    //to simulate friction and drag
-    m_velocity *= 0.85f;
-
-    if (m_flightMode) {
-        m_velocity += m_acceleration * dT;
-    } else {
-        m_velocity += glm::vec3(0, -0.031f, 0);
-        m_velocity += m_acceleration * dT;
+    m_velocity *= 0.8f;
+    m_velocity += m_acceleration * dT;
+    if (!m_flightMode) {
+        if (airtime > 0) {
+            m_velocity += glm::vec3(0, 1, 0) * 3.8f * dT * airtime / (maxair / 1.5f);
+            airtime--;
+        }
+        m_velocity += glm::vec3(0, -4.1f, 0) * dT;
         checkCollision();
     }
     moveAlongVector(m_velocity);
+//    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
     m_acceleration = glm::vec3(0);
 }
 
 void Player::checkCollision()
 {
-    glm::vec3 p = this->m_position;
-    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.5, p.y+2, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+2, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+2, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+2, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+1, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y+1, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+1, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y+1, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y, p.z-0.5),
-                                     glm::vec3(p.x+0.5, p.y, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y, p.z+0.5),
-                                     glm::vec3(p.x-0.5, p.y, p.z-0.5)};
+    glm::vec3 p = m_position;
+    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+1.8f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1.8f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+1, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+1, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y, p.z-0.3)};
 
     glm::vec3 min = glm::vec3(m_velocity.x, m_velocity.y, m_velocity.z);
 
-    for (glm::vec3& origin : corners) {
+    for (auto &origin : corners) {
         float x, y, z;
         glm::ivec3 b;
-        bool xF = mcr_terrain.gridMarch(origin, glm::vec3(min.x, 0, 0),
-                                    &x, &b);
-        bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, min.y, 0),
-                                    &y, &b);
-        bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, min.z),
-                                    &z, &b);
+        bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
+                                    &x, &b, false);
+        bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
+                                    &y, &b, false);
+        bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
+                                    &z, &b, false);
 
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);

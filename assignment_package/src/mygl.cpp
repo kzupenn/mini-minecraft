@@ -22,7 +22,8 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this), time(0),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
+      m_time(0), mouseMove(false),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(0), m_crosshair(this)
 {
@@ -136,12 +137,14 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 
 void MyGL::tick() {
-    time++;
+    m_time++;
     long long ct = QDateTime::currentMSecsSinceEpoch();
     float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
 
+    if (mouseMove) updateMouse();
     m_player.tick(dt, m_inputs);
+    setupTerrainThreads();
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
@@ -151,10 +154,13 @@ void MyGL::tick() {
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
     //zone player is in
+
+}
+
+void MyGL::setupTerrainThreads() {
+    //does rendering stuff
     int minx = floor(m_player.mcr_position.x/64)*64;
     int miny = floor(m_player.mcr_position.z/64)*64;
-
-    //does rendering stuff
     for(int dx = minx-192; dx <= minx+192; dx+=64) {
         for(int dy = miny-192; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
@@ -170,9 +176,9 @@ void MyGL::tick() {
     }
 
     //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
-    if(time%30 == 0) {
-        for(int dx = minx-128; dx <= minx+128; dx+=64) {
-            for(int dy = miny-128; dy <= miny+128; dy+=64) {
+    if(m_time%30 == 0) {
+        for(int dx = minx-192; dx <= minx+192; dx+=64) {
+            for(int dy = miny-192; dy <= miny+192; dy+=64) {
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
                     for(int ddy = dy; ddy < dy + 64; ddy+=16) {
                         if(m_terrain.hasChunkAt(ddx, ddy)){
@@ -187,6 +193,7 @@ void MyGL::tick() {
 
             }
         }
+        m_time = 0;
     }
 }
 
@@ -253,10 +260,6 @@ void MyGL::renderTerrain() {
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
-    float amount = 2.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
-    }
     // http://doc.qt.io/qt-5/qt.html#Key-enum
     // This could all be much more efficient if a switch
     // statement were used, but I really dislike their
@@ -278,8 +281,18 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = true;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = true;
+    } else if (e->key() == Qt::Key_Right) {
+        m_inputs.mouseX = 5.f;
+    } else if (e->key() == Qt::Key_Left) {
+        m_inputs.mouseX = -5.f;
+    } else if (e->key() == Qt::Key_Up) {
+        m_inputs.mouseY = -5.f;
+    } else if (e->key() == Qt::Key_Down) {
+        m_inputs.mouseY = 5.f;
+    } else if (e->key() == Qt::Key_M) {
+        mouseMove = !mouseMove;
     }
 }
 
@@ -298,60 +311,58 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
         m_inputs.ePressed = false;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = false;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = false;
     }
 }
 
-void MyGL::mouseMoveEvent(QMouseEvent *e) {
-    // TODO
-    if (e->buttons() & Qt::LeftButton) {
-        const float SPD = 0.15;
-        glm::vec2 pos(e->pos().x(), e->pos().y());
-        glm::vec2 diff = SPD * (pos - m_mousePosPrev);
-        m_mousePosPrev = pos;
-        m_inputs.mouseX = diff.x;
-        m_inputs.mouseY = diff.y;
-    }
+void MyGL::updateMouse() {
+    float sens = 0.15;
+    QPoint cur = QWidget::mapFromGlobal(QCursor::pos());
+    m_inputs.mouseX = sens * (cur.x() - width() / 2);
+    m_inputs.mouseY = sens * (cur.y() - height() / 2);
+    moveMouseToCenter();
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     // TODO
     if(e->buttons() & Qt::LeftButton)
     {
-        m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
-
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
         glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
+            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+            Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+            if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+            if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+            if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+            if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+            qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
         }
-    }
-
-    if (e->buttons() & Qt::RightButton) {
+    } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = m_player.getLook() * bound;
+        glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
-            BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
-            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x-1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x-1, block_pos.y, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y+1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y+1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y-1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y-1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z+1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z+1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
+        if (found) {
+            BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+            glm::vec3 backward = -glm::normalize(ray_dir);
+            glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
+            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+            qDebug() << QString::fromStdString(glm::to_string(restart));
+            qDebug() << dist;
+            glm::ivec3 bpos;
+            if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
+                m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
+            } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
+                m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
             }
         }
     }

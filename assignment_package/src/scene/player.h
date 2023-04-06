@@ -8,12 +8,12 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
-    bool m_flightMode;
-    const float maxVelo = 6;
-    const float acc = 3;
+    float theta, phi; //horiz, vert
+    float airtime, maxair;
 
-    void orientCamera();
     void processInputs(InputBundle &inputs);
+    bool checkAirborne();
+    void orientCamera();
     void computePhysics(float dT);
     void checkCollision();
 
@@ -25,6 +25,7 @@ public:
     const Camera& mcr_camera;
 
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
+    
     virtual ~Player() override;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
