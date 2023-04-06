@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>403</width>
-    <height>344</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -286,6 +286,42 @@
     <rect>
      <x>120</x>
      <y>290</y>
+     <width>271</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>UNK</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_13">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>320</y>
+     <width>91</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>Server IP:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="serverIPLabel">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>320</y>
      <width>271</width>
      <height>31</height>
     </rect>

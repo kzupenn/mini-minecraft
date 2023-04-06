@@ -2,8 +2,8 @@
 #include <QString>
 #include <iostream>
 
-Player::Player(glm::vec3 pos, const Terrain &terrain)
-    : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
+Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
+    : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
       airtime(0), maxair(45)
@@ -231,4 +231,147 @@ QString Player::lookAsQString() const {
 glm::vec3 Player::getLook()
 {
     return this->m_forward;
+}
+
+float Player::getPhi() {
+    return phi;
+}
+
+float Player::getTheta() {
+    return theta;
+}
+
+void Player::setState(glm::vec3 p, float f1, float f2) {
+    m_position = p;
+    m_camera.setPos(p);
+    theta = f1;
+    phi = f2;
+}
+
+void Player::createVBOdata() {
+    std::vector<glm::vec4> pos, nor, col, inter;
+    std::vector<int> idx;
+    //Front face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+
+    //Right face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+
+    //Left face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Back face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+
+    //Top face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Bottom face
+    //UR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+
+//    for(int i = 0; i < pos.size(); i++) {
+//        pos[i] += glm::vec4(m_position, 1.f);
+//        //qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
+//    }
+
+    //Front
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,1,0);
+    }
+    //Right
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(1,0,0,0);
+    }
+    //Left
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(-1,0,0,0);
+    }
+    //Back
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,-1,0);
+    }
+    //Top
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,1,0,0);
+    }
+    //Bottom
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,-1,0,0);
+    }
+
+    //colors
+    for(int i = 0; i < pos.size(); i++) {
+        col.emplace_back(1, 0, 0, 1);
+    }
+
+    for(int i = 0; i < 6; i++){
+        idx.push_back(i*4);
+        idx.push_back(i*4+1);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4+3);
+    }
+
+    m_count = idx.size();
+
+    for (int i = 0; i < pos.size(); i++) {
+       inter.push_back(pos[i]);
+       inter.push_back(nor[i]);
+       inter.push_back(col[i]);
+    }
+
+    generateIdx();
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
+
+}
+GLenum Player::drawMode() {
+    return GL_TRIANGLES;
 }

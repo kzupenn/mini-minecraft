@@ -12,19 +12,20 @@ private:
     float airtime, maxair;
 
     void processInputs(InputBundle &inputs);
+    bool checkAirborne();
+    void orientCamera();
     void computePhysics(float dT);
     void checkCollision();
 
 public:
+    float theta, phi; //horiz, vert
+
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-    bool m_flightMode;
-    bool checkAirborne();
-    void orientCamera();
-
-    Player(glm::vec3 pos, const Terrain &terrain);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
+    
     virtual ~Player() override;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
@@ -57,4 +58,12 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+
+    float getTheta();
+    float getPhi();
+
+    void setState(glm::vec3, float, float); //use this to set the state of other players from server packet
+
+    virtual GLenum drawMode();
+    virtual void createVBOdata();
 };

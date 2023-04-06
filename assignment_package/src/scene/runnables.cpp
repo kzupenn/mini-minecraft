@@ -29,3 +29,25 @@ void StructureWorker:: run() {
         break;
     }
 }
+
+ServerConnectionWorker::ServerConnectionWorker(Server* ss): s(ss){}
+ServerConnectionWorker::~ServerConnectionWorker(){};
+
+void ServerConnectionWorker:: run() {
+    s->start();
+}
+
+ServerThreadWorker::ServerThreadWorker(Server* ss, int tt): s(ss), t(tt){}
+ServerThreadWorker::~ServerThreadWorker(){};
+
+void ServerThreadWorker:: run() {
+    s->handle_client(t);
+}
+
+ClientWorker::ClientWorker(MyGL* ss): s(ss){}
+ClientWorker::~ClientWorker(){};
+
+void ClientWorker:: run() {
+    s->run_client();
+}
+
