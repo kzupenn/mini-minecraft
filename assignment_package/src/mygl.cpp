@@ -24,7 +24,7 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this), time(0),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_mousePosPrev(0)
+      m_mousePosPrev(0), m_crosshair(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -37,10 +37,15 @@ void MyGL::start(bool joinServer) {
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
 
-    //distribution tests
+    //set up overlays
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
+    m_crosshair.createVBOdata();
+
+    //noise function distribution tests
     //distTest();
     //biomeDist();
 
+    //check if we need to host a server
     if(!joinServer) {
         SERVER = mkU<Server>(1);
         while(!SERVER->setup);
@@ -49,6 +54,7 @@ void MyGL::start(bool joinServer) {
 
     verified_server = false;
     init_client();
+
     //block until we get world spawn info
     while(!verified_server);
     m_player.setState(m_terrain.worldSpawn, 0, 0);
@@ -113,6 +119,7 @@ void MyGL::resizeGL(int w, int h) {
     //our scene's camera view.
     m_player.setCameraWidthHeight(static_cast<unsigned int>(w), static_cast<unsigned int>(h));
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
 
@@ -208,9 +215,9 @@ void MyGL::paintGL() {
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
 
     renderTerrain();
-    m_player.createVBOdata();
-    m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
-    m_progLambert.drawInterleaved(m_player);
+    //m_player.createVBOdata();
+    //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
+    //m_progLambert.drawInterleaved(m_player);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
@@ -220,9 +227,13 @@ void MyGL::paintGL() {
     m_multiplayers_mutex.unlock();
 
     glDisable(GL_DEPTH_TEST);
+//    m_progFlat.setModelMatrix(glm::mat4());
+//    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
+//    m_progFlat.draw(m_worldAxes);
+
     m_progFlat.setModelMatrix(glm::mat4());
-    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_progFlat.draw(m_worldAxes);
+    m_progFlat.setViewProjMatrix(overlayTransform);
+    m_progFlat.draw(m_crosshair);
     glEnable(GL_DEPTH_TEST);
 }
 

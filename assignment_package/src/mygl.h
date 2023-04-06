@@ -2,6 +2,7 @@
 #define MYGL_H
 
 #include "openglcontext.h"
+#include "scene/crosshair.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
 #include "scene/camera.h"
@@ -21,7 +22,9 @@ class MyGL : public OpenGLContext
 {
     Q_OBJECT
 private:
+    glm::mat4 overlayTransform;
     WorldAxes m_worldAxes; // A wireframe representation of the world axes. It is hard-coded to sit centered at (32, 128, 32).
+    Crosshair m_crosshair; //crosshair so we know where we're looking
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
