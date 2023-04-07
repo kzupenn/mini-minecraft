@@ -62,7 +62,10 @@ void MyGL::initializeGL()
     // Set a few settings/modes in OpenGL rendering
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
+
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
@@ -311,9 +314,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float dist;
         glm::ivec3 block_pos;
         if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
-            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-            qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
         }
     } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
