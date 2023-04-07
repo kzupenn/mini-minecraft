@@ -1,3 +1,12 @@
+# Milestone 2
+
+# Kevin Zhang
+## Server
+Set up a peer-to-peer server and packet system. Players can join other players servers by ip. Currently only packets for player movement and world initialization are fully implemented.
+The server also calculates a safe world spawn point for survival-based gameplay.
+## Font
+WIP
+
 # Milestone 1
 
 # Leon Kabue
