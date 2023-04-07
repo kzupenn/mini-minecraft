@@ -147,6 +147,7 @@ void ShaderProgram::setGeometryColor(glm::vec4 color)
 //This function, as its name implies, uses the passed in GL widget
 void ShaderProgram::draw(Drawable &d)
 {
+    context->printGLErrorLog();
     useMe();
 
     if (unifSampler2D != -1) {
@@ -156,7 +157,7 @@ void ShaderProgram::draw(Drawable &d)
     if(d.elemCount() < 0) {
         throw std::out_of_range("Attempting to draw a drawable with m_count of " + std::to_string(d.elemCount()) + "!");
     }
-
+    context->printGLErrorLog();
     // Each of the following blocks checks that:
     //   * This shader has this attribute, and
     //   * This Drawable has a vertex buffer for this attribute.
@@ -170,7 +171,7 @@ void ShaderProgram::draw(Drawable &d)
         context->glEnableVertexAttribArray(attrPos);
         context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 0, NULL);
     }
-
+    context->printGLErrorLog();
     if (attrNor != -1 && d.bindNor()) {
         context->glEnableVertexAttribArray(attrNor);
         context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 0, NULL);
@@ -180,21 +181,15 @@ void ShaderProgram::draw(Drawable &d)
         context->glEnableVertexAttribArray(attrCol);
         context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 0, NULL);
     }
-
-    if (attrUV != -1 && d.bindUV()) {
-        context->glEnableVertexAttribArray(attrUV);
-        context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 0, NULL);
-    }
-
+    context->printGLErrorLog();
     // Bind the index buffer and then draw shapes from it.
     // This invokes the shader program, which accesses the vertex buffers.
     d.bindIdx();
     context->glDrawElements(d.drawMode(), d.elemCount(), GL_UNSIGNED_INT, 0);
-
+    context->printGLErrorLog();
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
-    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
     context->printGLErrorLog();
 }
 
@@ -359,6 +354,7 @@ void ShaderProgram::setTime(int t)
     if (unifTime != -1) {
         context->glUniform1i(unifTime, t);
     }
+    context->printGLErrorLog();
 }
 
 

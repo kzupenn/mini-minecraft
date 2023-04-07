@@ -15,16 +15,15 @@ uniform vec4 u_Color; // The color with which to render this instance of geometr
 
 uniform sampler2D u_Texture; // The texture to be read from by this shader
 
+uniform int uTime;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-//in vec4 fs_Col;
 in vec3 fs_UV;
 
-in float time;
 
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
@@ -78,14 +77,16 @@ void main()
 {
     // Material base color (before shading)
 
-        float t = cos(time * 0.07);
-        clamp(t, 0.f, 1.f);
+        float t = mod(float(uTime), 17) / 17;
+        t = clamp(t, 0.f, 1.f);
+
+        vec2 uv = vec2(fs_UV);
 
         if (fs_UV.z == 1.f) {
-            fs_UV.x = fs_UV.x + t/16.f;
+            uv.y = fs_UV.y - 1.f/16.f - t/16.f;
         }
 
-        vec4 diffuseColor = texture(u_Texture, vec2(fs_UV));
+        vec4 diffuseColor = texture(u_Texture, vec2(uv));
 
         float a = diffuseColor.w;
         //vec4 diffuseColor = fs_Col;

@@ -7,7 +7,7 @@ void printVec(glm::vec4 a) {
 }
 
 bool checkTransparent(BlockType bt) {
-    return bt == EMPTY;
+    return bt == EMPTY || bt == WATER || bt ==  GLASS;
 }
 
 bool isTransparent(int x, int y, int z, Chunk* c) {
@@ -310,10 +310,10 @@ void Chunk::createVBOdata() {
                             UVs[3] = glm::vec4(1.f/16.f, 16.f/16.f, 0.f, 1.f);
                             break;
                         case WATER:
-                            UVs[0] = glm::vec4(13.f/16.f, 3.f/16.f, 1.f, 1.f);
-                            UVs[1] = glm::vec4(14.f/16.f, 3.f/16.f, 1.f, 1.f);
-                            UVs[2] = glm::vec4(14.f/16.f, 4.f/16.f, 1.f, 1.f);
-                            UVs[3] = glm::vec4(13.f/16.f, 4.f/16.f, 1.f, 1.f);
+                            UVs[0] = glm::vec4(14.f/16.f, 4.f/16.f, 1.f, 1.f);
+                            UVs[1] = glm::vec4(15.f/16.f, 4.f/16.f, 1.f, 1.f);
+                            UVs[2] = glm::vec4(15.f/16.f, 5.f/16.f, 1.f, 1.f);
+                            UVs[3] = glm::vec4(14.f/16.f, 5.f/16.f, 1.f, 1.f);
                             break;
                         case SAND:
                             UVs[0] = glm::vec4(2.f/16.f, 14.f/16.f, 0.f, 1.f);
