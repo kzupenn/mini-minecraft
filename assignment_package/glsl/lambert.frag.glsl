@@ -78,8 +78,13 @@ void main()
 {
     // Material base color (before shading)
 
+//        if (fs_UV.z) {
+
+//        }
+
         vec4 diffuseColor = texture(u_Texture, vec2(fs_UV));
 
+        float a = diffuseColor.w;
         //vec4 diffuseColor = fs_Col;
         diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
 
@@ -95,5 +100,5 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+        out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
 }

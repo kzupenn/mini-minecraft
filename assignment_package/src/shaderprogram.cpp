@@ -223,22 +223,17 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
     if (d.bindInter()) {
         if (attrPos != -1) {
             context->glEnableVertexAttribArray(attrPos);
-            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) 0);
+            context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) 0);
         }
         context->printGLErrorLog();
         if (attrNor != -1) {
             context->glEnableVertexAttribArray(attrNor);
-            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) sizeof(glm::vec4));
-        }
-        context->printGLErrorLog();
-        if (attrCol != -1) {
-            context->glEnableVertexAttribArray(attrCol);
-            context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (2*sizeof(glm::vec4)));
+            context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) sizeof(glm::vec4));
         }
         context->printGLErrorLog();
         if (attrUV != -1) {
             context->glEnableVertexAttribArray(attrUV);
-            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 4 * sizeof(glm::vec4), (void*) (3*sizeof(glm::vec4)));
+            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) (2*sizeof(glm::vec4)));
         }
         context->printGLErrorLog();
     }
@@ -251,7 +246,6 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
 
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
-    if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
     if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
