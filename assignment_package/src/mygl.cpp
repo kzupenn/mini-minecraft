@@ -8,15 +8,16 @@
 
 #include "algo/perlin.h"
 #include "scene/biome.h"
+#include "scene/font.h"
 #include "scene/structure.h"
 #include <QDateTime>
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      time(0), m_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      time(0), m_block_texture(this), m_font_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(glm::vec2(width() / 2, height() / 2)),
       ip("localhost")
 {
@@ -71,8 +72,13 @@ void MyGL::initializeGL()
     glGenVertexArrays(1, &vao);
 
     //load texture into memory and store on gpu
-    m_texture.create(":/textures/minecraft_textures_all.png");
-    m_texture.load(0);
+    m_block_texture.create(":/textures/minecraft_textures_all.png");
+    m_block_texture.load(0);
+
+    m_font_texture.create(":/textures/ascii.png");
+    m_font_texture.load(1);
+
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
 
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
@@ -81,13 +87,14 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
+    m_progOverlay.create(":/glsl/overlay.vert.glsl", ":/glsl/overlay.frag.glsl");
     m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/instanced.frag.glsl");
 
     // Set a color with which to draw geometry.
     // This will ultimately not be used when you change
     // your program to render Chunks with vertex colors
     // and UV coordinates
-    m_progLambert.setGeometryColor(glm::vec4(0,1,0,1));
+    //m_progLambert.setGeometryColor(glm::vec4(0,1,0,1));
 
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
@@ -105,8 +112,12 @@ void MyGL::resizeGL(int w, int h) {
 
     m_progLambert.setViewProjMatrix(viewproj);
     m_progFlat.setViewProjMatrix(viewproj);
+    m_progOverlay.setViewProjMatrix(viewproj);
 
-    m_texture.bind(0);
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
+
+    m_block_texture.bind(0);
+    //m_font_texture.bind(1);
 
     printGLErrorLog();
 }
@@ -191,13 +202,24 @@ void MyGL::paintGL() {
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_texture.bind(0);
+    m_block_texture.bind(0);
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
-    m_progFlat.setModelMatrix(glm::mat4());
-    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_progFlat.draw(m_worldAxes);
+//    m_progFlat.setModelMatrix(glm::mat4());
+//    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
+//    m_progFlat.draw(m_worldAxes);
+
+    m_progOverlay.setModelMatrix(glm::mat4());
+    m_progOverlay.setViewProjMatrix(overlayTransform);
+    m_font_texture.bind(0);
+    // TO DO: TRANSLATE THE FONT WHEN DRAWING
+//    Font f1 = Font(this, "abcdefghijklmnopqrstuvwxyz", glm::vec2(0, 0), glm::vec4(1,1,1,1), 50);
+//    f1.createVBOdata();
+//    m_progOverlay.draw(f1);
+    Font f2 = Font(this, "HELLO WORLD :)", glm::vec2(0, 70), glm::vec4(1,1,1,1), 50);
+    f2.createVBOdata();
+    m_progOverlay.draw(f2);
     glEnable(GL_DEPTH_TEST);
 }
 

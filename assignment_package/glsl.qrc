@@ -6,5 +6,7 @@
         <file>glsl/flat.vert.glsl</file>
         <file>glsl/instanced.vert.glsl</file>
         <file>glsl/instanced.frag.glsl</file>
+        <file>glsl/overlay.frag.glsl</file>
+        <file>glsl/overlay.vert.glsl</file>
     </qresource>
 </RCC>
