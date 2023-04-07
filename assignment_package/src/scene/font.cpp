@@ -107,10 +107,6 @@ void Font::setText(std::string s) {
     text = s;
 }
 
-void Font::setPos(glm::vec2 v) {
-    pos = v;
-}
-
 void Font::setSize(float f) {
     size = f;
 }
@@ -119,7 +115,7 @@ void Font::createVBOdata() {
     std::vector<glm::vec4> VBOpos, uvs, col;
     std::vector<int> idx;
 
-    float width = 0;
+    width = 0;
 
     for(char& c: text) {
         idx.push_back(VBOpos.size());

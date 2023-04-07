@@ -20,7 +20,6 @@ public:
 class Inventory: public Drawable {
 private:
     int max_slots;
-    std::vector<std::optional<Item>> items;
     OpenGLContext* cnt;
 public:
     Inventory(OpenGLContext* context, int max_count, bool has_hotbar) : Drawable(context), max_slots(max_count), cnt(context), hotbar(context, 0), showInventory(false){
@@ -31,6 +30,8 @@ public:
     virtual ~Inventory(){};
     virtual void createVBOdata();
     virtual GLenum drawMode();
+    std::vector<std::optional<Item>> items;
+
     bool addItem(Item&); //adds item to first free slot
     bool addItem(Item&, int); //adds item to slot number
     Item takeItem(int num, int slot_num); //take items from the slot
