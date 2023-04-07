@@ -174,6 +174,24 @@ void Font::createVBOdata() {
     mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
 }
 
+void Font::unbindVBO() {
+    generateIdx();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufIdx);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, m_count * sizeof(GLuint), nullptr, GL_STATIC_DRAW);
+
+    generatePos();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, (m_count*2/3) * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+
+    generateUV();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufUV);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, (m_count*2/3) * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+
+    generateCol();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, (m_count*2/3) * sizeof(glm::vec4), nullptr, GL_STATIC_DRAW);
+}
+
 GLenum Font::drawMode(){
     return GL_TRIANGLES;
 }

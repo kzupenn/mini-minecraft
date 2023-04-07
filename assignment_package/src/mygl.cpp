@@ -9,6 +9,7 @@
 #include "algo/perlin.h"
 #include "scene/biome.h"
 #include "scene/font.h"
+#include "scene/inventory.h"
 #include "scene/structure.h"
 #include <QDateTime>
 
@@ -16,8 +17,8 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      time(0), m_block_texture(this), m_font_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
+      time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       m_mousePosPrev(glm::vec2(width() / 2, height() / 2)),
       ip("localhost")
 {
@@ -37,6 +38,9 @@ void MyGL::start() {
     //biomeDist();
     //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
     //m_terrain.createInitScene();
+
+    m_player.m_inventory.createVBOdata();
+    m_player.m_inventory.hotbar.createVBOdata();
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -80,6 +84,9 @@ void MyGL::initializeGL()
 
     m_font_texture.create(":/textures/ascii.png");
     m_font_texture.load(1);
+
+    m_inventory_texture.create(":/textures/inventory.png");
+    m_inventory_texture.load(2);
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
 
@@ -216,14 +223,22 @@ void MyGL::paintGL() {
     m_progOverlay.setModelMatrix(glm::mat4());
     m_progOverlay.setViewProjMatrix(overlayTransform);
     m_font_texture.bind(0);
-    // TO DO: TRANSLATE THE FONT WHEN DRAWING
-//    Font f1 = Font(this, "abcdefghijklmnopqrstuvwxyz", glm::vec2(0, 0), glm::vec4(1,1,1,1), 50);
-//    f1.createVBOdata();
-//    m_progOverlay.draw(f1);
-    Font f2 = Font(this, "HELLO WORLD :)", glm::vec2(0, 70), glm::vec4(1,1,1,1), 50);
-    f2.createVBOdata();
-    m_progOverlay.draw(f2);
-    glEnable(GL_DEPTH_TEST);
+
+//    Font f2 = Font(this, "HELLO WORLD :)", glm::vec2(0, 70), glm::vec4(1,1,1,1), 50);
+//    f2.createVBOdata();
+//    m_progOverlay.draw(f2);
+//    glEnable(GL_DEPTH_TEST);
+
+    //inventory
+    m_inventory_texture.bind(0);
+    m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(0, -height()+10, 0)));
+    m_progOverlay.draw(m_player.m_inventory.hotbar);
+
+    if(m_player.m_inventory.showInventory) {
+        m_progOverlay.setModelMatrix(glm::mat4(1));
+        m_progOverlay.draw(m_player.m_inventory);
+    }
+
 }
 
 // TODO: Change this so it renders the nine zones of generated
@@ -261,8 +276,8 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.dPressed = true;
     } else if (e->key() == Qt::Key_A) {
         m_inputs.aPressed = true;
-    } else if (e->key() == Qt::Key_Q) {
-        m_inputs.qPressed = true;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = true;
     } else if (e->key() == Qt::Key_E) {
         m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
@@ -281,14 +296,45 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
         m_inputs.dPressed = false;
     } else if (e->key() == Qt::Key_A) {
         m_inputs.aPressed = false;
-    } else if (e->key() == Qt::Key_Q) {
-        m_inputs.qPressed = false;
-    } else if (e->key() == Qt::Key_E) {
-        m_inputs.ePressed = false;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = false;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = false;
     } else if (e->key() ==Qt::Key_Space) {
         m_inputs.spacePressed = false;
+    }
+    //inventory hotkeys
+    else if (e->key() == Qt::Key_E) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_Q) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_1) {
+        m_player.m_inventory.hotbar.selected = 0;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_2) {
+        m_player.m_inventory.hotbar.selected = 1;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_3) {
+        m_player.m_inventory.hotbar.selected = 2;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_4) {
+        m_player.m_inventory.hotbar.selected = 3;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_5) {
+        m_player.m_inventory.hotbar.selected = 4;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_6) {
+        m_player.m_inventory.hotbar.selected = 5;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_7) {
+        m_player.m_inventory.hotbar.selected = 6;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_8) {
+        m_player.m_inventory.hotbar.selected = 7;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_9) {
+        m_player.m_inventory.hotbar.selected = 8;
+        m_player.m_inventory.hotbar.createVBOdata();
     }
 }
 

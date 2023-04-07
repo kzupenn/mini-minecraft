@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 #include "camera.h"
+#include "scene/inventory.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -26,8 +27,9 @@ public:
     void resetAir();
     void orientCamera();
 
-    Player(glm::vec3 pos, const Terrain &terrain);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context);
     virtual ~Player() override;
+    Inventory m_inventory;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 

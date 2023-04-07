@@ -20,5 +20,6 @@ public:
     void setSize(float);
 
     virtual void createVBOdata();
+    void unbindVBO();
     virtual GLenum drawMode();
 };
