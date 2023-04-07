@@ -48,7 +48,7 @@ void main()
     fs_Pos = vs_Pos;
 //    fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
     fs_UV = vec3(vs_UV);
-    time = uTime;
+    time = float(uTime);
 
     mat3 invTranspose = mat3(u_ModelInvTr);
     fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
