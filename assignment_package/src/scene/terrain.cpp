@@ -496,7 +496,8 @@ void Terrain::createSpawn()
     std::vector<glm::vec2> spiral;
     createGroundThread(glm::vec2(0, 0));
     spiral.emplace_back(0, 0);
-    for(int sl = 16; sl <= 11*16; sl+=16) {
+    int spawnRadius = 16; //176;
+    for(int sl = 16; sl <= spawnRadius; sl+=16) {
         for(int dx = -sl; dx <= sl; dx+= sl*2) {
             for(int dy = -sl; dy <= sl; dy+=16) {
                 createGroundThread(glm::vec2(dx, dy));
@@ -514,8 +515,8 @@ void Terrain::createSpawn()
     //block until all chunks are loaded
     while(!setSpawn){
         bool done = true;
-        for(int dx = -176; dx <= 176; dx+=16) {
-            for(int dy = -176; dy <= 176; dy+=16) {
+        for(int dx = -spawnRadius; dx <= spawnRadius; dx+=16) {
+            for(int dy = -spawnRadius; dy <= spawnRadius; dy+=16) {
                 if(!hasChunkAt(dx, dy)){
                     done = false;
                     break;

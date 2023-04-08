@@ -29,7 +29,6 @@ private:
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram m_progOverlay; //for overlays
-    glm::mat4 overlayTransform;
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.

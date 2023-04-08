@@ -4,7 +4,7 @@
 
 
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
-    : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
+    : Entity(pos, m_context), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
       airtime(0), maxair(45)

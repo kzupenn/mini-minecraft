@@ -24,13 +24,6 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-  //not sure to keep
-    bool m_flightMode;
-    bool checkAirborne();
-    void resetAir();
-    void orientCamera();
-    // not sure to keep
-
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
     
     virtual ~Player() override;
