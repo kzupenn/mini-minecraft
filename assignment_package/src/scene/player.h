@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 #include "camera.h"
+#include "scene/inventory.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -23,9 +24,17 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
 
+  //not sure to keep
+    bool m_flightMode;
+    bool checkAirborne();
+    void resetAir();
+    void orientCamera();
+    // not sure to keep
+
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
     
     virtual ~Player() override;
+    Inventory m_inventory;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 

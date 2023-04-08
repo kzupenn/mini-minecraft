@@ -10,6 +10,9 @@ SOURCES += \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
     $$PWD/scene/biome.cpp \
+    $$PWD/scene/font.cpp \
+    $$PWD/scene/inventory.cpp \
+    $$PWD/scene/item.cpp \
     $$PWD/scene/crosshair.cpp \
     $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
@@ -30,6 +33,7 @@ SOURCES += \
     $$PWD/scene/chunk.cpp \
     $$PWD/algo/perlin.cpp \
     $$PWD/server/server.cpp \
+    $$PWD/texture.cpp
 
 HEADERS += \
     $$PWD/algo/fractal.h \
@@ -39,6 +43,8 @@ HEADERS += \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
     $$PWD/scene/biome.h \
+    $$PWD/scene/font.h \
+    $$PWD/scene/item.h \
     $$PWD/scene/crosshair.h \
     $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
@@ -61,4 +67,10 @@ HEADERS += \
     $$PWD/scene/chunk.h \
     $$PWD/algo/perlin.h \
     $$PWD/server/server.h \
+    $$PWD/scene/inventory.h \
+    $$PWD/texture.h
+
+RESOURCES += \
+    $$PWD/textures.qrc \
+    $$PWD/textures.qrc
 

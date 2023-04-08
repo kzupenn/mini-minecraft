@@ -13,6 +13,8 @@
 
 #include "algo/perlin.h"
 #include "scene/biome.h"
+#include "scene/font.h"
+#include "scene/inventory.h"
 #include "scene/runnables.h"
 #include "scene/structure.h"
 #include "server/getip.h"
@@ -21,11 +23,12 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
-      m_time(0), mouseMove(false),
-      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_crosshair(this)
+      time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_mousePosPrev(glm::vec2(width() / 2, height() / 2)),
+      ip("localhost"), m_crosshair(this)
+      
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -60,6 +63,49 @@ void MyGL::start(bool joinServer) {
     while(!verified_server);
     m_player.setState(m_terrain.worldSpawn, 0, 0);
 
+    m_player.m_inventory.createVBOdata();
+    m_player.m_inventory.hotbar.createVBOdata();
+    Item a = Item(this, DIAMOND_HOE, 1);
+    Item b = Item(this, DIAMOND_LEGGINGS, 1);
+    Item c = Item(this, GOLD_NUGGET, 64);
+    Item d = Item(this, IRON_NUGGET, 8);
+    Item e = Item(this, IRON_BOOTS, 1);
+    Item f = Item(this, STONE_SWORD, 1);
+    Item g = Item(this, DIAMOND_SWORD, 1);
+    Item h = Item(this, IRON_CHESTPLATE, 1);
+    Item i = Item(this, STRING, 1);
+    Item j = Item(this, IRON_HELMET, 1);
+    Item k = Item(this, IRON_INGOT, 9);
+    m_player.m_inventory.addItem(a);
+    m_player.m_inventory.addItem(b);
+    m_player.m_inventory.addItem(c);
+    m_player.m_inventory.addItem(d);
+    m_player.m_inventory.addItem(e);
+    m_player.m_inventory.addItem(f);
+    m_player.m_inventory.addItem(g);
+    m_player.m_inventory.addItem(h);
+    m_player.m_inventory.addItem(i);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(k);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(j);
+
+
+
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
 }
@@ -86,7 +132,10 @@ void MyGL::initializeGL()
     // Set a few settings/modes in OpenGL rendering
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
+
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
@@ -95,6 +144,18 @@ void MyGL::initializeGL()
     // Create a Vertex Attribute Object
     glGenVertexArrays(1, &vao);
 
+    //load texture into memory and store on gpu
+    m_block_texture.create(":/textures/block_item_textures.png");
+    m_block_texture.load(0);
+
+    m_font_texture.create(":/textures/ascii.png");
+    m_font_texture.load(1);
+
+    m_inventory_texture.create(":/textures/inventory.png");
+    m_inventory_texture.load(2);
+
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
+
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
 
@@ -102,13 +163,15 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    m_progOverlay.create(":/glsl/overlay.vert.glsl", ":/glsl/overlay.frag.glsl");
+    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/instanced.frag.glsl");
 
     // Set a color with which to draw geometry.
     // This will ultimately not be used when you change
     // your program to render Chunks with vertex colors
     // and UV coordinates
-    m_progLambert.setGeometryColor(glm::vec4(0,1,0,1));
+    //m_progLambert.setGeometryColor(glm::vec4(0,1,0,1));
+
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -126,6 +189,12 @@ void MyGL::resizeGL(int w, int h) {
 
     m_progLambert.setViewProjMatrix(viewproj);
     m_progFlat.setViewProjMatrix(viewproj);
+    m_progOverlay.setViewProjMatrix(viewproj);
+
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
+
+    m_block_texture.bind(0);
+    //m_font_texture.bind(1);
 
     printGLErrorLog();
 }
@@ -217,10 +286,11 @@ void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    m_progLambert.setTime(time);
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-
+    m_block_texture.bind(0);
     renderTerrain();
     //m_player.createVBOdata();
     //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
@@ -234,13 +304,91 @@ void MyGL::paintGL() {
     m_multiplayers_mutex.unlock();
 
     glDisable(GL_DEPTH_TEST);
-//    m_progFlat.setModelMatrix(glm::mat4());
-//    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-//    m_progFlat.draw(m_worldAxes);
-
+    
     m_progFlat.setModelMatrix(glm::mat4());
     m_progFlat.setViewProjMatrix(overlayTransform);
     m_progFlat.draw(m_crosshair);
+
+    m_progOverlay.setModelMatrix(glm::mat4());
+    m_progOverlay.setViewProjMatrix(overlayTransform);
+    m_font_texture.bind(0);
+
+    //inventory gui
+    m_inventory_texture.bind(0);
+    m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(0, -height()+10, 0)));
+    m_progOverlay.draw(m_player.m_inventory.hotbar);
+
+    if(m_player.m_inventory.showInventory) {
+        m_progOverlay.setModelMatrix(glm::mat4(1));
+        m_progOverlay.draw(m_player.m_inventory);
+    }
+
+    //inventory items
+    m_block_texture.bind(0);
+    if(m_player.m_inventory.showInventory){
+        for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
+            std::optional<Item>& item = m_player.m_inventory.items[i];
+            if(item) {
+                item.value().createVBOdata();
+                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0))*
+                                             glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
+                m_progOverlay.draw(item.value());
+            }
+        }
+        for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+            std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
+            if(item) {
+                item.value().createVBOdata();
+                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0))*
+                                             glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
+                m_progOverlay.draw(item.value());
+            }
+        }
+    }
+
+    for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+        std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
+        if(item) {
+            item.value().createVBOdata();
+            m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-450+i*100 + 20, 30-height(), 0))*
+                                         glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
+            m_progOverlay.draw(item.value());
+        }
+    }
+
+    //inventory numbers
+    m_font_texture.bind(0);
+    if(m_player.m_inventory.showInventory){
+        for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
+            std::optional<Item>& item = m_player.m_inventory.items[i];
+            if(item && item->item_count > 1) {
+                Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 30);
+                ff.createVBOdata();
+                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65-ff.width, -5-550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0)));
+                m_progOverlay.draw(ff);
+            }
+        }
+        for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+            std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
+            if(item && item->item_count > 1) {
+                Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 30);
+                ff.createVBOdata();
+                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65-ff.width, -5-550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0)));
+                m_progOverlay.draw(ff);
+            }
+        }
+    }
+
+    for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+        std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
+        if(item && item->item_count > 1) {
+            Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 35);
+            ff.createVBOdata();
+            m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-450+i*100 + 96-ff.width, 10-height(), 0)));
+            m_progOverlay.draw(ff);
+        }
+    }
+    
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -275,8 +423,8 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.dPressed = true;
     } else if (e->key() == Qt::Key_A) {
         m_inputs.aPressed = true;
-    } else if (e->key() == Qt::Key_Q) {
-        m_inputs.qPressed = true;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = true;
     } else if (e->key() == Qt::Key_E) {
         m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
@@ -305,14 +453,45 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
         m_inputs.dPressed = false;
     } else if (e->key() == Qt::Key_A) {
         m_inputs.aPressed = false;
-    } else if (e->key() == Qt::Key_Q) {
-        m_inputs.qPressed = false;
-    } else if (e->key() == Qt::Key_E) {
-        m_inputs.ePressed = false;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = false;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = false;
     } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = false;
+    }
+    //inventory hotkeys
+    else if (e->key() == Qt::Key_E) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_Q) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_1) {
+        m_player.m_inventory.hotbar.selected = 0;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_2) {
+        m_player.m_inventory.hotbar.selected = 1;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_3) {
+        m_player.m_inventory.hotbar.selected = 2;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_4) {
+        m_player.m_inventory.hotbar.selected = 3;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_5) {
+        m_player.m_inventory.hotbar.selected = 4;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_6) {
+        m_player.m_inventory.hotbar.selected = 5;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_7) {
+        m_player.m_inventory.hotbar.selected = 6;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_8) {
+        m_player.m_inventory.hotbar.selected = 7;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_9) {
+        m_player.m_inventory.hotbar.selected = 8;
+        m_player.m_inventory.hotbar.createVBOdata();
     }
 }
 

@@ -8,7 +8,7 @@
 using namespace glm;
 
 enum PacketType: unsigned char {
-    PLAYER_STATE, PLAYER_INFO, WORLD_INIT
+    PLAYER_STATE, WORLD_INIT, CHUNK_CHANGE, BLOCK_CHANGE
 };
 
 struct Packet{
@@ -36,13 +36,39 @@ struct WorldInitPacket : Packet {
 };
 
 //Chunk changes packet
-//send over the changes made to a chunk
+//send over the changes made to a chunk so far
 struct ChunkChangePacket: Packet {
     int64_t chunkPos;
-    std::vector<std::pair<vec2, BlockType>> changes;
+    std::vector<std::pair<vec3, BlockType>> changes;
+    ChunkChangePacket(int64_t cp, std::vector<std::pair<vec3, BlockType>> ch):Packet(CHUNK_CHANGE), chunkPos(cp), changes(ch) {};
+    ~ChunkChangePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
+        int foo = changes.size();
+        out << CHUNK_CHANGE << chunkPos << foo;
+        for(std::pair<vec3, BlockType> &p: changes) {
+            unsigned char xz = 16*p.first.x + p.first.z;
+            unsigned char y = p.first.y;
+            out << xz << y << p.second;
+        }
+        return buffer;
+    }
+};
+
+//Block changes packet
+//send over a singular change
+struct BlockChangePacket: Packet {
+    int64_t chunkPos;
+    unsigned char yPos;
+    BlockType newBlock;
+    BlockChangePacket(int64_t cp, unsigned char yp, BlockType bt) : Packet(BLOCK_CHANGE), chunkPos(cp), yPos(yp), newBlock(bt){}
+    ~BlockChangePacket(){};
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer,QIODevice::ReadWrite);
+        out << BLOCK_CHANGE << chunkPos << yPos << newBlock;
+        return buffer;
     }
 };
 

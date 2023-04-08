@@ -8,6 +8,7 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "texture.h"
 #include "server/server.h"
 
 #include <QOpenGLVertexArrayObject>
@@ -27,6 +28,8 @@ private:
     Crosshair m_crosshair; //crosshair so we know where we're looking
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
+    ShaderProgram m_progOverlay; //for overlays
+    glm::mat4 overlayTransform;
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
@@ -40,6 +43,10 @@ private:
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int m_time; //to get tick number
     bool mouseMove;
+
+    Texture m_block_texture;
+    Texture m_font_texture;
+    Texture m_inventory_texture;
 
     long long m_currentMSecsSinceEpoch;
 
