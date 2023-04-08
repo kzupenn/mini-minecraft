@@ -6,7 +6,7 @@ Camera::Camera(glm::vec3 pos)
 {}
 
 Camera::Camera(unsigned int w, unsigned int h, glm::vec3 pos)
-    : Entity(pos), m_fovy(45), m_width(w), m_height(h),
+    : Entity(pos, nullptr), m_fovy(45), m_width(w), m_height(h),
       m_near_clip(0.1f), m_far_clip(1000.f), m_aspect(w / static_cast<float>(h))
 {}
 
@@ -34,4 +34,8 @@ void Camera::tick(float dT, InputBundle &input) {
 
 glm::mat4 Camera::getViewProj() const {
     return glm::perspective(glm::radians(m_fovy), m_aspect, m_near_clip, m_far_clip) * glm::lookAt(m_position, m_position + m_forward, m_up);
+}
+
+void Camera::setPos(glm::vec3 p) {
+    m_position = p;
 }

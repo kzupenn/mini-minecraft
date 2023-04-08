@@ -19,6 +19,7 @@ Packet* bufferToPacket(QByteArray buffer) {
         return new WorldInitPacket(s, glm::vec3(f1, f2, f3));
         break;
     }
+    
     case CHUNK_CHANGE: {
         int64_t cP;
         int num;
@@ -41,6 +42,7 @@ Packet* bufferToPacket(QByteArray buffer) {
         return new BlockChangePacket(cP, yP, bt);
         break;
     }
+
     default:
         qDebug() << "weird packet received:" << pt;
         break;

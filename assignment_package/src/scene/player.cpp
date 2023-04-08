@@ -2,11 +2,12 @@
 #include <QString>
 #include <iostream>
 
-Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context)
-    : Entity(pos), m_inventory(context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
+
+Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
+    : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      theta(0), phi(0), mcr_camera(m_camera), airtime(0),
-      maxair(45), m_flightMode(true)
+      theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
+      airtime(0), maxair(45)
 {}
 
 Player::~Player()
@@ -75,7 +76,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
     if (inputs.spacePressed) {
         if (m_flightMode) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
-        resetAir();
+        else if (!checkAirborne()) airtime = maxair;
     }
 }
 
@@ -87,13 +88,9 @@ bool Player::checkAirborne() {
     glm::vec3 down(0, -0.0001, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock;
-        if (mcr_terrain.gridMarch(c, down, &dist, &outblock)) return false;
+        if (mcr_terrain.gridMarch(c, down, &dist, &outblock, false)) return false;
     }
     return true;
-}
-
-void Player::resetAir() {
-    if (!m_flightMode && !airtime && !checkAirborne()) airtime = maxair;
 }
 
 void Player::computePhysics(float dT) {
@@ -103,13 +100,14 @@ void Player::computePhysics(float dT) {
     m_velocity += m_acceleration * dT;
     if (!m_flightMode) {
         if (airtime > 0) {
-            m_velocity += glm::vec3(0, 1, 0) * 3.85f * dT * airtime / (maxair / 1.5f);
+            m_velocity += glm::vec3(0, 1, 0) * 3.8f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
-        m_velocity += glm::vec3(0, -3.8f, 0) * dT;
+        m_velocity += glm::vec3(0, -4.1f, 0) * dT;
         checkCollision();
     }
     moveAlongVector(m_velocity);
+
     m_acceleration = glm::vec3(0);
 }
 
@@ -135,11 +133,11 @@ void Player::checkCollision()
         float x, y, z;
         glm::ivec3 b;
         bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
-                                    &x, &b);
+                                    &x, &b, false);
         bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
-                                    &y, &b);
+                                    &y, &b, false);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
-                                    &z, &b);
+                                    &z, &b, false);
 
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);
@@ -234,4 +232,147 @@ QString Player::lookAsQString() const {
 glm::vec3 Player::getLook()
 {
     return this->m_forward;
+}
+
+float Player::getPhi() {
+    return phi;
+}
+
+float Player::getTheta() {
+    return theta;
+}
+
+void Player::setState(glm::vec3 p, float f1, float f2) {
+    m_position = p;
+    m_camera.setPos(p + glm::vec3(0, 1.5f, 0));
+    theta = f1;
+    phi = f2;
+}
+
+void Player::createVBOdata() {
+    std::vector<glm::vec4> pos, nor, col, inter;
+    std::vector<int> idx;
+    //Front face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+
+    //Right face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+
+    //Left face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Back face
+    //UR
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+
+    //Top face
+    //UR
+    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+
+    //Bottom face
+    //UR
+    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
+    //LR
+    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
+    //LL
+    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
+    //UL
+    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+
+//    for(int i = 0; i < pos.size(); i++) {
+//        pos[i] += glm::vec4(m_position, 1.f);
+//        //qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
+//    }
+
+    //Front
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,1,0);
+    }
+    //Right
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(1,0,0,0);
+    }
+    //Left
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(-1,0,0,0);
+    }
+    //Back
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,0,-1,0);
+    }
+    //Top
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,1,0,0);
+    }
+    //Bottom
+    for(int i = 0; i < 4; i++){
+        nor.emplace_back(0,-1,0,0);
+    }
+
+    //colors
+    for(int i = 0; i < pos.size(); i++) {
+        col.emplace_back(1, 0, 0, 1);
+    }
+
+    for(int i = 0; i < 6; i++){
+        idx.push_back(i*4);
+        idx.push_back(i*4+1);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4+3);
+    }
+
+    m_count = idx.size();
+
+    for (int i = 0; i < pos.size(); i++) {
+       inter.push_back(pos[i]);
+       inter.push_back(nor[i]);
+       inter.push_back(col[i]);
+    }
+
+    generateIdx();
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
+
+}
+GLenum Player::drawMode() {
+    return GL_TRIANGLES;
 }

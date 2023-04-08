@@ -4,6 +4,7 @@ DEPENDPATH += $$PWD
 SOURCES += \
     $$PWD/algo/fractal.cpp \
     $$PWD/algo/noise.cpp \
+    $$PWD/algo/seed.cpp \
     $$PWD/algo/worley.cpp \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
@@ -12,11 +13,12 @@ SOURCES += \
     $$PWD/scene/font.cpp \
     $$PWD/scene/inventory.cpp \
     $$PWD/scene/item.cpp \
+    $$PWD/scene/crosshair.cpp \
     $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
     $$PWD/scene/transform.cpp \
-    $$PWD/server/client.cpp \
-    $$PWD/server/gamestate.cpp \
+    $$PWD/server/getip.cpp \
+    $$PWD/server/packet.cpp \
     $$PWD/shaderprogram.cpp \
     $$PWD/drawable.cpp \
     $$PWD/cameracontrolshelp.cpp \
@@ -36,17 +38,19 @@ SOURCES += \
 HEADERS += \
     $$PWD/algo/fractal.h \
     $$PWD/algo/noise.h \
+    $$PWD/algo/seed.h \
     $$PWD/algo/worley.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
     $$PWD/scene/biome.h \
     $$PWD/scene/font.h \
     $$PWD/scene/item.h \
+    $$PWD/scene/crosshair.h \
     $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
     $$PWD/scene/transform.h \
-    $$PWD/server/client.h \
-    $$PWD/server/gamestate.h \
+    $$PWD/server/getip.h \
+    $$PWD/server/packet.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \

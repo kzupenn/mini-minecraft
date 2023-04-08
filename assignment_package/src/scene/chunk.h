@@ -68,6 +68,7 @@ public:
     BlockType getBlockAt(int x, int y, int z) const;
     void setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
+    Chunk* getNeighborChunk(Direction);
 
     virtual void createVBOdata();
     //locks for multithreading stages
