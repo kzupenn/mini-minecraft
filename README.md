@@ -5,7 +5,9 @@
 Set up a peer-to-peer server and packet system. Players can join other players servers by ip. Currently only packets for player movement and world initialization are fully implemented.
 The server also calculates a safe world spawn point for survival-based gameplay.
 ## Font
-WIP
+Added a fontface texture that constructs and draws text from strings.
+## Inventory, items
+Added item and inventory GUI textures. 
 
 # Milestone 1
 
