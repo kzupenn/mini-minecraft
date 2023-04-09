@@ -1,6 +1,7 @@
 #pragma once
 #include "glm_includes.h"
 #include "scene/chunk.h"
+#include "scene/item.h"
 #include <QByteArray>
 #include <QDataStream>
 #include <QIODevice>
@@ -8,7 +9,8 @@
 using namespace glm;
 
 enum PacketType: unsigned char {
-    PLAYER_STATE, WORLD_INIT, CHUNK_CHANGE, BLOCK_CHANGE
+    PLAYER_STATE, WORLD_INIT, CHUNK_CHANGE, BLOCK_CHANGE,
+    ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY
 };
 
 struct Packet{
@@ -90,6 +92,36 @@ struct PlayerStatePacket : public Packet{
         out << PLAYER_STATE << player_id
             << player_pos.x << player_pos.y << player_pos.z
             << player_theta << player_phi;
+        return buffer;
+    }
+};
+
+//Item Entity State
+struct ItemEntityStatePacket : public Packet {
+    int entity_id;
+    ItemType type;
+    int count;
+    glm::vec3 pos;
+    ItemEntityStatePacket(int id, ItemType it, int c, glm::vec3 p) :
+        entity_id(id), type(it), count(c), pos(p){}
+    ~ItemEntityStatePacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << ITEM_ENTITY_STATE << entity_id << type << count << pos.x << pos.y << pos.z;
+        return buffer;
+    }
+};
+//delete item entity
+struct ItemEntityDeletePacket : public Packet {
+    int entity_id;
+    ItemEntityDeletePacket(int id) :
+        entity_id(id){}
+    ~ItemEntityDeletePacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << DELETE_ITEM_ENTITY << entity_id;
         return buffer;
     }
 };

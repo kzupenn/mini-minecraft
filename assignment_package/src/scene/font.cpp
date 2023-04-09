@@ -105,10 +105,7 @@ const std::map<char, std::pair<glm::vec2, float>> charUV = {
 
 void Font::setText(std::string s) {
     text = s;
-}
-
-void Font::setSize(float f) {
-    size = f;
+    createVBOdata();
 }
 
 void Font::createVBOdata() {
@@ -133,8 +130,8 @@ void Font::createVBOdata() {
             pp = charUV.at(c);
         }
 
-        float w = pp.second*size;
-        float h = size;
+        float w = pp.second;
+        float h = 1;
 
         VBOpos.emplace_back(width, 0, 0, 1);
         VBOpos.emplace_back(width+w, 0, 0, 1);
@@ -148,7 +145,7 @@ void Font::createVBOdata() {
 
         for(int j = 0; j < 4; j++) col.emplace_back(color);
 
-        width += w + size/16.f;
+        width += w + 1/16.f;
     }
 
     m_count = idx.size();
@@ -191,3 +188,4 @@ void Font::unbindVBO() {
 GLenum Font::drawMode(){
     return GL_TRIANGLES;
 }
+

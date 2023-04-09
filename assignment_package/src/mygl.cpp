@@ -26,7 +26,7 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      ip("localhost"), m_crosshair(this)
+      ip("localhost"), m_crosshair(this), mouseMove(true)
       
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -328,19 +328,17 @@ void MyGL::paintGL() {
         for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
             std::optional<Item>& item = m_player.m_inventory.items[i];
             if(item) {
-                item.value().createVBOdata();
-                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0))*
-                                             glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
-                m_progOverlay.draw(item.value());
+                item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                           60, 30, glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0));
             }
         }
         for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
             std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
             if(item) {
-                item.value().createVBOdata();
-                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0))*
-                                             glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
-                m_progOverlay.draw(item.value());
+                item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                            60, 30,
+                           glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0),
+                           glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0));
             }
         }
     }
@@ -348,44 +346,19 @@ void MyGL::paintGL() {
     for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
         std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
         if(item) {
-            item.value().createVBOdata();
-            m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-450+i*100 + 20, 30-height(), 0))*
-                                         glm::scale(glm::mat4(1), glm::vec3(60,60,0)));
-            m_progOverlay.draw(item.value());
+            item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                       60, 35, glm::vec3(-450+i*100 + 20, 30-height(), 0), glm::vec3(-450+i*100 + 96, 10-height(), 0));
         }
     }
 
-    //inventory numbers
-    m_font_texture.bind(0);
-    if(m_player.m_inventory.showInventory){
-        for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
-            std::optional<Item>& item = m_player.m_inventory.items[i];
-            if(item && item->item_count > 1) {
-                Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 30);
-                ff.createVBOdata();
-                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65-ff.width, -5-550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0)));
-                m_progOverlay.draw(ff);
-            }
+    if(m_player.m_inventory.showInventory) {
+        QPoint cur = mapFromGlobal(QCursor::pos());
+        if(m_cursor_item) {
+            m_cursor_item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                                60, 30, glm::vec3(2*cur.x()-width()+31, -2*cur.y()+height()-31, 0), glm::vec3(2*cur.x()-width()+96, -5-2*cur.y()+height()-31, 0));
         }
-        for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
-            std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
-            if(item && item->item_count > 1) {
-                Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 30);
-                ff.createVBOdata();
-                m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65-ff.width, -5-550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0)));
-                m_progOverlay.draw(ff);
-            }
-        }
-    }
-
-    for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
-        std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
-        if(item && item->item_count > 1) {
-            Font ff = Font(this, std::to_string(item->item_count), glm::vec4(1,1,1,1), 35);
-            ff.createVBOdata();
-            m_progOverlay.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(-450+i*100 + 96-ff.width, 10-height(), 0)));
-            m_progOverlay.draw(ff);
-        }
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(2*cur.x()-width()+65, -2*cur.y()+height(), 0)));
+        m_progFlat.draw(m_crosshair);
     }
     
     glEnable(GL_DEPTH_TEST);
@@ -424,8 +397,6 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.aPressed = true;
     } else if (e->key() == Qt::Key_Shift) {
         m_inputs.lshiftPressed = true;
-    } else if (e->key() == Qt::Key_E) {
-        m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = true;
     } else if (e->key() == Qt::Key_Space) {
@@ -438,30 +409,10 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.mouseY = -5.f;
     } else if (e->key() == Qt::Key_Down) {
         m_inputs.mouseY = 5.f;
-    } else if (e->key() == Qt::Key_M) {
-        mouseMove = !mouseMove;
-    }
-}
-
-void MyGL::keyReleaseEvent(QKeyEvent *e) {
-    if (e->key() == Qt::Key_W) {
-        m_inputs.wPressed = false;
-    } else if (e->key() == Qt::Key_S) {
-        m_inputs.sPressed = false;
-    } else if (e->key() == Qt::Key_D) {
-        m_inputs.dPressed = false;
-    } else if (e->key() == Qt::Key_A) {
-        m_inputs.aPressed = false;
-    } else if (e->key() == Qt::Key_Shift) {
-        m_inputs.lshiftPressed = false;
-    } else if (e->key() == Qt::Key_F) {
-        m_inputs.fPressed = false;
-    } else if (e->key() == Qt::Key_Space) {
-        m_inputs.spacePressed = false;
-    }
-    //inventory hotkeys
+    }     //inventory hotkeys
     else if (e->key() == Qt::Key_E) {
         m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+        mouseMove = !m_player.m_inventory.showInventory;
     } else if (e->key() == Qt::Key_Q) {
         m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
     } else if (e->key() == Qt::Key_1) {
@@ -494,6 +445,24 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
     }
 }
 
+void MyGL::keyReleaseEvent(QKeyEvent *e) {
+    if (e->key() == Qt::Key_W) {
+        m_inputs.wPressed = false;
+    } else if (e->key() == Qt::Key_S) {
+        m_inputs.sPressed = false;
+    } else if (e->key() == Qt::Key_D) {
+        m_inputs.dPressed = false;
+    } else if (e->key() == Qt::Key_A) {
+        m_inputs.aPressed = false;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = false;
+    } else if (e->key() == Qt::Key_F) {
+        m_inputs.fPressed = false;
+    } else if (e->key() == Qt::Key_Space) {
+        m_inputs.spacePressed = false;
+    }
+}
+
 void MyGL::updateMouse() {
     float sens = 0.15;
     QPoint cur = QWidget::mapFromGlobal(QCursor::pos());
@@ -503,44 +472,71 @@ void MyGL::updateMouse() {
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
-    // TODO
-    if(e->buttons() & Qt::LeftButton)
-    {
-        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = m_player.getLook() * 3.f;
-
-        float dist;
-        glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
-            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-            m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-            Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
-            if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-            if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-            if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-            if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
-            qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
+    if(m_player.m_inventory.showInventory) {
+        if(e->buttons() & Qt::LeftButton){
+            QPoint cur = 2*mapFromGlobal(QCursor::pos());
+            cur = QPoint(cur.x()-width(), height()-cur.y());
+            for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
+                float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
+                float dy = -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f;
+                if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx &&
+                        cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                    std::optional<Item> foo = m_player.m_inventory.items[i];
+                    m_player.m_inventory.items[i] = m_cursor_item;
+                    m_cursor_item = foo;
+                }
+            }
+            for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+                float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
+                float dy = -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f;
+                if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx  &&
+                        cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                    std::optional<Item> foo = m_player.m_inventory.hotbar.items[i];
+                    m_player.m_inventory.hotbar.items[i] = m_cursor_item;
+                    m_cursor_item = foo;
+                }
+            }
         }
-    } else if (e->buttons() & Qt::RightButton) {
-        float bound = 3.f;
-        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
+    }
+    else {
+        if(e->buttons() & Qt::LeftButton)
+        {
+            glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+            glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
-        float dist;
-        glm::ivec3 block_pos;
-        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
-        if (found) {
-            BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
-            glm::vec3 backward = -glm::normalize(ray_dir);
-            glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
-            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-            qDebug() << QString::fromStdString(glm::to_string(restart));
-            qDebug() << dist;
-            glm::ivec3 bpos;
-            if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
-                m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
-            } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
-                m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
+            float dist;
+            glm::ivec3 block_pos;
+            if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
+                qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+                Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+                qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
+            }
+        } else if (e->buttons() & Qt::RightButton) {
+            float bound = 3.f;
+            glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+            glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
+
+            float dist;
+            glm::ivec3 block_pos;
+            bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
+            if (found) {
+                BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+                glm::vec3 backward = -glm::normalize(ray_dir);
+                glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
+                qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+                qDebug() << QString::fromStdString(glm::to_string(restart));
+                qDebug() << dist;
+                glm::ivec3 bpos;
+                if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
+                    m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
+                } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
+                    m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
+                }
             }
         }
     }

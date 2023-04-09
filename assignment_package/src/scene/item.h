@@ -1,6 +1,9 @@
 #pragma once
 #include <glm_includes.h>
 #include "drawable.h"
+#include "shaderprogram.h"
+#include "texture.h"
+#include "font.h"
 
 //ordered by row in texture map
 enum ItemType: unsigned char {
@@ -28,13 +31,18 @@ enum ItemType: unsigned char {
 class Item: public Drawable {
 private:
     int max_count;
-
+    Font count_text;
 public:
-    Item(OpenGLContext* context) : Drawable(context), item_count(0), max_count(64){};
+    Item(OpenGLContext* context) : Drawable(context), count_text(context),
+        item_count(0), max_count(64){
+        createVBOdata();
+    };
     Item(OpenGLContext* context, ItemType t, int init_count);
     virtual ~Item(){};
     virtual void createVBOdata();
     virtual GLenum drawMode();
+
+    void draw(ShaderProgram*, Texture&, Texture&, float, float, glm::vec3, glm::vec3);
 
     ItemType type;
     int item_count;

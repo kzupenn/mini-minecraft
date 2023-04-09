@@ -89,7 +89,9 @@ const std::map<ItemType, int> itemMaxStack = {
     {DIAMOND_BOOTS, 1}
 };
 
-Item:: Item(OpenGLContext* context, ItemType t, int init_count) : Drawable(context), max_count(itemMaxStack.at(t)), type(t), item_count(init_count){};
+Item:: Item(OpenGLContext* context, ItemType t, int init_count) : Drawable(context), max_count(itemMaxStack.at(t)), count_text(context, std::to_string(init_count), glm::vec4(1)), type(t), item_count(init_count){
+    createVBOdata();
+};
 
 GLenum Item::drawMode() {
     return GL_TRIANGLES;
@@ -130,5 +132,20 @@ void Item::merge(Item& x) {
 
     int toAdd = std::min(x.item_count, max_count-item_count);
     item_count += toAdd;
+    count_text.setText(std::to_string(item_count));
     x.item_count -= toAdd;
+    x.count_text.setText(std::to_string(x.item_count));
+}
+
+void Item::draw(ShaderProgram* m_prog, Texture& block, Texture& text, float block_size, float text_size, glm::vec3 block_pos, glm::vec3 text_pos) {
+    block.bind(0);
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), block_pos)*
+                           glm::scale(glm::mat4(1), glm::vec3(block_size, block_size, 1)));
+    m_prog->draw(*this);
+    if(item_count > 1) {
+        text.bind(0);
+        m_prog->setModelMatrix(glm::translate(glm::mat4(1), text_pos-glm::vec3(text_size*count_text.width, 0, 0))*
+                               glm::scale(glm::mat4(1), glm::vec3(text_size, text_size, 1)));
+        m_prog->draw(count_text);
+    }
 }

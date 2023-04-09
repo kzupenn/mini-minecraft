@@ -38,6 +38,7 @@ private:
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
 
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
+    std::optional<Item> m_cursor_item; // Item player is handling in inventory mode
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int m_time; //to get tick number
