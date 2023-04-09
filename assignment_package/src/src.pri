@@ -6,6 +6,7 @@ SOURCES += \
     $$PWD/algo/noise.cpp \
     $$PWD/algo/seed.cpp \
     $$PWD/algo/worley.cpp \
+    $$PWD/framebuffer.cpp \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
@@ -36,6 +37,7 @@ HEADERS += \
     $$PWD/algo/noise.h \
     $$PWD/algo/seed.h \
     $$PWD/algo/worley.h \
+    $$PWD/framebuffer.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
     $$PWD/scene/biome.h \

@@ -279,6 +279,9 @@ float generateSnowLayer(vec2 pp) {
 float generateRockLayer(vec2 pp) {
     return 100+10*perlinNoise(pp, SEED.getSeed(8008.714,9810.119,9169.679,9032.367), 64);
 }
+float generateCaves(vec3 pp) {
+    return perlinNoise3D(pp, SEED.getSeed(6230.714,4545.119,9169.679,2300.367), 512);
+}
 
 //noise distribution tests
 
