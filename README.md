@@ -5,9 +5,9 @@
 Set up a peer-to-peer server and packet system. Players can join other players servers by ip. Currently only packets for player movement and world initialization are fully implemented.
 The server also calculates a safe world spawn point for survival-based gameplay.
 ## Font
-Added a fontface texture that constructs and draws text from strings.
-## Inventory, items
-Added item and inventory GUI textures. 
+Added a fontface texture that constructs and draws text from strings. This is used to indicate items in stacks and also for item name descriptions, player tags, and player chat.
+## Inventory and Items
+Added item and inventory GUI textures. A crosshair was added to the inventory and normal gameplay to identify the cursor position. Items can be moved around in the inventory with left and right click to separate and merge item stacks. The hotbar selection can also be changed with the numpad.
 
 # Milestone 1
 
