@@ -88,17 +88,7 @@ void MyGL::start(bool joinServer) {
     m_player.m_inventory.addItem(k);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(k, 26);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
@@ -473,28 +463,104 @@ void MyGL::updateMouse() {
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     if(m_player.m_inventory.showInventory) {
-        if(e->buttons() & Qt::LeftButton){
-            QPoint cur = 2*mapFromGlobal(QCursor::pos());
-            cur = QPoint(cur.x()-width(), height()-cur.y());
-            for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
-                float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
-                float dy = -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f;
-                if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx &&
-                        cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
-                    std::optional<Item> foo = m_player.m_inventory.items[i];
+        QPoint cur = 2*mapFromGlobal(QCursor::pos());
+        cur = QPoint(cur.x()-width(), height()-cur.y());
+        for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
+            float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
+            float dy = -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f;
+            if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx &&
+                    cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                std::optional<Item> foo = m_player.m_inventory.items[i];
+                if(e->buttons() & Qt::LeftButton) {
+                    if(foo && m_cursor_item) {
+                        m_cursor_item->merge(foo.value());
+                        if(foo->item_count == 0){
+                            foo.reset();
+                        }
+                    }
                     m_player.m_inventory.items[i] = m_cursor_item;
                     m_cursor_item = foo;
                 }
+                else if (e->buttons() & Qt::RightButton) {
+                    if(m_cursor_item.has_value()) {
+                        if(!m_player.m_inventory.items[i].has_value()) {
+                            m_player.m_inventory.items[i] = Item(this, m_cursor_item->type, 1);
+                            m_cursor_item-> item_count--;
+
+                            if(m_cursor_item->item_count == 0) m_cursor_item.reset();
+                            else m_cursor_item->count_text.setText(std::to_string(m_cursor_item->item_count));
+                        }
+                        else if(m_player.m_inventory.items[i]->type == m_cursor_item->type && m_player.m_inventory.items[i] ->item_count < m_player.m_inventory.items[i] -> max_count) {
+                            m_cursor_item->item_count --;
+                            if(m_cursor_item->item_count == 0) m_cursor_item.reset();
+                            else m_cursor_item->count_text.setText(std::to_string(m_cursor_item->item_count));
+
+                            m_player.m_inventory.items[i]->item_count ++;
+                            m_player.m_inventory.items[i]->count_text.setText(std::to_string(m_player.m_inventory.items[i]->item_count));
+                        }
+                    }
+                    else {
+                        if(m_player.m_inventory.items[i].has_value()) {
+                            int toMerge = (m_player.m_inventory.items[i]->item_count+1)/2;
+                            m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge);
+
+                            m_player.m_inventory.items[i]->item_count -= toMerge;
+                            if(m_player.m_inventory.items[i]->item_count == 0) m_player.m_inventory.items[i].reset();
+                            else m_player.m_inventory.items[i]->count_text.setText(std::to_string(m_player.m_inventory.items[i]->item_count));
+
+                        }
+                    }
+                }
+                break;
             }
-            for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
-                float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
-                float dy = -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f;
-                if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx  &&
-                        cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
-                    std::optional<Item> foo = m_player.m_inventory.hotbar.items[i];
+        }
+        for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
+            float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
+            float dy = -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f;
+            if(cur.x() >= dx-36.f/256.f*550.f && cur.x() <= dx  &&
+                    cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                std::optional<Item> foo = m_player.m_inventory.hotbar.items[i];
+                if(e->buttons() & Qt::LeftButton) {
+                    if(foo && m_cursor_item) {
+                        m_cursor_item->merge(foo.value());
+                        if(foo->item_count == 0) {
+                            foo.reset();
+                        }
+                    }
                     m_player.m_inventory.hotbar.items[i] = m_cursor_item;
                     m_cursor_item = foo;
                 }
+                else if (e->buttons() & Qt::RightButton) {
+                    if(m_cursor_item.has_value()) {
+                        if(!m_player.m_inventory.hotbar.items[i].has_value()) {
+                            m_player.m_inventory.hotbar.items[i] = Item(this, m_cursor_item->type, 1);
+                            m_cursor_item-> item_count--;
+
+                            if(m_cursor_item->item_count == 0) m_cursor_item.reset();
+                            else m_cursor_item->count_text.setText(std::to_string(m_cursor_item->item_count));
+                        }
+                        else if(m_player.m_inventory.hotbar.items[i]->type == m_cursor_item->type && m_player.m_inventory.hotbar.items[i] ->item_count < m_player.m_inventory.hotbar.items[i] -> max_count) {
+                            m_cursor_item->item_count --;
+                            if(m_cursor_item->item_count == 0) m_cursor_item.reset();
+                            else m_cursor_item->count_text.setText(std::to_string(m_cursor_item->item_count));
+
+                            m_player.m_inventory.hotbar.items[i]->item_count ++;
+                            m_player.m_inventory.hotbar.items[i]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[i]->item_count));
+                        }
+                    }
+                    else {
+                        if(m_player.m_inventory.hotbar.items[i].has_value()) {
+                            int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
+                            m_cursor_item = Item(this, m_player.m_inventory.hotbar.items[i]->type, toMerge);
+
+                            m_player.m_inventory.hotbar.items[i]->item_count -= toMerge;
+
+                            if(m_player.m_inventory.hotbar.items[i]->item_count == 0) m_player.m_inventory.hotbar.items[i].reset();
+                            else m_player.m_inventory.hotbar.items[i]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[i]->item_count));
+                        }
+                    }
+                }
+                break;
             }
         }
     }

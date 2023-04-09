@@ -28,10 +28,7 @@ enum ItemType: unsigned char {
     DIAMOND, DIAMOND_BOOTS, DIAMOND_CHESTPLATE, DIAMOND_HELMET, STICK
 };
 
-class Item: public Drawable {
-private:
-    int max_count;
-    Font count_text;
+class Item: public Drawable { 
 public:
     Item(OpenGLContext* context) : Drawable(context), count_text(context),
         item_count(0), max_count(64){
@@ -42,9 +39,12 @@ public:
     virtual void createVBOdata();
     virtual GLenum drawMode();
 
+    Font count_text;
+
     void draw(ShaderProgram*, Texture&, Texture&, float, float, glm::vec3, glm::vec3);
 
     ItemType type;
     int item_count;
+    int max_count;
     void merge(Item&); //merges a number of items from the input item to its count
 };
