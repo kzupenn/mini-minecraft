@@ -7,7 +7,7 @@ void printVec(glm::vec4 a) {
 }
 
 bool checkTransparent(BlockType bt) {
-    return bt == EMPTY/* || bt == WATER*/;
+    return bt == EMPTY || bt == WATER || bt ==  GLASS || bt == OAK_LEAVES;
 }
 
 bool isTransparent(int x, int y, int z, Chunk* c) {
@@ -121,6 +121,7 @@ const int delta[] = {1, 0, 0,
                0, -1, 0,
                0, 0, 1,
                0, 0, -1};
+
 const int facedeltas[] = {
     0, 0, 0,
     0, 1, 0,
@@ -137,10 +138,25 @@ const int facedeltas[] = {
     1, 1, 0,
     0, 1, 0
 };
+
+const int UVorder[6][4] = {
+    {0, 3, 2, 1},
+    {1, 2, 3, 0},
+    {0, 1, 2, 3},
+    {0, 1, 2, 3},
+    {1, 0, 3, 2},
+    {0, 1, 2, 3}
+};
 void Chunk::createVBOdata() {
     createVBO_mutex.lock();
     std::vector<glm::vec4> VBOpos;
     std::vector<glm::vec4> VBOnor;
+    std::vector<glm::vec4> VBOuv;
+
+    std::vector<glm::vec4> VBOClearpos;
+    std::vector<glm::vec4> VBOClearnor;
+    std::vector<glm::vec4> VBOClearuv;
+    std::vector<int> Clearidx;
     std::vector<glm::vec4> VBOcol;
     VBOinter.clear();
     idx.clear();
@@ -149,10 +165,12 @@ void Chunk::createVBOdata() {
         for(int j = 0; j < 256; j++) {
             for(int k = 0; k < 16; k++) {
                 //check in all 6 directions
+                int Face = 0; //0, 1, 4, 5 for side, 2 for top & 3 bottom
+                glm::vec4 UVs[4];
                 for(int l = 0; l < 6*3; l+=3) {
                     //bound checking and neighbor
                     BlockType curr = getBlockAt(i, j, k);
-                    BlockType oth;
+                    BlockType oth = EMPTY;                   
                     bool drawFace = false;
                     if(i+delta[l] < 0){
                         if (curr != EMPTY) drawFace = (m_neighbors.find(XNEG) != m_neighbors.end()
@@ -160,7 +178,8 @@ void Chunk::createVBOdata() {
                         else {
                             drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
                                 && m_neighbors[XNEG]->getBlockAt(15, j, k) != EMPTY;
-                            if (m_neighbors.find(XNEG) != m_neighbors.end()) oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
+                            if (m_neighbors.find(XNEG) != m_neighbors.end())
+                                oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
                         }
                     }
                     else if(i+delta[l] > 15){
@@ -197,91 +216,337 @@ void Chunk::createVBOdata() {
                         if (curr != EMPTY) drawFace = true;
                     }
                     if(drawFace){
-                        //set indices
-                        idx.push_back(VBOpos.size());
-                        idx.push_back(VBOpos.size()+1);
-                        idx.push_back(VBOpos.size()+2);
-                        idx.push_back(VBOpos.size()+2);
-                        idx.push_back(VBOpos.size()+3);
-                        idx.push_back(VBOpos.size());
+
+//                        if ((Face != 3 && Face != 2) && (curr == WATER || (curr == EMPTY && oth == WATER))) {
+//                            Face++;
+//                            continue;
+//                        }
                         //set surface positions
                         glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
-                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
-                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
-                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
-                        VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
+
+                        if (curr == WATER || curr == GLASS || curr == OAK_LEAVES ||(curr == EMPTY && (oth == WATER || oth == GLASS || oth == OAK_LEAVES))) {
+                            //set indices
+                            Clearidx.push_back(VBOClearpos.size());
+                            Clearidx.push_back(VBOClearpos.size()+1);
+                            Clearidx.push_back(VBOClearpos.size()+2);
+                            Clearidx.push_back(VBOClearpos.size()+2);
+                            Clearidx.push_back(VBOClearpos.size()+3);
+                            Clearidx.push_back(VBOClearpos.size());
+
+                            VBOClearpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
+                            VBOClearpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
+                            VBOClearpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
+                            VBOClearpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
+                        } else {
+                            //set indices
+                            idx.push_back(VBOpos.size());
+                            idx.push_back(VBOpos.size()+1);
+                            idx.push_back(VBOpos.size()+2);
+                            idx.push_back(VBOpos.size()+2);
+                            idx.push_back(VBOpos.size()+3);
+                            idx.push_back(VBOpos.size());
+
+                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12], facedeltas[(l/6)*12+1], facedeltas[(l/6)*12+2], 0));
+                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+3], facedeltas[(l/6)*12+4], facedeltas[(l/6)*12+5], 0));
+                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+6], facedeltas[(l/6)*12+7], facedeltas[(l/6)*12+8], 0));
+                            VBOpos.push_back(faceref + glm::vec4(facedeltas[(l/6)*12+9], facedeltas[(l/6)*12+10], facedeltas[(l/6)*12+11], 0));
+                        }
                         //set surface normals
                         if (curr != EMPTY) {
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            if (curr == WATER || curr == GLASS || curr == OAK_LEAVES) {
+                                VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            } else {
+                                VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            }
                         } else {
-                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
-                            VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            if (oth ==  WATER || oth == GLASS || oth == OAK_LEAVES) {
+                                VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            } else {
+                                VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                                VBOnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
+                            }
                         }
 
-                        //colors, TODO
-                        glm::vec4 this_color;
                         if (curr == EMPTY) curr = oth;
                         switch(curr){
                         case GRASS:
-                            this_color = glm::vec4(0, 1, 0, 1);
+                            if (Face != 2 && Face != 3) { //side
+
+                                UVs[0] = glm::vec4(25.f/64.f + 1.f/1024, 63.f/64.f + 1.f/1024, 0.f, 1.f),
+                                UVs[1] = glm::vec4(26.f/64.f - 1.f/1024, 63.f/64.f + 1.f/1024, 0.f, 1.f),
+                                UVs[2] = glm::vec4(26.f/64.f - 1.f/1024, 64.f/64.f - 1.f/1024, 0.f, 1.f),
+                                UVs[3] = glm::vec4(25.f/64.f + 1.f/1024, 64.f/64.f - 1.f/1024, 0.f, 1.f);
+
+                            } else { //top & bottom
+                                UVs[0] = glm::vec4(497.f/1024.f, 817.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(511.f/1024.f, 817.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(511.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(497.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                            }
                             break;
                         case DIRT:
-                            this_color = glm::vec4(181.f, 155.f, 90.f, 255.f)/255.f;
-                            break;
-                        case PATH:
-                            this_color = glm::vec4(211.f, 185.f, 120.f, 255.f)/255.f;
+                            UVs[0] = glm::vec4(337.f/1024.f, 850.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(350.f/1024.f, 850.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(350.f/1024.f, 863.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(337.f/1024.f, 863.f/1024.f, 0.f, 1.f);
                             break;
                         case STONE:
-                            this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            UVs[0] = glm::vec4(507.f/1024.f, 642.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(510.f/1024.f, 642.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(510.f/1024.f, 655.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(507.f/1024.f, 655.f/1024.f, 0.f, 1.f);
                             break;
                         case WATER:
-                            this_color = glm::vec4(0, 0, 1, 0.5);
+                            UVs[0] = glm::vec4(129.f/1024.f, 930.f/1024.f, 1.f, 0.f);
+                            UVs[1] = glm::vec4(142.f/1024.f, 930.f/1024.f, 1.f, 0.f);
+                            UVs[2] = glm::vec4(142.f/1024.f, 944.f/1024.f, 1.f, 0.f);
+                            UVs[3] = glm::vec4(129.f/1024.f, 944.f/1024.f, 1.f, 0.f);
                             break;
                         case SAND:
-                            this_color = glm::vec4(1,1,0,1);
+                            UVs[0] = glm::vec4(129.f/1024.f, 658.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(142.f/1024.f, 658.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(142.f/1024.f, 671.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(129.f/1024.f, 671.f/1024.f, 0.f, 1.f);
                             break;
                         case SNOW:
-                            this_color = glm::vec4(1,1,1,1);
+                            UVs[0] = glm::vec4(480.f/1024.f, 705.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(494.f/1024.f, 705.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(494.f/1024.f, 720.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(480.f/1024.f, 720.f/1024.f, 0.f, 1.f);
                             break;
                         case GLASS:
-                            this_color = glm::vec4(1,1,1,1);
+                            UVs[0] = glm::vec4(384.f/1024.f, 881.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(399.f/1024.f, 881.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(399.f/1024.f, 896.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(384.f/1024.f, 896.f/1024.f, 0.f, 1.f);
                             break;
                         case COBBLESTONE:
-                            this_color = glm::vec4(0.5, 0.5, 0.5, 1);
+                            UVs[0] = glm::vec4(32.f/1024.f, 770.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(47.f/1024.f, 770.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(47.f/1024.f, 784.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(32.f/1024.f, 784.f/1024.f, 0.f, 1.f);
                             break;
                         case OAK_PLANKS:
-                            this_color = glm::vec4(221.f, 195.f, 130.f, 255.f)/255.f;
+                            UVs[0] = glm::vec4(384.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(398.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(398.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(384.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                            break;
+                          case SPRUCE_PLANKS:
+                              UVs[0] = glm::vec4(448.f/1024.f, 641.f/1024.f, 0.f, 1.f);
+                              UVs[1] = glm::vec4(462.f/1024.f, 641.f/1024.f, 0.f, 1.f);
+                              UVs[2] = glm::vec4(462.f/1024.f, 656.f/1024.f, 0.f, 1.f);
+                              UVs[3] = glm::vec4(448.f/1024.f, 656.f/1024.f, 0.f, 1.f);
+                              break;
+                        case JUNGLE_PLANKS:
+                            UVs[0] = glm::vec4(448.f/1024.f, 849.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(462.f/1024.f, 849.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(462.f/1024.f, 864.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(448.f/1024.f, 864.f/1024.f, 0.f, 1.f);
+                            break;
+                        case BIRCH_PLANKS:
+                            UVs[0] = glm::vec4(256.f/1024.f, 929.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(270.f/1024.f, 929.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(270.f/1024.f, 944.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(256.f/1024.f, 944.f/1024.f, 0.f, 1.f);
+                            break;
+                        case ACACIA_PLANKS:
+                            UVs[0] = glm::vec4(4.f/1024.f, 15.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(5.f/1024.f, 15.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(5.f/1024.f, 16.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(4.f/1024.f, 16.f/1024.f, 0.f, 1.f);
                             break;
                         case OAK_LOG:
-                            this_color = glm::vec4(151.f, 125.f, 60.f, 255.f)/255.f;
+                            if (Face != 2 && Face != 3) { //side
+                                UVs[0] = glm::vec4(352.f/1024.f, 738.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(367.f/1024.f, 738.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(367.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(352.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                            } else { //top and bottom
+                                UVs[0] = glm::vec4(369.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(383.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(383.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(369.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                            }
                             break;
+//                        case SPRUCE_LOG:
+//                            if (Face != 2 && Face != 3) { //side
+//                                UVs[0] = glm::vec4(4.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            } else { //top and bottom
+//                                UVs[0] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(6.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(6.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            }
+//                            break;
+//                        case BIRCH_LOG:
+//                            if (Face != 2 && Face != 3) { //side
+//                                UVs[0] = glm::vec4(4.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            } else { //top and bottom
+//                                UVs[0] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(6.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(6.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            }
+//                            break;
+//                        case JUNGLE_LOG:
+//                            if (Face != 2 && Face != 3) { //side
+//                                UVs[0] = glm::vec4(4.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            } else { //top and bottom
+//                                UVs[0] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(6.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(6.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            }
+//                            break;
+//                        case ACACIA_LOG:
+//                            if (Face != 2 && Face != 3) { //side
+//                                UVs[0] = glm::vec4(4.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(4.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            } else { //top and bottom
+//                                UVs[0] = glm::vec4(5.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[1] = glm::vec4(6.f/16.f, 14.f/16.f, 0.f, 1.f);
+//                                UVs[2] = glm::vec4(6.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                                UVs[3] = glm::vec4(5.f/16.f, 15.f/16.f, 0.f, 1.f);
+//                            }
+//                            break;
                         case OAK_LEAVES:
-                            this_color = glm::vec4(0, 0.5, 0, 1);
+                            UVs[0] = glm::vec4(192.f/1024.f, 1009.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(207.f/1024.f, 1009.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(207.f/1024.f, 1024.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(192.f/1024.f, 1024.f/1024.f, 0.f, 1.f);
+                            break;
+                        case PATH:
+                            if (Face != 2 && Face != 3) { //side
+                                UVs[0] = glm::vec4(337.f/1024.f, 833.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(350.f/1024.f, 833.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(350.f/1024.f, 847.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(337.f/1024.f, 847.f/1024.f, 0.f, 1.f);
+                            } else {
+                                UVs[0] = glm::vec4(337.f/1024.f, 818.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(350.f/1024.f, 818.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(350.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(337.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                            }
+                            break;
+                        case BOOKSHELF:
+                            if (Face != 2 && Face != 3) {
+                                UVs[0] = glm::vec4(192.f/1024.f, 849.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(207.f/1024.f, 849.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(207.f/1024.f, 864.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(192.f/1024.f, 864.f/1024.f, 0.f, 1.f);
+                            } else {
+                                UVs[0] = glm::vec4(384.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(398.f/1024.f, 737.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(398.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(384.f/1024.f, 752.f/1024.f, 0.f, 1.f);
+                            }
+                            break;
+                        case LAVA:
+                            UVs[0] = glm::vec4(129.f/1024.f, 962.f/1024.f, 1.f, 1.f);
+                            UVs[1] = glm::vec4(141.f/1024.f, 962.f/1024.f, 1.f, 1.f);
+                            UVs[2] = glm::vec4(141.f/1024.f, 976.f/1024.f, 1.f, 1.f);
+                            UVs[3] = glm::vec4(129.f/1024.f, 976.f/1024.f, 1.f, 1.f);
+                            break;
+                        case SANDSTONE:
+                            if (Face != 2 && Face != 3) { //side
+                                UVs[0] = glm::vec4(144.f/1024.f, 657.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(158.f/1024.f, 657.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(158.f/1024.f, 671.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(144.f/1024.f, 671.f/1024.f, 0.f, 1.f);
+                            } else { //top & bottom
+                                UVs[0] = glm::vec4(160.f/1024.f, 657.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(174.f/1024.f, 657.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(174.f/1024.f, 671.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(160.f/1024.f, 671.f/1024.f, 0.f, 1.f);
+                            }
+                            break;
+                        case BEDROCK:
+                            UVs[0] = glm::vec4(208.f/1024.f, 881.f/1024.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(222.f/1024.f, 881.f/1024.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(222.f/1024.f, 895.f/1024.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(208.f/1024.f, 895.f/1024.f, 0.f, 1.f);
+                            break;
+                        case ICE:
+                            UVs[0] = glm::vec4(224.f/1024.f, 722.f/1024.f, 1.f, 1.f);
+                            UVs[1] = glm::vec4(238.f/1024.f, 722.f/1024.f, 1.f, 1.f);
+                            UVs[2] = glm::vec4(238.f/1024.f, 735.f/1024.f, 1.f, 1.f);
+                            UVs[3] = glm::vec4(224.f/1024.f, 735.f/1024.f, 1.f, 1.f);
+                            break;
+                        case CACTUS:
+                            if (Face != 2 && Face != 3) { //side
+                                UVs[0] = glm::vec4(32.f/1024.f, 818.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(47.f/1024.f, 818.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(47.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(32.f/1024.f, 831.f/1024.f, 0.f, 1.f);
+                            } else { //top & bottom
+                                UVs[0] = glm::vec4(48.f/1024.f, 817.f/1024.f, 0.f, 1.f);
+                                UVs[1] = glm::vec4(63.f/1024.f, 817.f/1024.f, 0.f, 1.f);
+                                UVs[2] = glm::vec4(63.f/1024.f, 832.f/1024.f, 0.f, 1.f);
+                                UVs[3] = glm::vec4(48.f/1024.f, 832.f/1024.f, 0.f, 1.f);
+                            }
                             break;
                         default:
-                            this_color = glm::vec4(0);
+                            UVs[0] = glm::vec4(32.f/64.f, 63.f/64.f, 0.f, 1.f);
+                            UVs[1] = glm::vec4(33.f/64.f, 63.f/64.f, 0.f, 1.f);
+                            UVs[2] = glm::vec4(33.f/64.f, 64.f/64.f, 0.f, 1.f);
+                            UVs[3] = glm::vec4(32.f/64.f, 64.f/64.f, 0.f, 1.f);
                             break;
                         }
-                        //std::cout << glm::to_string(this_color);
                         for(int foo = 0; foo < 4; foo++) {
-                            VBOcol.push_back(this_color);
+                            if (curr == WATER || curr == GLASS || curr == OAK_LEAVES) {
+                                VBOClearuv.push_back(UVs[UVorder[l/3][foo]]);
+                            } else {
+                                VBOuv.push_back(UVs[UVorder[l/3][foo]]);
+                            }
                         }
                     }
+                    Face++;
                 }
             }
         }
     }
 
     for (int i = 0; i < VBOpos.size(); i++) {
-           VBOinter.push_back(VBOpos[i]);
-           VBOinter.push_back(VBOnor[i]);
-           VBOinter.push_back(VBOcol[i]);
+        VBOinter.push_back(VBOpos[i]);
+        VBOinter.push_back(VBOnor[i]);
+        VBOinter.push_back(VBOuv[i]);
     }
+
+    for(int i = 0; i < VBOClearpos.size(); i++) {
+        VBOinter.push_back(VBOClearpos[i]);
+        VBOinter.push_back(VBOClearnor[i]);
+        VBOinter.push_back(VBOClearuv[i]);
+    }
+
+    int s = VBOpos.size();
+    for (int i = 0; i < Clearidx.size(); i++) {
+        int index = Clearidx.at(i);
+        idx.push_back(s + index);
+    }
+
     createVBO_mutex.unlock();
 
     //tells the main thread to bind to vbo

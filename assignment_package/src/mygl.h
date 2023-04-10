@@ -8,6 +8,7 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "texture.h"
 #include "server/server.h"
 
 #include <QOpenGLVertexArrayObject>
@@ -40,6 +41,8 @@ private:
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int m_time; //to get tick number
     bool mouseMove;
+
+    Texture m_texture;
 
     long long m_currentMSecsSinceEpoch;
 

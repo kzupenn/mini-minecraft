@@ -22,10 +22,10 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
-      m_time(0), mouseMove(false),
-      m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_crosshair(this)
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      time(0), m_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_mousePosPrev(glm::vec2(width() / 2, height() / 2)),
+      ip("localhost")
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -86,7 +86,10 @@ void MyGL::initializeGL()
     // Set a few settings/modes in OpenGL rendering
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LINE_SMOOTH);
+
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
@@ -95,6 +98,10 @@ void MyGL::initializeGL()
     // Create a Vertex Attribute Object
     glGenVertexArrays(1, &vao);
 
+    //load texture into memory and store on gpu
+    m_texture.create(":/textures/block_item_textures_fixed.png");
+    m_texture.load(0);
+
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
 
@@ -102,13 +109,14 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/instanced.frag.glsl");
 
     // Set a color with which to draw geometry.
     // This will ultimately not be used when you change
     // your program to render Chunks with vertex colors
     // and UV coordinates
     m_progLambert.setGeometryColor(glm::vec4(0,1,0,1));
+
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -126,6 +134,8 @@ void MyGL::resizeGL(int w, int h) {
 
     m_progLambert.setViewProjMatrix(viewproj);
     m_progFlat.setViewProjMatrix(viewproj);
+
+    m_texture.bind(0);
 
     printGLErrorLog();
 }
@@ -217,10 +227,11 @@ void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    m_progLambert.setTime(time);
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-
+    m_texture.bind(0);
     renderTerrain();
     //m_player.createVBOdata();
     //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
@@ -333,15 +344,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
-            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-            Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
-            if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-            if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-            if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-            if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
-            qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
         }
     } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;

@@ -16,8 +16,11 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW,
-    COBBLESTONE, OAK_PLANKS, OAK_LOG, OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE};
+    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW, COBBLESTONE,
+    OAK_PLANKS, SPRUCE_PLANKS, JUNGLE_PLANKS, BIRCH_PLANKS, ACACIA_PLANKS,
+    OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG,
+    OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE,
+    LAVA, BEDROCK, CACTUS, ICE};
 
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
@@ -58,7 +61,9 @@ private:
 
     //for vbo
     std::vector<glm::vec4> VBOinter;
+    std::vector<glm::vec4> VBOinterClear;
     std::vector<int> idx;
+    std::vector<int> idxClear;
 
     std::mutex setBlock_mutex;
     std::mutex createVBO_mutex;
