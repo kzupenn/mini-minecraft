@@ -3,7 +3,9 @@
 #include <QThread>
 #include <QRunnable>
 #include "glm_includes.h"
+#include "mygl.h"
 #include "terrain.h"
+#include "server/server.h"
 
 //runnables
 class BlockTypeWorker: public QRunnable {
@@ -39,3 +41,30 @@ public:
     void run();
 };
 
+class ServerConnectionWorker: public QRunnable {
+private:
+    Server* s;
+public:
+    ServerConnectionWorker(Server*);
+    ~ServerConnectionWorker();
+    void run();
+};
+
+class ServerThreadWorker: public QRunnable {
+private:
+    Server* s;
+    int t;
+public:
+    ServerThreadWorker(Server*, int);
+    ~ServerThreadWorker();
+    void run();
+};
+
+class ClientWorker: public QRunnable {
+private:
+    MyGL* s;
+public:
+    ClientWorker(MyGL*);
+    ~ClientWorker();
+    void run();
+};

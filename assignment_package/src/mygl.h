@@ -2,23 +2,30 @@
 #define MYGL_H
 
 #include "openglcontext.h"
+#include "scene/crosshair.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
 #include "texture.h"
+#include "server/server.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
+#include <netinet/in.h>
 #include <smartpointerhelp.h>
 
+#define PORT 3078
+#define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
 {
     Q_OBJECT
 private:
+    glm::mat4 overlayTransform;
     WorldAxes m_worldAxes; // A wireframe representation of the world axes. It is hard-coded to sit centered at (32, 128, 32).
+    Crosshair m_crosshair; //crosshair so we know where we're looking
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
@@ -28,15 +35,41 @@ private:
 
     Terrain m_terrain; // All of the Chunks that currently comprise the world.
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
+
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
-    int time; //to get tick number
+    int m_time; //to get tick number
+    bool mouseMove;
 
     Texture m_texture;
 
     long long m_currentMSecsSinceEpoch;
-    glm::vec2 m_mousePosPrev;
+
+    //multiplayer stuffs
+    //client vars
+    void receive_messages(void*arg);
+
+    int client_fd;
+    struct sockaddr_in server_address;
+    bool open;
+    pthread_t receive_thread;
+
+    void packet_parser(Packet*);
+    void init_client(); //initializes the client
+    void send_packet(Packet*);
+    void close_client(); //closes client
+
+    //server, if hosting
+    uPtr<Server> SERVER;
+
+    //info from server
+    std::atomic_bool verified_server;
+    std::mutex m_multiplayers_mutex;
+    std::map<int, uPtr<Player>> m_multiplayers;
+    std::mutex m_entites_mutex;
+    std::vector<Entity> m_entities; //collection of all non-player entities
+
 
     void moveMouseToCenter(); // Forces the mouse position to the screen's center. You should call this
                               // from within a mouse move event after reading the mouse movement so that
@@ -63,12 +96,16 @@ public:
     void paintGL() override;
 
     //servers
-    void start();
+    void start(bool isMultiplayer); //starts the client
+    void run_client(); //runs the client
+    void packet_processer(Packet*);
     std::string ip;
 
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
+    void setupTerrainThreads();
+
 
 protected:
     // Automatically invoked when the user
@@ -78,7 +115,7 @@ protected:
 
     // Automatically invoked when the user
     // moves the mouse
-    void mouseMoveEvent(QMouseEvent *e);
+    void updateMouse();
     // Automatically invoked when the user
     // presses a mouse button
     void mousePressEvent(QMouseEvent *e);
@@ -94,6 +131,7 @@ signals:
     void sig_sendPlayerLook(QString) const;
     void sig_sendPlayerChunk(QString) const;
     void sig_sendPlayerTerrainZone(QString) const;
+    void sig_sendServerIP(QString) const;
 };
 
 

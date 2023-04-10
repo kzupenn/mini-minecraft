@@ -2,13 +2,20 @@
 #include <glm_includes.h>
 
 #include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <QApplication>
 #include <QKeyEvent>
-#include <thread>
 
 #include "algo/perlin.h"
 #include "scene/biome.h"
+#include "scene/runnables.h"
 #include "scene/structure.h"
+#include "server/getip.h"
 #include <QDateTime>
 
 MyGL::MyGL(QWidget *parent)
@@ -25,17 +32,33 @@ MyGL::MyGL(QWidget *parent)
 }
 
 //move stuff from constructor to here so that it can be called upon entering game scene
-void MyGL::start() {
+void MyGL::start(bool joinServer) {
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
     setCursor(Qt::BlankCursor); // Make the cursor invisible
 
-    //distribution tests
+    //set up overlays
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
+    m_crosshair.createVBOdata();
+
+    //noise function distribution tests
     //distTest();
     //biomeDist();
-    //TO DO: uncomment the bottom out to initialize spawn chunks before player loads in
-    //m_terrain.createInitScene();
+
+    //check if we need to host a server
+    if(!joinServer) {
+        SERVER = mkU<Server>(1);
+        while(!SERVER->setup);
+        ip = getIP().data();
+    }
+
+    verified_server = false;
+    init_client();
+
+    //block until we get world spawn info
+    while(!verified_server);
+    m_player.setState(m_terrain.worldSpawn, 0, 0);
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -44,6 +67,8 @@ void MyGL::start() {
 MyGL::~MyGL() {
     makeCurrent();
     glDeleteVertexArrays(1, &vao);
+    close_client();
+    SERVER->shutdown();
 }
 
 void MyGL::moveMouseToCenter() {
@@ -103,6 +128,7 @@ void MyGL::resizeGL(int w, int h) {
     //our scene's camera view.
     m_player.setCameraWidthHeight(static_cast<unsigned int>(w), static_cast<unsigned int>(h));
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+    overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
 
     // Upload the view-projection matrix to our shaders (i.e. onto the graphics card)
 
@@ -121,21 +147,30 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 
 void MyGL::tick() {
-    time++;
+    m_time++;
     long long ct = QDateTime::currentMSecsSinceEpoch();
     float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
 
+    if (mouseMove) updateMouse();
     m_player.tick(dt, m_inputs);
+    setupTerrainThreads();
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
+
+    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi());
+    send_packet(&pp);
+
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
     //zone player is in
+
+}
+
+void MyGL::setupTerrainThreads() {
+    //does rendering stuff
     int minx = floor(m_player.mcr_position.x/64)*64;
     int miny = floor(m_player.mcr_position.z/64)*64;
-
-    //does rendering stuff
     for(int dx = minx-192; dx <= minx+192; dx+=64) {
         for(int dy = miny-192; dy <= miny+192; dy+=64) {
             if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
@@ -151,7 +186,7 @@ void MyGL::tick() {
     }
 
     //checks for additional structures for rendering, but not as often since structure threads can finish at staggered times
-    if(time%30 == 0) {
+    if(m_time%30 == 0) {
         for(int dx = minx-192; dx <= minx+192; dx+=64) {
             for(int dy = miny-192; dy <= miny+192; dy+=64) {
                 for(int ddx = dx; ddx < dx + 64; ddx+=16) {
@@ -168,10 +203,12 @@ void MyGL::tick() {
 
             }
         }
+        m_time = 0;
     }
 }
 
-void MyGL::sendPlayerDataToGUI() const {
+void MyGL::sendPlayerDataToGUI() const{
+    emit sig_sendServerIP(QString::fromStdString(ip));
     emit sig_sendPlayerPos(m_player.posAsQString());
     emit sig_sendPlayerVel(m_player.velAsQString());
     emit sig_sendPlayerAcc(m_player.accAsQString());
@@ -196,11 +233,25 @@ void MyGL::paintGL() {
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_texture.bind(0);
     renderTerrain();
+    //m_player.createVBOdata();
+    //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
+    //m_progLambert.drawInterleaved(m_player);
+    m_multiplayers_mutex.lock();
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second->createVBOdata();
+        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
+        m_progLambert.drawInterleaved(*(it->second));
+    }
+    m_multiplayers_mutex.unlock();
 
     glDisable(GL_DEPTH_TEST);
+//    m_progFlat.setModelMatrix(glm::mat4());
+//    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
+//    m_progFlat.draw(m_worldAxes);
+
     m_progFlat.setModelMatrix(glm::mat4());
-    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_progFlat.draw(m_worldAxes);
+    m_progFlat.setViewProjMatrix(overlayTransform);
+    m_progFlat.draw(m_crosshair);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -220,10 +271,6 @@ void MyGL::renderTerrain() {
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
-    float amount = 2.0f;
-    if(e->modifiers() & Qt::ShiftModifier){
-        amount = 10.0f;
-    }
     // http://doc.qt.io/qt-5/qt.html#Key-enum
     // This could all be much more efficient if a switch
     // statement were used, but I really dislike their
@@ -245,8 +292,18 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         m_inputs.ePressed = true;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = true;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = true;
+    } else if (e->key() == Qt::Key_Right) {
+        m_inputs.mouseX = 5.f;
+    } else if (e->key() == Qt::Key_Left) {
+        m_inputs.mouseX = -5.f;
+    } else if (e->key() == Qt::Key_Up) {
+        m_inputs.mouseY = -5.f;
+    } else if (e->key() == Qt::Key_Down) {
+        m_inputs.mouseY = 5.f;
+    } else if (e->key() == Qt::Key_M) {
+        mouseMove = !mouseMove;
     }
 }
 
@@ -265,27 +322,23 @@ void MyGL::keyReleaseEvent(QKeyEvent *e) {
         m_inputs.ePressed = false;
     } else if (e->key() == Qt::Key_F) {
         m_inputs.fPressed = false;
-    } else if (e->key() ==Qt::Key_Space) {
+    } else if (e->key() == Qt::Key_Space) {
         m_inputs.spacePressed = false;
     }
 }
 
-void MyGL::mouseMoveEvent(QMouseEvent *e) {
-    // TODO
-    const float spd = 0.6;
-    glm::vec2 pos(e->pos().x(), e->pos().y());
-    glm::vec2 diff = spd * (pos - m_mousePosPrev);
-    m_mousePosPrev = pos;
-    m_inputs.mouseX = diff.x;
-    m_inputs.mouseY = diff.y;
+void MyGL::updateMouse() {
+    float sens = 0.15;
+    QPoint cur = QWidget::mapFromGlobal(QCursor::pos());
+    m_inputs.mouseX = sens * (cur.x() - width() / 2);
+    m_inputs.mouseY = sens * (cur.y() - height() / 2);
+    moveMouseToCenter();
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     // TODO
     if(e->buttons() & Qt::LeftButton)
     {
-        m_mousePosPrev = glm::vec2(e->pos().x(), e->pos().y());
-
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
         glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
@@ -297,25 +350,124 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
     } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
         glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = m_player.getLook() * bound;
+        glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
 
         float dist;
         glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos)) {
-            BlockType b = m_terrain.getBlockAt(glm::vec3(block_pos));
-            if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z-1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z-1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x-1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x-1, block_pos.y, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y+1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y+1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y-1, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y-1, block_pos.z, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x, block_pos.y, block_pos.z+1)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z+1, b);
-            } else if (m_terrain.getBlockAt(glm::vec3(block_pos.x+1, block_pos.y, block_pos.z)) == EMPTY) {
-                m_terrain.setBlockAt(block_pos.x+1, block_pos.y, block_pos.z, b);
+        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
+        if (found) {
+            BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+            glm::vec3 backward = -glm::normalize(ray_dir);
+            glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
+            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+            qDebug() << QString::fromStdString(glm::to_string(restart));
+            qDebug() << dist;
+            glm::ivec3 bpos;
+            if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
+                m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
+            } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
+                m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
             }
         }
+    }
+}
+
+void MyGL::run_client() {
+    QByteArray buffer;
+    qDebug() << "client listening";
+    buffer.resize(BUFFER_SIZE);
+    while (open)
+    {
+        int bytes_received = recv(client_fd, buffer.data(), buffer.size(), 0);
+        if (bytes_received < 0)
+        {
+            qDebug() << "Failed to receive message";
+            break;
+        }
+        else if (bytes_received == 0)
+        {
+            qDebug() << "Connection closed by server";
+            break;
+        }
+        else
+        {
+            buffer.resize(bytes_received);
+            Packet* pp = bufferToPacket(buffer);
+            packet_processer(pp);
+            delete(pp);
+            buffer.resize(BUFFER_SIZE);
+        }
+    }
+}
+
+void MyGL::init_client() {
+    // create client socket
+    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+    {
+        qDebug() << "Failed to create client socket";
+        return;
+    }
+
+    // connect to server
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, &ip[0], &server_address.sin_addr) <= 0)
+    {
+        qDebug() << "Invalid server address";
+        return;
+    }
+    if (::connect(client_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0)
+    {
+        qDebug() << "Failed to connect to server";
+        return;
+    }
+
+    // create thread to receive messages
+    open = true;
+    ClientWorker* cw = new ClientWorker(this);
+    QThreadPool::globalInstance()->start(cw);
+}
+
+void MyGL::send_packet(Packet* packet) {
+    QByteArray buffer;
+        switch(packet->type) {
+        case PLAYER_STATE:{
+            buffer = (dynamic_cast<PlayerStatePacket*>(packet))->packetToBuffer();
+            break;
+        }
+        default:
+            break;
+        }
+        int bytes_sent = send(client_fd, buffer.data(), buffer.size(), 0);
+        //qDebug() << bytes_sent;
+//        return (bytes_sent >= 0);
+}
+
+void MyGL::close_client() {
+    open = false;
+}
+
+void MyGL::packet_processer(Packet* packet) {
+    switch(packet->type) {
+    case PLAYER_STATE:{
+        PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
+        m_multiplayers_mutex.lock();
+        if(m_multiplayers.find(thispack->player_id) == m_multiplayers.end()) {
+            m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this));
+        }
+        m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi);
+        m_multiplayers_mutex.unlock();
+        break;
+    }
+    case WORLD_INIT:{
+        WorldInitPacket* thispack = dynamic_cast<WorldInitPacket*>(packet);
+        //TO do: set seed somewhere
+        m_terrain.worldSpawn = thispack->spawn;
+        verified_server = true;
+        break;
+    }
+    default:
+        qDebug() << "unknown packet type: " << packet->type;
+        break;
     }
 }

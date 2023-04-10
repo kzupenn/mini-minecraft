@@ -3,19 +3,11 @@
 #include "algo/perlin.h"
 #include "algo/worley.h"
 #include "terrain.h"
+#include "algo/seed.h"
 #include <map>
 
 using namespace glm;
 
-//TODO: MOVE SEED TO SOMEWHERE ELSE
-int seed = 584254031;
-float getSeed(float f) {
-    return seed*f;
-}
-
-vec4 heightSeed = vec4(getSeed(4), getSeed(3), getSeed(5), getSeed(2));
-vec4 rainSeed = vec4(getSeed(432), getSeed(1249), getSeed(120.3), getSeed(582.259));
-vec4 tempSeed = vec4(getSeed(593.24), getSeed(52.29), getSeed(623.33), getSeed(5920.2));
 #define river_width 0.007
 
 const bool TESTING = false;
@@ -23,7 +15,7 @@ const bool TESTING = false;
 //terrain generation
 //makes sporatic divets to make smooth terrain appear with erosion
 float divet(glm::vec2 pos) {
-    return -20*max(0.f, fBm(pos, 4, vec4(getSeed(1.43), getSeed(43.3), getSeed(431), getSeed(223)), 50)-0.57f);
+    return -20*max(0.f, fBm(pos, 4, vec4(SEED.getSeed(7061.801,6269.454,594.208,8654.859)), 50)-0.57f);
 }
 //flat
 float superflat(glm::vec2 p){
@@ -38,7 +30,7 @@ float flat(glm::vec2 pos) {
 
 //shallow hills
 float hills(glm::vec2 pos) {
-    std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, glm::vec4(getSeed(2), getSeed(3), getSeed(4), getSeed(5)), 32);
+    std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, glm::vec4(SEED.getSeed(8199.337,7556.696,704.539,8315.043)), 32);
     float ret = 0;
     for(std::pair<float, glm::vec2> p: hillWeights) {
         ret+=pow(glm::tanh(1.5*p.first-1.5)*0.5+0.5, 4);
@@ -51,23 +43,23 @@ float hills(glm::vec2 pos) {
 //valley?
 
 float terraces(glm::vec2 pos) {
-    return 50*fBm(pos, 8, heightSeed, 64);
+    return 50*fBm(pos, 8, SEED.getSeed(9197.192,4666.678,4885.874,2264.0), 64);
 }
 
 //desert
 float dunes(glm::vec2 pos) {
-    return 40*hybridMultifractal(pos, 8, heightSeed, 64);
+    return 40*hybridMultifractal(pos, 8, SEED.getSeed(6394.685,9164.769,6711.066,8576.487), 64);
 }
 
 //mountains
 float mountains(glm::vec2 pos) {
-    return clamp((float)(200*pow(hybridMultifractalM(pos, 8, heightSeed, 256), 2) + 30*fBm(pos, 8, heightSeed, 128)), 0.f, 255.f);
+    return clamp((float)(200*pow(hybridMultifractalM(pos, 8, SEED.getSeed(3592.123,9767.551,8272.77,2613.673), 256), 2) + 30*fBm(pos, 8, SEED.getSeed(9448.479,7845.191,1589.323,2670.333), 128)), 0.f, 255.f);
 }
 
 //UNUSED
 //tall cone peaks, has issues with jagged terrain
 float cone_mountains(glm::vec2 pos) {
-    std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, glm::vec4(getSeed(2), getSeed(3), getSeed(4), getSeed(5)), 32);
+    std::vector<std::pair<float, glm::vec2>> hillWeights = worleyNoise(pos, 9, SEED.getSeed(9304.527, 4757.075, 8550.053, 3560.767), 32);
     float ret = 0;
     for(std::pair<float, glm::vec2> p: hillWeights) {
         ret+=1/(1+p.first);
@@ -181,14 +173,14 @@ float getBiomeHeight(float e, vec2 pp, std::vector<std::pair<vec2, float(*)(vec2
 }
 
 float generateErosion(vec2 pp) {
-    return normPerlin(pp, vec4(getSeed(7.8), getSeed(5.6), getSeed(2.5), getSeed(4.6)), 1024);
+    return normPerlin(pp, SEED.getSeed(9441.693,326.184,2558.757,8946.046), 1024);
 //    setMultiFractalNoise(normPerlin);
 //    return hybridMultifractal(pp);
 }
 
 std::pair<float, BiomeType> generateGround (vec2 pp) {
-    float rain = fBm(pp, 12, rainSeed, 2048);
-    float temp = fBm(pp, 12, tempSeed, 2048);
+    float rain = fBm(pp, 12, SEED.getSeed(3885.207,977.211,3437.496,3504.515), 2048);
+    float temp = fBm(pp, 12, SEED.getSeed(5716.522,6415.354,3175.466,3309.938), 2048);
 
     float crain = rain * std::sqrt(1 - 0.5*temp*temp);
     float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
@@ -268,52 +260,27 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
 float generateBedrock(vec2 pp){
     vec2 q, r;
-    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, vec4(getSeed(2.32), getSeed(114), getSeed(3.1), getSeed(2.4)), 2048)-0.5)),
+    return clamp((float)(2*abs(warpPattern(pp, q, r, 12, 500, SEED.getSeed(2388.099,6949.378,3298.059,7308.408), 2048)-0.5)),
                  0.f, 1.f);
 }
 
 float generateBeach(vec2 pp) {
-    return normPerlin(pp, heightSeed, 128);
+    return normPerlin(pp, SEED.getSeed(6391.105,5259.751,5585.325,5970.867), 128);
 }
 
 float generateRiver(vec2 pp) {
-    return fBm(pp*0.25f, 8, heightSeed*4.f, 512);
+    return fBm(pp*0.25f, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
 }
 
 //
 float generateSnowLayer(vec2 pp) {
-    return 128+20*perlinNoise(pp, heightSeed, 128);
+    return 128+20*perlinNoise(pp, SEED.getSeed(748.852,4942.126,34.161,5958.106), 32);
 }
 float generateRockLayer(vec2 pp) {
-    return 100+10*perlinNoise(pp, heightSeed, 256);
+    return 100+10*perlinNoise(pp, SEED.getSeed(8008.714,9810.119,9169.679,9032.367), 64);
 }
 
 //noise distribution tests
-
-void raintempTest() {
-    float foo1[1000000], foo2[1000000];
-    for(int i = 0; i < 1000; i++) {
-        for(int j = 0; j < 1000; j++) {
-            vec2 randp = vec2(i,j);//vec2(std::rand()%10000,std::rand()%10000);
-            float crain = fBm(randp, 12, rainSeed, 1024);
-            float ctemp = fBm(randp, 12, tempSeed, 1024);
-            //float crain = rain * std::sqrt(1.f - 0.5f*temp*temp);
-            //float ctemp = 1-(temp * std::sqrt(1.f - 0.5f*rain*rain));
-            foo1[1000*i+j] = crain;
-            foo2[1000*i+j] = ctemp;
-        }
-    }
-    std::sort(std::begin(foo1), std::end(foo1));
-    std::sort(std::begin(foo2), std::end(foo2));
-    qDebug() << "rain";
-    for(int i = 0; i < 20; i++) {
-        qDebug() <<i*5 << foo1[i*1000000/20];
-    }
-    qDebug() << "temp";
-    for(int i = 0; i < 20; i++) {
-        qDebug() <<i*5<< foo2[i*1000000/20];
-    }
-}
 
 void bedrockTest() {
     float foo[100000];
@@ -330,8 +297,8 @@ void biomeTest() {
     int b[9] = {0,0,0,0,0,0,0,0,0};
     for(int i = 0; i < 100000; i++) {
         vec2 pp = vec2(std::rand()%100000,std::rand()%100000);
-        float rain = fBm(pp, 12, rainSeed, 2048);
-        float temp = fBm(pp, 12, tempSeed, 2048);
+        float rain = fBm(pp, 12, SEED.getSeed(3885.207,977.211,3437.496,3504.515), 2048);
+        float temp = fBm(pp, 12, SEED.getSeed(5716.522,6415.354,3175.466,3309.938), 2048);
 
         float crain = rain * std::sqrt(1 - 0.5*temp*temp);
         float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
@@ -363,8 +330,8 @@ void biomeTest() {
 
 }
 void biomeDist() {
-    biomeTest();
-    //bedrockTest();
+    //biomeTest();
+    bedrockTest();
 }
 
 void erosionDist() {

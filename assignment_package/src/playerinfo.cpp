@@ -37,3 +37,6 @@ void PlayerInfo::slot_setZoneText(QString s) {
     ui->zoneLabel->setText(s);
 }
 
+void PlayerInfo::slot_setServerIP(QString s) {
+    ui->serverIPLabel->setText(s);
+}

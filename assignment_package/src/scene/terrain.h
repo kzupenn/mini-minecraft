@@ -108,7 +108,9 @@ public:
 
     // Initializes the Chunks that store the 64 x 256 x 64 block scene you
     // see when the base code is run.
-    void createInitScene();
+    void createSpawn();
+    std::atomic_bool setSpawn;
+    glm::vec3 worldSpawn;
 
     //for multithreading
     //creates a ground thread
@@ -123,7 +125,7 @@ public:
     void buildStructure(const Structure&);
 
     bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, float *out_dist,
-                   glm::ivec3 *out_blockHit) const;
+                   glm::ivec3 *out_blockHit, bool empty) const;
 };
 
 

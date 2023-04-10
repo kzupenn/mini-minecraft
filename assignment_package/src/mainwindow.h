@@ -28,6 +28,8 @@ private slots:
     //scene
     void slot_setSceneSinglePlayer();
     void slot_setSceneMultiPlayer();
+    void slot_setSceneHostServer();
+    void slot_setSceneJoinServer();
     void slot_setSeed();
     void slot_startGame();
 
