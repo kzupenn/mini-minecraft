@@ -15,7 +15,7 @@ void Crosshair::createVBOdata() {
         glm::vec4(-l, -w, 0, 1)
     };
     for(int i = 0; i < pos.size(); i++) {
-        col.emplace_back(1,1,1,1);
+        col.emplace_back(1,1,1,0.5);
     }
     std::vector<int> idx = {0, 1, 2,
                            2, 3, 0,

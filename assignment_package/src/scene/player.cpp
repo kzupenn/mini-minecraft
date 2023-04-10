@@ -2,11 +2,12 @@
 #include <QString>
 #include <iostream>
 
+
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
-    : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
+    : Entity(pos, m_context), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
-      airtime(0), maxair(45)
+      airtime(0), maxair(45), inHand(AIR)
 {}
 
 Player::~Player()
@@ -67,10 +68,10 @@ void Player::processInputs(InputBundle &inputs) {
         else m_acceleration -= glm::normalize(
                                 glm::vec3(m_right.x, 0, m_right.z)) * SPEED;
     }
-    if (inputs.ePressed && m_flightMode) {
+    if (inputs.spacePressed && m_flightMode) {
         m_acceleration += glm::vec3(0, 1, 0) * SPEED;
     }
-    if (inputs.qPressed && m_flightMode) {
+    if (inputs.lshiftPressed && m_flightMode) {
         m_acceleration -= glm::vec3(0, 1, 0) * SPEED;
     }
     if (inputs.spacePressed) {
@@ -106,7 +107,7 @@ void Player::computePhysics(float dT) {
         checkCollision();
     }
     moveAlongVector(m_velocity);
-//    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
+
     m_acceleration = glm::vec3(0);
 }
 
@@ -241,12 +242,14 @@ float Player::getTheta() {
     return theta;
 }
 
-void Player::setState(glm::vec3 p, float f1, float f2) {
+void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
     m_position = p;
     m_camera.setPos(p + glm::vec3(0, 1.5f, 0));
     theta = f1;
     phi = f2;
+    inHand = i;
 }
+
 
 void Player::createVBOdata() {
     std::vector<glm::vec4> pos, nor, col, inter;
