@@ -8,8 +8,9 @@ Packet* bufferToPacket(QByteArray buffer) {
     case PLAYER_STATE:{
         int pid;
         float f1, f2, f3, f4, f5;
-        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5;
-        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), f4, f5);
+        ItemType c;
+        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5 >> c;
+        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), f4, f5, c);
         break;
     }
     case WORLD_INIT:{

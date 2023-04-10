@@ -7,7 +7,7 @@
 
 //ordered by row in texture map
 enum ItemType: unsigned char {
-    DIAMOND_HOE,
+    DIAMOND_HOE, AIR,
     DIAMOND_LEGGINGS, GOLD_NUGGET,
     IRON_NUGGET,
     IRON_BOOTS, STONE_SWORD,

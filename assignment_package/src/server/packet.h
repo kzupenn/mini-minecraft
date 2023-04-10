@@ -82,16 +82,17 @@ struct PlayerStatePacket : public Packet{
     int player_id; //id by server assigned client_fd
     vec3 player_pos;
     float player_phi, player_theta;
+    ItemType player_hand;
 
-    PlayerStatePacket(int i, glm::vec3 p, int t, int ph) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_theta(t), player_phi(ph) {}
-    PlayerStatePacket(glm::vec3 p, int t, int ph) : PlayerStatePacket(0, p, t, ph) {}
+    PlayerStatePacket(int i, glm::vec3 p, int t, int ph, ItemType it) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_theta(t), player_phi(ph), player_hand(it) {}
+    PlayerStatePacket(glm::vec3 p, int t, int ph, ItemType it) : PlayerStatePacket(0, p, t, ph, it) {}
     ~PlayerStatePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         out << PLAYER_STATE << player_id
             << player_pos.x << player_pos.y << player_pos.z
-            << player_theta << player_phi;
+            << player_theta << player_phi << player_hand;
         return buffer;
     }
 };

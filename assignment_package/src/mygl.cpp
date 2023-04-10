@@ -60,7 +60,7 @@ void MyGL::start(bool joinServer) {
 
     //block until we get world spawn info
     while(!verified_server);
-    m_player.setState(m_terrain.worldSpawn, 0, 0);
+    m_player.setState(m_terrain.worldSpawn, 0, 0, AIR);
 
     m_player.m_inventory.createVBOdata();
     m_player.m_inventory.hotbar.createVBOdata();
@@ -206,7 +206,7 @@ void MyGL::tick() {
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
-    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi());
+    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi(), m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
     send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -345,7 +345,7 @@ void MyGL::paintGL() {
         QPoint cur = mapFromGlobal(QCursor::pos());
         if(m_cursor_item) {
             m_cursor_item->draw(&m_progOverlay, m_block_texture, m_font_texture,
-                                60, 30, glm::vec3(2*cur.x()-width()+31, -2*cur.y()+height()-31, 0), glm::vec3(2*cur.x()-width()+96, -5-2*cur.y()+height()-31, 0));
+                                60, 30, glm::vec3(2*cur.x()-width()+32, -2*cur.y()+height()-31, 0), glm::vec3(2*cur.x()-width()+97, -5-2*cur.y()+height()-31, 0));
         }
         m_progFlat.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(2*cur.x()-width()+65, -2*cur.y()+height(), 0)));
         m_progFlat.draw(m_crosshair);
@@ -691,7 +691,7 @@ void MyGL::packet_processer(Packet* packet) {
         if(m_multiplayers.find(thispack->player_id) == m_multiplayers.end()) {
             m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this));
         }
-        m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi);
+        m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand);
         m_multiplayers_mutex.unlock();
         break;
     }
