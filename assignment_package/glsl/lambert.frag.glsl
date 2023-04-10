@@ -22,7 +22,7 @@ uniform int uTime;
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-in vec3 fs_UV;
+in vec4 fs_UV;
 
 
 out vec4 out_Col; // This is the final output color that you will see on your
@@ -83,7 +83,7 @@ void main()
         vec2 uv = vec2(fs_UV);
 
         if (fs_UV.z == 1.f) {
-            uv.y = fs_UV.y - 1.f/16.f - t/16.f;
+            uv.x = fs_UV.x + t/64.f;
         }
 
         vec4 diffuseColor = texture(u_Texture, vec2(uv));
@@ -104,5 +104,9 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
+
+        if (fs_UV.w == 0.f) {
+            diffuseColor += vec4(0.f, 0.f, 204.f, 0.f);
+        }
         out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
 }

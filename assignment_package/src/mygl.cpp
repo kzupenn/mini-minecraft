@@ -74,7 +74,7 @@ void MyGL::initializeGL()
     glGenVertexArrays(1, &vao);
 
     //load texture into memory and store on gpu
-    m_texture.create(":/textures/minecraft_textures_all.png");
+    m_texture.create(":/textures/block_item_textures_fixed.png");
     m_texture.load(0);
 
     //Create the instance of the world axes
