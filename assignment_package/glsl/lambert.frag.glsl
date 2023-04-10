@@ -13,17 +13,12 @@
 
 uniform vec4 u_Color; // The color with which to render this instance of geometry.
 
-uniform sampler2D u_Texture; // The texture to be read from by this shader
-
-uniform int uTime;
-
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-in vec4 fs_UV;
-
+in vec4 fs_Col;
 
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
@@ -76,20 +71,7 @@ float fbm(vec3 p) {
 void main()
 {
     // Material base color (before shading)
-
-        float t = mod(float(uTime), 17) / 17;
-        t = clamp(t, 0.f, 1.f);
-
-        vec2 uv = vec2(fs_UV);
-
-        if (fs_UV.z == 1.f) {
-            uv.x = fs_UV.x + t/64.f;
-        }
-
-        vec4 diffuseColor = texture(u_Texture, vec2(uv));
-
-        float a = diffuseColor.w;
-        //vec4 diffuseColor = fs_Col;
+        vec4 diffuseColor = fs_Col;
         diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
 
         // Calculate the diffuse term for Lambert shading
@@ -104,9 +86,5 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
-
-        if (fs_UV.w == 0.f) {
-            diffuseColor += vec4(0.f, 0.5f, 0.8f, 0.f);
-        }
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
+        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
 }

@@ -106,7 +106,7 @@ void Player::computePhysics(float dT) {
         checkCollision();
     }
     moveAlongVector(m_velocity);
-
+//    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
     m_acceleration = glm::vec3(0);
 }
 

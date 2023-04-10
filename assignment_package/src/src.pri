@@ -30,7 +30,6 @@ SOURCES += \
     $$PWD/scene/chunk.cpp \
     $$PWD/algo/perlin.cpp \
     $$PWD/server/server.cpp \
-    $$PWD/texture.cpp
 
 HEADERS += \
     $$PWD/algo/fractal.h \
@@ -62,9 +61,4 @@ HEADERS += \
     $$PWD/scene/chunk.h \
     $$PWD/algo/perlin.h \
     $$PWD/server/server.h \
-    $$PWD/texture.h
-
-RESOURCES += \
-    $$PWD/textures.qrc \
-    $$PWD/textures.qrc
 

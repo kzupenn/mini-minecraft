@@ -20,8 +20,7 @@ FORMS += forms/mainwindow.ui \
     forms/cameracontrolshelp.ui \
     forms/playerinfo.ui
 
-RESOURCES += glsl.qrc \
-    textures.qrc
+RESOURCES += glsl.qrc
 
 *-clang*|*-g++* {
     message("Enabling additional warnings")
@@ -52,7 +51,3 @@ address_sanitizer {
 HEADERS +=
 
 SOURCES +=
-
-DISTFILES += \
-    textures/minecraft_normals_all.png \
-    textures/minecraft_textures_all.png
