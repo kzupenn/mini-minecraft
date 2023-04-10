@@ -106,7 +106,7 @@ void main()
         // Compute final shaded color
 
         if (fs_UV.w == 0.f) {
-            diffuseColor += vec4(0.f, 0.f, 204.f, 0.f);
+            diffuseColor += vec4(0.f, 0.5f, 0.8f, 0.f);
         }
         out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
 }

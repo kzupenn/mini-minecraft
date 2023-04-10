@@ -211,6 +211,10 @@ void Chunk::createVBOdata() {
                     }
                     if(drawFace){
 
+//                        if ((Face != 3 && Face != 2) && (curr == WATER || (curr == EMPTY && oth == WATER))) {
+//                            Face++;
+//                            continue;
+//                        }
                         //set surface positions
                         glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
 
