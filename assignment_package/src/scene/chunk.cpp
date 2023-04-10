@@ -7,7 +7,7 @@ void printVec(glm::vec4 a) {
 }
 
 bool checkTransparent(BlockType bt) {
-    return bt == EMPTY || bt == WATER || bt ==  GLASS || bt == OAK_LEAVES;
+    return bt == EMPTY || bt == WATER || bt ==  GLASS;
 }
 
 bool isTransparent(int x, int y, int z, Chunk* c) {
