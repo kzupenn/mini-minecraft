@@ -8,7 +8,10 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "texture.h"
 #include "server/server.h"
+#include "framebuffer.h"
+#include "quad.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -27,19 +30,28 @@ private:
     Crosshair m_crosshair; //crosshair so we know where we're looking
     ShaderProgram m_progLambert;// A shader program that uses lambertian reflection
     ShaderProgram m_progFlat;// A shader program that uses "flat" reflection (no shadowing at all)
+    ShaderProgram m_progOverlay; //for overlays
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
+    ShaderProgram m_progPostProcess;
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
     Terrain m_terrain; // All of the Chunks that currently comprise the world.
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
+    FrameBuffer m_frame;
+    Quad m_quad;
 
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
+    std::optional<Item> m_cursor_item; // Item player is handling in inventory mode
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
     int m_time; //to get tick number
     bool mouseMove;
+
+    Texture m_block_texture;
+    Texture m_font_texture;
+    Texture m_inventory_texture;
 
     long long m_currentMSecsSinceEpoch;
 

@@ -8,8 +8,9 @@
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
-      attrPos(-1), attrNor(-1), attrCol(-1),
+      attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
+      attrUV(-1), unifSampler2D(-1), unifTime(-1), unifWater(-1)
       context(context)
 {}
 
@@ -64,13 +65,22 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrPos = context->glGetAttribLocation(prog, "vs_Pos");
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
+    attrUV = context->glGetAttribLocation(prog, "vs_UV");
     if(attrCol == -1) attrCol = context->glGetAttribLocation(prog, "vs_ColInstanced");
+    attrUV = context->glGetAttribLocation(prog, "vs_UV");
+
     attrPosOffset = context->glGetAttribLocation(prog, "vs_OffsetInstanced");
 
     unifModel      = context->glGetUniformLocation(prog, "u_Model");
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
+
+    unifWater = context->glGetUniformLocation(prog, "u_Type");
+    unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
+    unifTime = context->glGetUniformLocation(prog, "uTime");
+
+    context->printGLErrorLog();
 }
 
 void ShaderProgram::useMe()
@@ -136,10 +146,23 @@ void ShaderProgram::setGeometryColor(glm::vec4 color)
     }
 }
 
+void ShaderProgram::setType(int type) {
+    useMe();
+
+    if (unifWater != -1)
+    {
+        context->glUniform1i(unifWater, type);
+    }
+}
+
 //This function, as its name implies, uses the passed in GL widget
 void ShaderProgram::draw(Drawable &d)
 {
     useMe();
+
+    if (unifSampler2D != -1) {
+        context->glUniform1i(unifSampler2D, 0);
+    }
 
     if(d.elemCount() < 0) {
         throw std::out_of_range("Attempting to draw a drawable with m_count of " + std::to_string(d.elemCount()) + "!");
@@ -169,6 +192,11 @@ void ShaderProgram::draw(Drawable &d)
         context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 0, NULL);
     }
 
+    if (attrUV != -1 && d.bindUV()) {
+        context->glEnableVertexAttribArray(attrUV);
+        context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 0, NULL);
+    }
+
     // Bind the index buffer and then draw shapes from it.
     // This invokes the shader program, which accesses the vertex buffers.
     d.bindIdx();
@@ -177,13 +205,18 @@ void ShaderProgram::draw(Drawable &d)
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
-
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
     context->printGLErrorLog();
 }
 
 void ShaderProgram::drawInterleaved(Drawable &d) {
     useMe();
 
+    if(unifSampler2D != -1)
+    {
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
+    context->printGLErrorLog();
     if(d.elemCount() < 0) {
         throw std::out_of_range("Attempting to draw a drawable with m_count of " + std::to_string(d.elemCount()) + "!");
     }
@@ -203,14 +236,51 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
             context->glEnableVertexAttribArray(attrPos);
             context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) 0);
         }
-        if (attrPos != -1) {
+        context->printGLErrorLog();
+        if (attrNor != -1) {
             context->glEnableVertexAttribArray(attrNor);
             context->glVertexAttribPointer(attrNor, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) sizeof(glm::vec4));
         }
-        if (attrPos != -1) {
-            context->glEnableVertexAttribArray(attrCol);
-            context->glVertexAttribPointer(attrCol, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) (2*sizeof(glm::vec4)));
+        context->printGLErrorLog();
+        if (attrUV != -1) {
+            context->glEnableVertexAttribArray(attrUV);
+            context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*) (2*sizeof(glm::vec4)));
         }
+        context->printGLErrorLog();
+    }
+
+    // Bind the index buffer and then draw shapes from it.
+    // This invokes the shader program, which accesses the vertex buffers.
+    d.bindIdx();
+    context->glDrawElements(d.drawMode(), d.elemCount(), GL_UNSIGNED_INT, 0);
+    context->printGLErrorLog();
+
+    if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
+    if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
+
+    context->printGLErrorLog();
+}
+
+void ShaderProgram::drawPostProcess(Drawable &d, int textureSlot)
+{
+    useMe();
+
+    // Set our "renderedTexture" sampler to user specified texture slot
+    context->glUniform1i(unifSampler2D, textureSlot);
+
+    // Each of the following blocks checks that:
+    //   * This shader has this attribute, and
+    //   * This Drawable has a vertex buffer for this attribute.
+    // If so, it binds the appropriate buffers to each attribute.
+
+    if (attrPos != -1 && d.bindPos()) {
+        context->glEnableVertexAttribArray(attrPos);
+        context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 0, NULL);
+    }
+    if (attrUV != -1 && d.bindUV()) {
+        context->glEnableVertexAttribArray(attrUV);
+        context->glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 0, NULL);
     }
 
     // Bind the index buffer and then draw shapes from it.
@@ -219,8 +289,7 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
     context->glDrawElements(d.drawMode(), d.elemCount(), GL_UNSIGNED_INT, 0);
 
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
-    if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
-    if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
 }
@@ -228,6 +297,11 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
 void ShaderProgram::drawInstanced(InstancedDrawable &d)
 {
     useMe();
+
+    if(unifSampler2D != -1)
+    {
+        context->glUniform1i(unifSampler2D, /*GL_TEXTURE*/0);
+    }
 
     if(d.elemCount() < 0) {
         throw std::out_of_range("Attempting to draw a drawable with m_count of " + std::to_string(d.elemCount()) + "!");
@@ -260,6 +334,12 @@ void ShaderProgram::drawInstanced(InstancedDrawable &d)
         context->glVertexAttribDivisor(attrCol, 1);
     }
 
+    if (attrUV != -1 && d.bindUV()) {
+        context->glEnableVertexAttribArray(attrUV);
+        context->glVertexAttribPointer(attrUV, 4, GL_FLOAT, false, 0, NULL);
+        context->glVertexAttribDivisor(attrUV, 1);
+    }
+
     if (attrPosOffset != -1 && d.bindOffsetBuf()) {
         context->glEnableVertexAttribArray(attrPosOffset);
         context->glVertexAttribPointer(attrPosOffset, 3, GL_FLOAT, false, 0, NULL);
@@ -275,6 +355,7 @@ void ShaderProgram::drawInstanced(InstancedDrawable &d)
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
     if (attrPosOffset != -1) context->glDisableVertexAttribArray(attrPosOffset);
 
 }
@@ -313,6 +394,16 @@ QString ShaderProgram::qTextFileRead(const char *fileName)
     }
     return text;
 }
+
+void ShaderProgram::setTime(int t)
+{
+    useMe();
+
+    if (unifTime != -1) {
+        context->glUniform1i(unifTime, t);
+    }
+}
+
 
 void ShaderProgram::printShaderInfoLog(int shader)
 {

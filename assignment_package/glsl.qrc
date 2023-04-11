@@ -7,5 +7,8 @@
         <file>glsl/instanced.vert.glsl</file>
         <file>glsl/post.frag.glsl</file>
         <file>glsl/post.vert.glsl</file>
+        <file>glsl/instanced.frag.glsl</file>
+        <file>glsl/overlay.frag.glsl</file>
+        <file>glsl/overlay.vert.glsl</file>
     </qresource>
 </RCC>

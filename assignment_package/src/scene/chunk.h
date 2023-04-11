@@ -17,8 +17,7 @@
 enum BlockType : unsigned char
 {
     EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW,
-    COBBLESTONE, OAK_PLANKS, OAK_LOG, OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE};
-
+    COBBLESTONE, OAK_PLANKS, OAK_LOG, OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE, LAVA, BEDROCK};
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
 {
@@ -73,6 +72,8 @@ public:
     virtual void createVBOdata();
     //locks for multithreading stages
     bool dataBound, dataGen, surfaceGen;
+
+    bool hasTransparent;
 
     //for generating structures, don't want to redraw vbo for every single one
     std::atomic_bool blocksChanged;
