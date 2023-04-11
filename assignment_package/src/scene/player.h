@@ -24,7 +24,7 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*, QString n);
     
     virtual ~Player() override;
     Inventory m_inventory;
@@ -64,6 +64,7 @@ public:
     float getPhi();
 
     ItemType inHand;
+    QString name;
 
     void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
 
