@@ -61,9 +61,7 @@ private:
 
     //for vbo
     std::vector<glm::vec4> VBOinter;
-    std::vector<glm::vec4> VBOinterClear;
     std::vector<int> idx;
-    std::vector<int> idxClear;
 
     std::mutex setBlock_mutex;
     std::mutex createVBO_mutex;

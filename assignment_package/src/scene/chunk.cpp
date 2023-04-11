@@ -153,6 +153,8 @@ void Chunk::createVBOdata() {
     std::vector<glm::vec4> VBOClearnor;
     std::vector<glm::vec4> VBOClearuv;
     std::vector<int> Clearidx;
+
+    VBOinter.clear();
     idx.clear();
 
     for(int i = 0; i < 16; i++) {
