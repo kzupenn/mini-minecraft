@@ -14,6 +14,7 @@ protected:
     GLuint m_bufNor; // A Vertex Buffer Object that we will use to store mesh normals (vec4s)
     GLuint m_bufCol; // Can be used to pass per-vertex color information to the shader, but is currently unused.
                    // Instead, we use a uniform vec4 in the shader to set an overall color for the geometry
+    GLuint m_bufUV;
     GLuint m_bufInter;
 
     GLuint m_bufUV; // A Vertex Buffer Object that we will use to store mesh UV coordinates (vec3s)
@@ -22,6 +23,7 @@ protected:
     bool m_posGenerated;
     bool m_norGenerated;
     bool m_colGenerated;
+    bool m_uvGenerated;
     bool m_interGenerated;
     bool m_uvGenerated;
 
@@ -46,6 +48,7 @@ public:
     void generatePos();
     void generateNor();
     void generateCol();
+    void generateUV();
     void generateInter();
     void generateUV();
 
@@ -53,6 +56,7 @@ public:
     bool bindPos();
     bool bindNor();
     bool bindCol();
+    bool bindUV();
     bool bindInter();
     bool bindUV();
 };
