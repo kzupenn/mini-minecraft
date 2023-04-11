@@ -21,7 +21,8 @@ uniform sampler2D u_Texture; // The texture to be read from by this shader
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-in vec3 fs_UV;
+in vec4 fs_Col;
+//in vec3 fs_UV;
 
 in float time;
 
@@ -77,17 +78,8 @@ void main()
 {
     // Material base color (before shading)
 
-//        if (fs_UV.z) {
+        vec4 diffuseColor = fs_Col;
 
-//        }
-
-        vec4 diffuseColor = texture(u_Texture, vec2(fs_UV));
-
-        if (fs_UV.z == 1.f && fs_UV.y <= 944.f/1024.f) {
-            diffuseColor += vec4(0.f, 0.3f, 0.8f, 0.f);
-        }
-
-        float a = diffuseColor.w;
         //vec4 diffuseColor = fs_Col;
         diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
 
@@ -103,5 +95,5 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
+        out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
 }

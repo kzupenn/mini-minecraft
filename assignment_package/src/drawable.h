@@ -17,12 +17,15 @@ protected:
     GLuint m_bufUV;
     GLuint m_bufInter;
 
+    GLuint m_bufUV; // A Vertex Buffer Object that we will use to store mesh UV coordinates (vec3s)
+
     bool m_idxGenerated; // Set to TRUE by generateIdx(), returned by bindIdx().
     bool m_posGenerated;
     bool m_norGenerated;
     bool m_colGenerated;
     bool m_uvGenerated;
     bool m_interGenerated;
+    bool m_uvGenerated;
 
     OpenGLContext* mp_context; // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,
                           // we need to pass our OpenGL context to the Drawable in order to call GL functions
@@ -47,6 +50,7 @@ public:
     void generateCol();
     void generateUV();
     void generateInter();
+    void generateUV();
 
     bool bindIdx();
     bool bindPos();
@@ -54,6 +58,7 @@ public:
     bool bindCol();
     bool bindUV();
     bool bindInter();
+    bool bindUV();
 };
 
 // A subclass of Drawable that enables the base code to render duplicates of

@@ -82,6 +82,12 @@ void Drawable::generateInter()
     mp_context->glGenBuffers(1, &m_bufInter);
 }
 
+void Drawable::generateUV() {
+    m_uvGenerated = true;
+    // Create a VBO on our GPU and store its handle in bufUV
+    mp_context->glGenBuffers(1, &m_bufUV);
+}
+
 bool Drawable::bindIdx()
 {
     if(m_idxGenerated) {
@@ -128,6 +134,13 @@ bool Drawable::bindInter()
         mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
     }
     return m_interGenerated;
+}
+
+bool Drawable::bindUV() {
+    if(m_uvGenerated) {
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufUV);
+    }
+    return m_uvGenerated;
 }
 
 InstancedDrawable::InstancedDrawable(OpenGLContext *context)

@@ -3,13 +3,13 @@
 #include "drawable.h"
 
 struct InputBundle {
-    bool wPressed, aPressed, sPressed, dPressed, qPressed, ePressed, fPressed;
+    bool wPressed, aPressed, sPressed, dPressed, lshiftPressed, ePressed, fPressed;
     bool spacePressed;
     float mouseX, mouseY;
 
     InputBundle()
         : wPressed(false), aPressed(false), sPressed(false),
-          dPressed(false), qPressed(false), ePressed(false), fPressed(false),
+          dPressed(false), lshiftPressed(false), ePressed(false), fPressed(false),
           spacePressed(false), mouseX(0.f), mouseY(0.f)
     {}
 };

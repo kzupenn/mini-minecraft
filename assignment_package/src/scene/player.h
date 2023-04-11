@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 #include "camera.h"
+#include "scene/inventory.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -28,6 +29,7 @@ public:
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
     
     virtual ~Player() override;
+    Inventory m_inventory;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
@@ -65,7 +67,9 @@ public:
     float getTheta();
     float getPhi();
 
-    void setState(glm::vec3, float, float); //use this to set the state of other players from server packet
+    ItemType inHand;
+
+    void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
 
     virtual GLenum drawMode();
     virtual void createVBOdata();
