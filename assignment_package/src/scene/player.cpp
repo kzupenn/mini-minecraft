@@ -4,9 +4,9 @@
 
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
     : Entity(pos, m_context), m_velocity(0,0,0), m_acceleration(0,0,0),
-      m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
+      m_camera(pos + glm::vec3(0, 3.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
-      airtime(0), maxair(45)
+      airtime(0), maxair(45), in_liquid(false), bott_in_liquid(false)
 {}
 
 Player::~Player()
@@ -75,6 +75,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
     if (inputs.spacePressed) {
         if (m_flightMode) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
+        else if (bott_in_liquid) m_acceleration += glm::vec3(0, 1, 0) * SPEED * 1.5f;
         else if (!checkAirborne()) airtime = maxair;
     }
 }
@@ -86,8 +87,8 @@ bool Player::checkAirborne() {
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
     glm::vec3 down(0, -0.0001, 0);
     for (auto &c : corners) {
-        float dist; glm::ivec3 outblock;
-        if (mcr_terrain.gridMarch(c, down, &dist, &outblock, false)) return false;
+        float dist; glm::ivec3 outblock; Direction d;
+        if (mcr_terrain.gridMarch(c, down, &dist, &outblock, d)) return false;
     }
     return true;
 }
@@ -102,10 +103,14 @@ void Player::computePhysics(float dT) {
             m_velocity += glm::vec3(0, 1, 0) * 3.8f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
-        m_velocity += glm::vec3(0, -4.1f, 0) * dT;
+        if (bott_in_liquid) m_velocity += glm::vec3(0, -1.1f, 0) * dT;
+        else m_velocity += glm::vec3(0, -4.1f, 0) * dT;
         checkCollision();
     }
-    moveAlongVector(m_velocity);
+    if (in_liquid) moveAlongVector(m_velocity / 1.5f);
+    else moveAlongVector(m_velocity);
+    glm::vec3 cur = m_camera.m_position;
+    if (mcr_terrain.hasChunkAt(cur.x, cur.z)) camera_block = mcr_terrain.getBlockAt(cur);
 //    qDebug() << m_position.x << " " << m_position.y << " " << m_position.z;
     m_acceleration = glm::vec3(0);
 }
@@ -125,18 +130,30 @@ void Player::checkCollision()
                                      glm::vec3(p.x+0.3, p.y, p.z+0.3),
                                      glm::vec3(p.x-0.3, p.y, p.z+0.3),
                                      glm::vec3(p.x-0.3, p.y, p.z-0.3)};
+    bool liquid = true;
+    in_liquid = false; bott_in_liquid = false;
+    for (int i = 0; i < corners.size(); i++) {
+        if (i % 4 == 3) {
+            in_liquid = in_liquid || liquid;
+            bott_in_liquid = bott_in_liquid || (i < 4 && in_liquid);
+            liquid = true;
+        }
+        glm::vec3 cur = corners[i];
+        BlockType bt = mcr_terrain.getBlockAt(cur.x, cur.y, cur.z);
+        liquid = liquid && (bt == WATER || bt == LAVA);
+    }
 
     glm::vec3 min = glm::vec3(m_velocity.x, m_velocity.y, m_velocity.z);
-
-    for (auto &origin : corners) {
+    for (auto &origin : corners) {            
         float x, y, z;
         glm::ivec3 b;
+        Direction d;
         bool xF = mcr_terrain.gridMarch(origin, glm::vec3(m_velocity.x, 0, 0),
-                                    &x, &b, false);
+                                    &x, &b, d);
         bool yF = mcr_terrain.gridMarch(origin, glm::vec3(0, m_velocity.y, 0),
-                                    &y, &b, false);
+                                    &y, &b, d);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
-                                    &z, &b, false);
+                                    &z, &b, d);
 
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);
@@ -226,6 +243,17 @@ QString Player::accAsQString() const {
 QString Player::lookAsQString() const {
     std::string str("( " + std::to_string(m_forward.x) + ", " + std::to_string(m_forward.y) + ", " + std::to_string(m_forward.z) + ")");
     return QString::fromStdString(str);
+}
+
+void Player::setType(BlockType bt) {
+    camera_block = bt;
+}
+
+int Player::getType() {
+    if (camera_block == EMPTY) return 0;
+    else if (camera_block == WATER) return 1;
+    else if (camera_block == LAVA) return 2;
+    else return 3;
 }
 
 glm::vec3 Player::getLook()

@@ -21,11 +21,12 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_progPostProcess(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
       m_time(0), mouseMove(false),
       m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      m_crosshair(this)
+      m_crosshair(this),
+      m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -69,6 +70,7 @@ MyGL::~MyGL() {
     glDeleteVertexArrays(1, &vao);
     close_client();
     SERVER->shutdown();
+    m_frame.destroy();
 }
 
 void MyGL::moveMouseToCenter() {
@@ -103,6 +105,7 @@ void MyGL::initializeGL()
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    m_progPostProcess.create(":/glsl/post.vert.glsl", ":/glsl/post.frag.glsl");
 
     // Set a color with which to draw geometry.
     // This will ultimately not be used when you change
@@ -113,6 +116,9 @@ void MyGL::initializeGL()
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
+
+    m_frame.create();
+    m_quad.createVBOdata();
 }
 
 void MyGL::resizeGL(int w, int h) {
@@ -128,6 +134,10 @@ void MyGL::resizeGL(int w, int h) {
     m_progFlat.setViewProjMatrix(viewproj);
 
     printGLErrorLog();
+
+    m_frame.resize(w, h, 1.f);
+    m_frame.destroy();
+    m_frame.create();
 }
 
 
@@ -215,6 +225,8 @@ void MyGL::sendPlayerDataToGUI() const{
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
+    m_frame.bindFrameBuffer();
+    glViewport(0,0,this->width(), this->height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
@@ -233,14 +245,24 @@ void MyGL::paintGL() {
     }
     m_multiplayers_mutex.unlock();
 
-    glDisable(GL_DEPTH_TEST);
 //    m_progFlat.setModelMatrix(glm::mat4());
 //    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
 //    m_progFlat.draw(m_worldAxes);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    m_progPostProcess.setType(m_player.getType());
+    m_frame.bindToTextureSlot(3);
+
+    glDisable(GL_DEPTH_TEST);
+    m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
+
     m_progFlat.setModelMatrix(glm::mat4());
     m_progFlat.setViewProjMatrix(overlayTransform);
     m_progFlat.draw(m_crosshair);
+
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -332,8 +354,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
         float dist;
-        glm::ivec3 block_pos;
-        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
+        glm::ivec3 block_pos; Direction d;
+        if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
             Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
@@ -349,21 +371,15 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
 
         float dist;
-        glm::ivec3 block_pos;
-        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false);
+        glm::ivec3 block_pos; Direction dir;
+        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
         if (found) {
             BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
-            glm::vec3 backward = -glm::normalize(ray_dir);
-            glm::vec3 restart = glm::vec3(cam_pos + glm::normalize(ray_dir) * (dist + 0.2f));
+            glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
+            m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-            qDebug() << QString::fromStdString(glm::to_string(restart));
+            qDebug() << QString::fromStdString(glm::to_string(neighbor));
             qDebug() << dist;
-            glm::ivec3 bpos;
-            if (m_terrain.getBlockAt(restart.x, restart.y, restart.z) == EMPTY) {
-                m_terrain.setBlockAt(restart.x, restart.y, restart.z, type);
-            } else if (m_terrain.gridMarch(restart, backward, &dist, &bpos, true)) {
-                m_terrain.setBlockAt(bpos.x, bpos.y, bpos.z, type);
-            }
         }
     }
 }

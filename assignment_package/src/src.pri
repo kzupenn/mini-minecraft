@@ -10,6 +10,7 @@ SOURCES += \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
+    $$PWD/quad.cpp \
     $$PWD/scene/biome.cpp \
     $$PWD/scene/crosshair.cpp \
     $$PWD/scene/runnables.cpp \
@@ -40,6 +41,7 @@ HEADERS += \
     $$PWD/framebuffer.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
+    $$PWD/quad.h \
     $$PWD/scene/biome.h \
     $$PWD/scene/crosshair.h \
     $$PWD/scene/runnables.h \

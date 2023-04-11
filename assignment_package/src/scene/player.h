@@ -11,6 +11,8 @@ private:
     bool m_flightMode;
     float theta, phi; //horiz, vert
     float airtime, maxair;
+    bool in_liquid, bott_in_liquid;
+    BlockType camera_block;
 
     void processInputs(InputBundle &inputs);
     bool checkAirborne();
@@ -57,6 +59,8 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+    void setType(BlockType bt);
+    int getType();
 
     float getTheta();
     float getPhi();

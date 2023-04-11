@@ -495,7 +495,8 @@ void Terrain::createSpawn()
     std::vector<glm::vec2> spiral;
     createGroundThread(glm::vec2(0, 0));
     spiral.emplace_back(0, 0);
-    for(int sl = 16; sl <= 11*16; sl+=16) {
+    int spawnRadius = 16; //176;
+    for(int sl = 16; sl <= spawnRadius; sl+=16) {
         for(int dx = -sl; dx <= sl; dx+= sl*2) {
             for(int dy = -sl; dy <= sl; dy+=16) {
                 createGroundThread(glm::vec2(dx, dy));
@@ -513,8 +514,8 @@ void Terrain::createSpawn()
     //block until all chunks are loaded
     while(!setSpawn){
         bool done = true;
-        for(int dx = -176; dx <= 176; dx+=16) {
-            for(int dy = -176; dy <= 176; dy+=16) {
+        for(int dx = -spawnRadius; dx <= spawnRadius; dx+=16) {
+            for(int dy = -spawnRadius; dy <= spawnRadius; dy+=16) {
                 if(!hasChunkAt(dx, dy)){
                     done = false;
                     break;
@@ -1187,8 +1188,16 @@ void Terrain::buildStructure(const Structure& s) {
 }
 
 bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
-                        float *out_dist, glm::ivec3 *out_blockHit, bool empty) const
+                        float *out_dist, glm::ivec3 *out_blockHit,
+                        Direction &out_dir) const
 {
+    std::map<Direction, glm::vec3> faces;
+    faces[ZNEG] = glm::vec3(0.5, 0.5, 0);
+    faces[XNEG] = glm::vec3(0, 0.5, 0.5);
+    faces[YNEG] = glm::vec3(0.5, 0, 0.5);
+    faces[XPOS] = glm::vec3(1, 0.5, 0.5);
+    faces[ZPOS] = glm::vec3(0.5, 0.5, 1);
+    faces[YPOS] = glm::vec3(0.5, 1, 0.5);
     float maxLen = glm::length(rayDirection); // Farthest we search
     glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
     rayDirection = glm::normalize(rayDirection); // Now all t values represent world dist.
@@ -1227,12 +1236,21 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
         // curr_t
         if (hasChunkAt(currCell.x, currCell.z)) {
             BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
-            if((!empty && cellType != EMPTY) || (empty && cellType == EMPTY)) {
+            if(cellType != EMPTY && cellType != WATER && cellType != LAVA) {
                 *out_blockHit = currCell;
                 if (count == 0) {
                     *out_dist = 0;
                 } else {
                     *out_dist = glm::min(maxLen, curr_t);
+                }
+                float mn = 2.f;
+                glm::vec3 cur = glm::vec3(currCell);
+                for (auto &f : faces) {
+                    float dst = glm::length(cur + f.second - rayOrigin);
+                    if (dst < mn) {
+                        mn = dst;
+                        out_dir = f.first;
+                    }
                 }
                 return true;
             }

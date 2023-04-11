@@ -8,8 +8,9 @@
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
-      attrPos(-1), attrNor(-1), attrCol(-1),
+      attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
+      unifSampler2D(-1), unifDimensions(-1), unifWater(-1),
       context(context)
 {}
 
@@ -64,6 +65,7 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrPos = context->glGetAttribLocation(prog, "vs_Pos");
     attrNor = context->glGetAttribLocation(prog, "vs_Nor");
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
+    attrUV = context->glGetAttribLocation(prog, "vs_UV");
     if(attrCol == -1) attrCol = context->glGetAttribLocation(prog, "vs_ColInstanced");
     attrPosOffset = context->glGetAttribLocation(prog, "vs_OffsetInstanced");
 
@@ -71,6 +73,10 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
+
+    unifSampler2D = context->glGetUniformLocation(prog, "u_RenderedTexture");
+    unifDimensions = context->glGetUniformLocation(prog, "u_Dimensions");
+    unifWater = context->glGetUniformLocation(prog, "u_Type");
 }
 
 void ShaderProgram::useMe()
@@ -133,6 +139,15 @@ void ShaderProgram::setGeometryColor(glm::vec4 color)
     if(unifColor != -1)
     {
         context->glUniform4fv(unifColor, 1, &color[0]);
+    }
+}
+
+void ShaderProgram::setType(int type) {
+    useMe();
+
+    if (unifWater != -1)
+    {
+        context->glUniform1i(unifWater, type);
     }
 }
 
@@ -221,6 +236,38 @@ void ShaderProgram::drawInterleaved(Drawable &d) {
     if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
     if (attrNor != -1) context->glDisableVertexAttribArray(attrNor);
     if (attrCol != -1) context->glDisableVertexAttribArray(attrCol);
+
+    context->printGLErrorLog();
+}
+
+void ShaderProgram::drawPostProcess(Drawable &d, int textureSlot)
+{
+    useMe();
+
+    // Set our "renderedTexture" sampler to user specified texture slot
+    context->glUniform1i(unifSampler2D, textureSlot);
+
+    // Each of the following blocks checks that:
+    //   * This shader has this attribute, and
+    //   * This Drawable has a vertex buffer for this attribute.
+    // If so, it binds the appropriate buffers to each attribute.
+
+    if (attrPos != -1 && d.bindPos()) {
+        context->glEnableVertexAttribArray(attrPos);
+        context->glVertexAttribPointer(attrPos, 4, GL_FLOAT, false, 0, NULL);
+    }
+    if (attrUV != -1 && d.bindUV()) {
+        context->glEnableVertexAttribArray(attrUV);
+        context->glVertexAttribPointer(attrUV, 2, GL_FLOAT, false, 0, NULL);
+    }
+
+    // Bind the index buffer and then draw shapes from it.
+    // This invokes the shader program, which accesses the vertex buffers.
+    d.bindIdx();
+    context->glDrawElements(d.drawMode(), d.elemCount(), GL_UNSIGNED_INT, 0);
+
+    if (attrPos != -1) context->glDisableVertexAttribArray(attrPos);
+    if (attrUV != -1) context->glDisableVertexAttribArray(attrUV);
 
     context->printGLErrorLog();
 }
