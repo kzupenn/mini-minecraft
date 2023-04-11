@@ -78,6 +78,8 @@ public:
     //locks for multithreading stages
     bool dataBound, dataGen, surfaceGen;
 
+    bool hasTransparent;
+
     //for generating structures, don't want to redraw vbo for every single one
     std::atomic_bool blocksChanged;
 
