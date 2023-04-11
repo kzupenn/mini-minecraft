@@ -54,5 +54,7 @@ HEADERS +=
 SOURCES +=
 
 DISTFILES += \
+    ../../../Downloads/ascii.png \
+    ../../../Downloads/inventory.png \
     textures/minecraft_normals_all.png \
     textures/minecraft_textures_all.png

@@ -1,54 +1,96 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <pthread.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include "algo/seed.h"
 #include "server.h"
-#include "gamestate.h"
+#include "scene/runnables.h"
+#include <QThreadPool>
 
 using namespace std;
 
-int server_fd;
-int client_fds[MAX_CLIENTS];
-pthread_t threads[MAX_CLIENTS];
 
-void* Server::handle_client(void* arg)
+Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
+    m_clients.setMaxThreadCount(MAX_CLIENTS);
+    ServerConnectionWorker* sw = new ServerConnectionWorker(this);
+    QThreadPool::globalInstance()->start(sw);
+}
+
+void Server::handle_client(int client_fd)
 {
-    int client_fd = *(int*)arg;
-    char buffer[BUFFER_SIZE];
-    while (true)
+    QByteArray buffer;
+    buffer.resize(BUFFER_SIZE);
+    while (open)
     {
-        memset(buffer, 0, BUFFER_SIZE);
-        int valread = read(client_fd, buffer, BUFFER_SIZE);
+        int valread = read(client_fd, buffer.data(), BUFFER_SIZE);
         if (valread == 0)
         {
             // client has disconnected
             cout << "Client " << client_fd << " disconnected" << endl;
             close(client_fd);
-            pthread_exit(NULL);
+            break;
         }
         else
         {
-            // broadcast message to all clients
-            cout << "Client " << client_fd << " says: " << buffer << endl;
-            for (int i = 0; i < MAX_CLIENTS; i++)
-            {
-                if (client_fds[i] != 0 && client_fds[i] != client_fd)
-                {
-                    const char* toSend = process_packet(buffer).c_str();
-                    send(client_fds[i], toSend, strlen(buffer), 0);
-                }
-            }
+            //qDebug() << "Client " << client_fd << " says: " << buffer;
+            buffer.resize(valread);
+            Packet* pp = bufferToPacket(buffer);
+            process_packet(pp, client_fd);
+            delete(pp);
+            buffer.resize(BUFFER_SIZE);
         }
     }
 }
 
-std::string Server::process_packet(char* c) {
-    return "lmao";
+void Server::process_packet(Packet* packet, int sender) {
+    switch(packet->type) {
+    case PLAYER_STATE: {
+        PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
+        m_players_mutex.lock();
+        m_players[sender].pos = thispack->player_pos;
+        m_players[sender].phi = thispack->player_phi;
+        m_players[sender].theta = thispack->player_theta;
+        m_players_mutex.unlock();
+        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
+        break;
+    }
+    default:
+        qDebug() << "unexpected packet type found" << packet->type;
+        break;
+    }
+}
+
+void Server::broadcast_packet(Packet* packet, int exclude) { //use exclude = 0 if you dont want to exclude
+    client_fds_mutex.lock();
+    for (int i = 0; i < client_fds.size(); i++)
+    {
+        if (client_fds[i] != exclude)
+        {
+            QByteArray buffer = packet->packetToBuffer();
+            send(client_fds[i], buffer, buffer.size(), 0);
+        }
+    }
+    client_fds_mutex.unlock();
+}
+
+void Server::target_packet(Packet* packet, int target) {
+    client_fds_mutex.lock();
+    QByteArray buffer = packet->packetToBuffer();
+    send(target, buffer, buffer.size(), 0);
+    client_fds_mutex.unlock();
+}
+
+void Server::initClient(int i) {
+    client_fds_mutex.lock();
+    client_fds.push_back(i);
+    m_players_mutex.lock();
+    m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f);
+    m_players_mutex.unlock();
+    client_fds_mutex.unlock();
+    target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn).get(), i);
 }
 
 int Server::start()
@@ -62,14 +104,6 @@ int Server::start()
         cout << "Failed to create server socket" << endl;
         return -1;
     }
-
-    // set socket options
-    // int opt = 1;
-    // if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt)))
-    // {
-    //     cout << "Failed to set socket options" << endl;
-    //     return -1;
-    // }
 
     // bind server socket to address
     address.sin_family = AF_INET;
@@ -90,6 +124,11 @@ int Server::start()
 
     cout << "Server started listening on port " << PORT << endl;
 
+    //initialize spawn chunks, and select a spawn point
+    m_terrain.createSpawn();
+
+    setup = true;
+
     // wait for incoming connections and handle each one in a separate thread
     while (true)
     {
@@ -101,33 +140,19 @@ int Server::start()
         }
         else
         {
-            // find an available slot in the client_fds array
-            int i;
-            for (i = 0; i < MAX_CLIENTS; i++)
-            {
-                if (client_fds[i] == 0)
-                {
-                    client_fds[i] = client_fd;
-                    break;
-                }
-            }
-
-            // check if the array is full
-            if (i == MAX_CLIENTS)
-            {
-                cout << "Maximum number of clients reached" << endl;
-                close(client_fd);
-            }
-            else
-            {
-                // create a new thread to handle the client
-                pthread_create(&threads[i], NULL, this->handle_client, (void*)&client_fd);
-                pthread_detach(threads[i]);
-                cout << "New client connected: " << inet_ntoa(address.sin_addr) << endl;
-            }
+            // do initial actions
+            initClient(client_fd);
+            // create a new thread to handle the client
+            ServerThreadWorker* stw = new ServerThreadWorker(this, client_fd);
+            m_clients.start(stw);
+            cout << "New client connected: " << inet_ntoa(address.sin_addr) << endl;
         }
     }
 
     return 0;
+}
+
+void Server::shutdown() {
+    open = false;
 }
 

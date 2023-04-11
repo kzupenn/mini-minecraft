@@ -22,11 +22,13 @@ uniform mat4 u_ViewProj;    // The matrix that defines the camera's transformati
 
 uniform vec4 u_Color;       // When drawing the cube instance, we'll set our uniform color to represent different block types.
 
+uniform int uTime;
 
 in vec4 vs_Pos;             // The array of vertex positions passed to the shader
 
 in vec4 vs_Nor;             // The array of vertex normals passed to the shader
 
+//in vec4 vs_Col;             // The array of vertex colors passed to the shader.
 
 in vec4 vs_UV;              //The array of vertex uv coords passed to the shader
 

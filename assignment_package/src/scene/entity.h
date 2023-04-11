@@ -1,37 +1,43 @@
 #pragma once
 #include "glm_includes.h"
+#include "drawable.h"
 
 struct InputBundle {
-    bool wPressed, aPressed, sPressed, dPressed, qPressed, ePressed, fPressed;
+    bool wPressed, aPressed, sPressed, dPressed, lshiftPressed, ePressed, fPressed;
     bool spacePressed;
     float mouseX, mouseY;
 
     InputBundle()
         : wPressed(false), aPressed(false), sPressed(false),
-          dPressed(false), qPressed(false), ePressed(false), fPressed(false),
+          dPressed(false), lshiftPressed(false), ePressed(false), fPressed(false),
           spacePressed(false), mouseX(0.f), mouseY(0.f)
     {}
 };
 
-class Entity {
+class Entity: public Drawable {
 protected:
     // The origin of our local coordinate system
-    glm::vec3 m_position;
 
 public:
+    glm::vec3 m_position;
+
     // A readonly reference to position for external use
     const glm::vec3& mcr_position;
     // Vectors that define the axes of our local coordinate system
     glm::vec3 m_forward, m_right, m_up;
 
     // Various constructors
-    Entity();
-    Entity(glm::vec3 pos);
-    Entity(const Entity &e);
+    //Entity();
+    Entity(glm::vec3 pos, OpenGLContext* mp_context);
+    Entity(const Entity &e, OpenGLContext* mp_context);
     virtual ~Entity();
 
     // To be called by MyGL::tick()
     virtual void tick(float dT, InputBundle &input) = 0;
+
+    // To be called to draw
+    virtual void createVBOdata();
+    virtual GLenum drawMode();
 
     // Translate along the given vector
     virtual void moveAlongVector(glm::vec3 dir);
@@ -55,4 +61,7 @@ public:
     virtual void rotateOnForwardGlobal(float degrees);
     virtual void rotateOnRightGlobal(float degrees);
     virtual void rotateOnUpGlobal(float degrees);
+
+    //getter function
+    glm::vec3 getPos();
 };

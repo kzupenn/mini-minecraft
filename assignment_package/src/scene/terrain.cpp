@@ -9,17 +9,18 @@
 #include <thread>
 #include <queue>
 #include "algo/noise.h"
+#include "algo/seed.h"
 
 
 #define TEST_RADIUS 256
 
-#define ocean_level 0.53
+#define ocean_level 0.4
 #define OCEAN_LEVEL 64
 #define BEDROCK_LEVEL 32
 #define beach_level 0.1
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), mp_context(context), m_generatedTerrain()
+    : m_chunks(), mp_context(context), m_generatedTerrain(), setSpawn(false)
 {
     //QThreadPool::globalInstance()->setMaxThreadCount(100);
 }
@@ -404,33 +405,39 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     metaData.erase(key);
     metaData_mutex.unlock();
 
-
-    createVBOThread(cPtr);
+    cPtr->dataGen = true;
+    cPtr->blocksChanged = true;
+    //createVBOThread(cPtr);
     // Set the neighbor pointers of itself and its neighbors
     if(hasChunkAt(x, z + 16)) {
+        m_chunks_mutex.lock();
         auto &chunkNorth = m_chunks[toKey(x, z + 16)];
         cPtr->linkNeighbor(chunkNorth, ZPOS);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x, z - 16)) {
+         m_chunks_mutex.lock();
         auto &chunkSouth = m_chunks[toKey(x, z - 16)];
         cPtr->linkNeighbor(chunkSouth, ZNEG);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x + 16, z)) {
+         m_chunks_mutex.lock();
         auto &chunkEast = m_chunks[toKey(x + 16, z)];
         cPtr->linkNeighbor(chunkEast, XPOS);
+         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x - 16, z)) {
+         m_chunks_mutex.lock();
         auto &chunkWest = m_chunks[toKey(x - 16, z)];
         cPtr->linkNeighbor(chunkWest, XNEG);
+         m_chunks_mutex.unlock();
     }
 
 
     return cPtr;
 }
 
-// TODO: When you make Chunk inherit from Drawable, change this code so
-// it draws each Chunk with the given ShaderProgram, remembering to set the
-// model matrix to the proper X and Z translation!
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
     std::vector<glm::vec2> transparentChunks;
 
@@ -500,21 +507,65 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
     }
 }
 
-void Terrain::createInitScene()
+void Terrain::createSpawn()
 {
-    // mark one semaphor immediately to signal start
-    // Tell our existing terrain set that
-    // the "generated terrain zone" at (0,0)
-    // now exists.
-    // We'll do this part somewhat synchronously since doing it async will result in 500+ threads and crash
-
-    for(int dx = -256; dx <= 256; dx+=64) {
-        for(int dy = -256; dy <= 256; dy+=64) {
-            m_generatedTerrain.insert(toKey(dx, dy));
-            for(int ddx = dx; ddx < dx + 64; ddx+=16) {
-                for(int ddy = dy; ddy < dy + 64; ddy+=16) {
-                    createGroundThread(glm::vec2(ddx, ddy));
+    //instantiate chunks in a spiral pattern
+    std::vector<glm::vec2> spiral;
+    createGroundThread(glm::vec2(0, 0));
+    spiral.emplace_back(0, 0);
+    int spawnRadius = 16; //176;
+    for(int sl = 16; sl <= spawnRadius; sl+=16) {
+        for(int dx = -sl; dx <= sl; dx+= sl*2) {
+            for(int dy = -sl; dy <= sl; dy+=16) {
+                createGroundThread(glm::vec2(dx, dy));
+                spiral.emplace_back(dx, dy);
+            }
+        }
+        for(int dy = -sl; dy <= sl; dy+= sl*2) {
+            for(int dx = -sl+16; dx <= sl-16; dx+=16) {
+                createGroundThread(glm::vec2(dx, dy));
+                spiral.emplace_back(dx, dy);
+            }
+        }
+    }
+    qDebug() << "creating" << spiral.size() << "spawn chunks";
+    //block until all chunks are loaded
+    while(!setSpawn){
+        bool done = true;
+        for(int dx = -spawnRadius; dx <= spawnRadius; dx+=16) {
+            for(int dy = -spawnRadius; dy <= spawnRadius; dy+=16) {
+                if(!hasChunkAt(dx, dy)){
+                    done = false;
+                    break;
                 }
+            }
+        }
+        //finds available spawn chunks in same spiral pattern
+        if(done) {
+            for(glm::vec2 pp: spiral) {
+                Chunk* c = getChunkAt(pp.x, pp.y).get();
+                //checks if it is a water biome
+                if(c->biome!= OCEAN && c->biome!=RIVER){
+                    for(int dx = 0; dx < 16; dx++) {
+                        for(int dy = 0; dy < 16; dy++) {
+                            //checks if the top block is a solid
+                            if(!isTransparent(dx, c->heightMap[dx][dy]-1, dy, c)) {
+                                worldSpawn = glm::vec3(pp.x+dx, c->heightMap[dx][dy]+1, pp.y+dy);
+                                setSpawn = true;
+                                break;
+                            }
+                        }
+                        if(setSpawn) break;
+                    }
+                }
+                if(setSpawn) break;
+            }
+            if(setSpawn) qDebug() << "found spawn at" << worldSpawn.x << worldSpawn.y << worldSpawn.z;
+            else qDebug() << "no spawn found?";
+            //worse case, set spawn to 0,0
+            if(!setSpawn) {
+                worldSpawn = glm::vec3(0, getChunkAt(0,0)->heightMap[0][0]+1, 0);
+                setSpawn = true;
             }
         }
     }
@@ -563,10 +614,9 @@ void Terrain::buildStructure(const Structure& s) {
     switch(s.type){
     case OAK_TREE: {
         //how tall the tree is off the ground
-        //TO DO: replace the noise seed with a seed based vec3
         //TO DO: replace GRASS with LEAVES block once implemented
         //TO DO: replace DIRT with WOOD block once implemented
-        int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), glm::vec3(3,2,1));
+        int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), SEED.getSeed(8654.512,8568.53,3163.562));
         //find base of tree
         int ymin = c->heightMap[xx-x][zz-z];
         for(int dy = 0; dy < 4; dy++) {
@@ -585,16 +635,16 @@ void Terrain::buildStructure(const Structure& s) {
                     setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
-                    if(noise1D(glm::vec3(xx+1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+1, yat, zz+1), SEED.getSeed(7785.015,5766.378,649.792,6102.897)) > 0.5) {
                         setBlockAt(xx+1, yat, zz+1, OAK_LEAVES);
                     }
-                    if(noise1D(glm::vec3(xx+1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+1, yat, zz-1), SEED.getSeed(1420.159,7503.537,1373.417,2979.007)) > 0.5) {
                         setBlockAt(xx+1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-1, yat, zz+1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-1, yat, zz+1), SEED.getSeed(464.713,1450.085,4383.409,6818.919)) > 0.5) {
                         setBlockAt(xx-1, yat, zz+1, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-1, yat, zz-1), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-1, yat, zz-1), SEED.getSeed(8513.165,8543.726,1277.831,9162.371)) > 0.5) {
                         setBlockAt(xx-1, yat, zz-1, OAK_LEAVES, isEmpty);
                     }
                     break;
@@ -612,16 +662,16 @@ void Terrain::buildStructure(const Structure& s) {
                     setBlockAt(xx-1, yat, zz-2, OAK_LEAVES, isEmpty);
                     setBlockAt(xx, yat, zz-2, OAK_LEAVES);
                     setBlockAt(xx+1, yat, zz-2, OAK_LEAVES, isEmpty);
-                    if(noise1D(glm::vec3(xx+2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+2, yat, zz+2), SEED.getSeed(7798.159,7306.237,4491.404,966.212)) > 0.5) {
                         setBlockAt(xx+2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx+2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx+2, yat, zz-2), SEED.getSeed(3953.665,7624.82,5599.103,4681.367)) > 0.5) {
                         setBlockAt(xx+2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-2, yat, zz+2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-2, yat, zz+2), SEED.getSeed(431.931,9230.515,2698.152,3252.572)) > 0.5) {
                         setBlockAt(xx-2, yat, zz+2, OAK_LEAVES, isEmpty);
                     }
-                    if(noise1D(glm::vec3(xx-2, yat, zz-2), glm::vec4(4,3,2,1)) > 0.5) {
+                    if(noise1D(glm::vec3(xx-2, yat, zz-2), SEED.getSeed(2799.543,9511.908,2472.754,4812.237)) > 0.5) {
                         setBlockAt(xx-2, yat, zz-2, OAK_LEAVES, isEmpty);
                     }
                     break;
@@ -637,15 +687,14 @@ void Terrain::buildStructure(const Structure& s) {
         break;
     }
         //creates a spruce tree
-        //TO DO: replace the seed with an actual seed-dependent seed
         //TO DO: replace block types with appropriate leaves and wood
     case SPRUCE_TREE:{
         int ymin = c->heightMap[xx-x][zz-z];
-        int ymax = 5+7*noise1D(glm::vec2(xx,zz), glm::vec3(3,2,1));
+        int ymax = 5+7*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
         float leaves = 1;
         setBlockAt(xx, ymax, zz, DIRT);
         for(int y = ymax+ymin-1; y > ymax; y--) {
-            float transition = noise1D(glm::vec3(xx, y, zz), glm::vec4(32,24,10, 12));
+            float transition = noise1D(glm::vec3(xx, y, zz), SEED.getSeed(7656.579,4083.936,4656.875,8280.13));
             if(leaves == 0){
                 leaves++;
             }
@@ -689,7 +738,7 @@ void Terrain::buildStructure(const Structure& s) {
         }
         for(int i = -5; i <= 5; i++) {
             for(int j = -5; j <= 5; j++) {
-                float f = noise1D(glm::vec2(xx+i, zz+j), glm::vec3(57091, 850135, 323));
+                float f = noise1D(glm::vec2(xx+i, zz+j), SEED.getSeed(57091, 850135, 323));
                 if(f < 0.33)
                     setBlockAt(xx+i, 1000-1, zz+j, PATH);
                 else if(f < 0.66)
@@ -1157,7 +1206,7 @@ void Terrain::buildStructure(const Structure& s) {
 }
 
 bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
-                        float *out_dist, glm::ivec3 *out_blockHit) const
+                        float *out_dist, glm::ivec3 *out_blockHit, bool empty) const
 {
     float maxLen = glm::length(rayDirection); // Farthest we search
     glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
@@ -1197,7 +1246,7 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
         // curr_t
         if (hasChunkAt(currCell.x, currCell.z)) {
             BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
-            if(cellType != EMPTY) {
+            if((!empty && cellType != EMPTY) || (empty && cellType == EMPTY)) {
                 *out_blockHit = currCell;
                 if (count == 0) {
                     *out_dist = 0;

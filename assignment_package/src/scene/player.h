@@ -1,6 +1,7 @@
 #pragma once
 #include "entity.h"
 #include "camera.h"
+#include "scene/inventory.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -8,11 +9,13 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
-
-    float airtime, maxair;
+    bool m_flightMode;
     float theta, phi; //horiz, vert
+    float airtime, maxair;
 
     void processInputs(InputBundle &inputs);
+    bool checkAirborne();
+    void orientCamera();
     void computePhysics(float dT);
     void checkCollision();
 
@@ -21,13 +24,10 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
 
-    bool m_flightMode;
-    bool checkAirborne();
-    void resetAir();
-    void orientCamera();
-
-    Player(glm::vec3 pos, const Terrain &terrain);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*);
+    
     virtual ~Player() override;
+    Inventory m_inventory;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
@@ -59,4 +59,14 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+
+    float getTheta();
+    float getPhi();
+
+    ItemType inHand;
+
+    void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
+
+    virtual GLenum drawMode();
+    virtual void createVBOdata();
 };
