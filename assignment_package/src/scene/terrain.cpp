@@ -439,18 +439,24 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 }
 
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
+    std::vector<glm::vec2> transparentChunks;
+
     for(int x = minX; x < maxX; x += 16) {
         for(int z = minZ; z < maxZ; z += 16) {
             if(hasChunkAt(x, z)){
                 uPtr<Chunk> &chunk = getChunkAt(x, z);
-                //only renders chunks with generated terrain data
+                //only renders chunks with generated terrain data                
                 if(chunk->dataGen){
-                    //since only main thread can add
-                    if(!chunk->dataBound){
-                        chunk->bindVBOdata();
+                    if (chunk->hasTransparent) {
+                        transparentChunks.push_back(glm::vec2(x, z));
+                    } else {
+                        //since only main thread can add
+                        if(!chunk->dataBound){
+                            chunk->bindVBOdata();
+                        }
+                        shaderProgram->setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(x, 0, z)));
+                        shaderProgram->drawInterleaved(*chunk.get());
                     }
-                    shaderProgram->setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(x, 0, z)));
-                    shaderProgram->drawInterleaved(*chunk.get());
                 }
             }
             else {
@@ -458,6 +464,17 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             }
         }
     }
+
+    for (glm::vec2 v: transparentChunks) {
+        uPtr<Chunk> &chunk = getChunkAt(v.x, v.y);
+        //since only main thread can add
+        if(!chunk->dataBound){
+            chunk->bindVBOdata();
+        }
+        shaderProgram->setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(v.x, 0, v.y)));
+        shaderProgram->drawInterleaved(*chunk.get());
+    }
+
     //check if we should clear unloaded chunk vbos
     for(int x = minX - 32; x < maxX + 32; x+= 16) {
         if(hasChunkAt(x, minZ - 32)) {

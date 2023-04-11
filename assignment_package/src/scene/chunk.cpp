@@ -7,7 +7,7 @@ void printVec(glm::vec4 a) {
 }
 
 bool checkTransparent(BlockType bt) {
-    return bt == EMPTY;
+    return bt == EMPTY || bt == WATER || bt ==  GLASS || bt == ICE || bt ==  OAK_LEAVES;
 }
 
 bool isTransparent(int x, int y, int z, Chunk* c) {
@@ -60,7 +60,7 @@ Direction vecToDir(glm::vec3 v) {
 }
 
 Chunk::Chunk(OpenGLContext* mp_context) : Drawable(mp_context), m_blocks(),
-    dataBound(false), dataGen(false), surfaceGen(false)
+    dataBound(false), dataGen(false), surfaceGen(false), hasTransparent(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
 }
@@ -220,7 +220,8 @@ void Chunk::createVBOdata() {
                         //set surface positions
                         glm::vec4 faceref = glm::vec4(i+fmax(0, delta[l]), j+fmax(0, delta[l+1]), k+fmax(0, delta[l+2]), 1);
 
-                        if (curr == WATER || curr == GLASS || (curr == EMPTY && (oth == WATER || oth == GLASS))) {
+                        if (curr == WATER || curr == GLASS || curr == ICE || curr == OAK_LEAVES ||
+                                (curr == EMPTY && (oth == WATER || oth == GLASS || oth == ICE || oth == OAK_LEAVES))) {
                             //set indices
                             Clearidx.push_back(VBOClearpos.size());
                             Clearidx.push_back(VBOClearpos.size()+1);
@@ -249,7 +250,7 @@ void Chunk::createVBOdata() {
                         }
                         //set surface normals
                         if (curr != EMPTY) {
-                            if (curr == WATER || curr == GLASS) {
+                            if (curr == WATER || curr == GLASS || curr == ICE || curr == OAK_LEAVES) {
                                 VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
                                 VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
                                 VBOClearnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
@@ -261,7 +262,7 @@ void Chunk::createVBOdata() {
                                 VBOnor.push_back(glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
                             }
                         } else {
-                            if (oth ==  WATER || oth == GLASS) {
+                            if (oth ==  WATER || oth == GLASS || oth == ICE || oth == OAK_LEAVES) {
                                 VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
                                 VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
                                 VBOClearnor.push_back(-glm::vec4(delta[l], delta[l+1], delta[l+2], 1));
@@ -409,7 +410,7 @@ void Chunk::createVBOdata() {
                             break;
                         }
                         for(int foo = 0; foo < 4; foo++) {
-                            if (curr == WATER || curr == GLASS) {
+                            if (curr == WATER || curr == GLASS || curr == ICE || curr == OAK_LEAVES) {
                                 VBOClearuv.push_back(UVs[UVorder[l/3][foo]]);
                             } else {
                                 VBOuv.push_back(UVs[UVorder[l/3][foo]]);
@@ -439,6 +440,8 @@ void Chunk::createVBOdata() {
         int index = Clearidx.at(i);
         idx.push_back(s + index);
     }
+
+    hasTransparent = !Clearidx.empty();
 
     createVBO_mutex.unlock();
 
