@@ -16,8 +16,12 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW, ICE,
-    COBBLESTONE, OAK_PLANKS, OAK_LOG, OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE, LAVA, BEDROCK};
+    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW, COBBLESTONE,
+    OAK_PLANKS, SPRUCE_PLANKS, JUNGLE_PLANKS, BIRCH_PLANKS, ACACIA_PLANKS,
+    OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG,
+    OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE,
+    LAVA, BEDROCK, CACTUS, ICE};
+
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
 {
@@ -63,11 +67,11 @@ private:
     std::mutex createVBO_mutex;
 public:
     Chunk(OpenGLContext*);
+    Chunk* getNeighborChunk(Direction d);
     BlockType getBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
     BlockType getBlockAt(int x, int y, int z) const;
     void setBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
-    Chunk* getNeighborChunk(Direction);
 
     virtual void createVBOdata();
     //locks for multithreading stages

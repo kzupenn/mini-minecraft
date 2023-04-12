@@ -153,7 +153,7 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/instanced.frag.glsl");
     m_progPostProcess.create(":/glsl/post.vert.glsl", ":/glsl/post.frag.glsl");
     m_progOverlay.create(":/glsl/overlay.vert.glsl", ":/glsl/overlay.frag.glsl");
 

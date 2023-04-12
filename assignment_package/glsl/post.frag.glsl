@@ -11,7 +11,7 @@ void main()
 {
     // TODO Homework 5
     vec4 color = texture(u_Texture, fs_UV);
-    if (u_Type == 0 || u_Type == 3) out_Col = color;
+    if (u_Type == 0 || u_Type == 3) out_Col = color; //EMPTY or NON-LAVA/WATER
     else {
         vec4 mixer;
         if (u_Type == 1) mixer = vec4(0, 0, 1, 0.5);
