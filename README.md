@@ -12,6 +12,13 @@ Added item and inventory GUI textures. A crosshair was added to the inventory an
 # Milestone 1
 
 # Leon Kabue
+## Textures
+Created a textures class for loading images as textures and binding them for drawing in mygl.
+Enabled alpha blending of textures and used seperate vectors to store transparent blocks in a chunk and appended the transparent blocks at the end of the VBOinter so that they could be rendered after the opaque blocks.
+Replaced color vbo with uv vbo for chunks and added new blocktypes, and configured their uv's using a seperate texture map from the one provided.
+Altered the shaderpogram to include uv's and created handles for the in the respective shaders.
+Animated water and lava texture blocks by sampling from different blocks adjacent to each other.
+
 ## Tick 
 Modified the key events to only update the input bundle when a key is pressed or released and only update a players position every tick
 Implemented flight mode that allows player to defy gravity and move through walls and normal mode in which player is affected by gravity, had a boolean to keep track on which mode the player was in and this boolean.
