@@ -9,8 +9,7 @@
 using namespace glm;
 
 enum PacketType: unsigned char {
-    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT,
-    CHUNK_CHANGE, BLOCK_CHANGE,
+    PLAYER_STATE, WORLD_INIT, CHUNK_CHANGE, BLOCK_CHANGE,
     ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY
 };
 
@@ -28,18 +27,12 @@ struct Packet{
 struct WorldInitPacket : Packet {
     int seed;
     vec3 spawn;
-    std::vector<std::pair<int, QString>> players;
-    WorldInitPacket(int s, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), spawn(p), players(pp) {}
+    WorldInitPacket(int s, glm::vec3 p) : Packet(WORLD_INIT), seed(s), spawn(p) {}
     ~WorldInitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
-        int a = players.size(); //overloaded <<
         out << WORLD_INIT << seed << spawn.x << spawn.y << spawn.z;
-        out << a;
-        for(std::pair<int, QString> pp: players) {
-            out << pp.first << pp.second;
-        }
         return buffer;
     }
 };
@@ -104,35 +97,6 @@ struct PlayerStatePacket : public Packet{
     }
 };
 
-//Player joined/left game packet
-struct PlayerJoinPacket : public Packet {
-    bool join;
-    int player_id;
-    QString name;
-    PlayerJoinPacket(bool j, int i, QString n) : Packet(PLAYER_JOIN), join(j), player_id(i), name(n) {}
-    ~PlayerJoinPacket() {}
-    QByteArray packetToBuffer() override {
-        QByteArray buffer;
-        QDataStream out(&buffer,QIODevice::ReadWrite);
-        out << PLAYER_JOIN << join << player_id << name;
-        return buffer;
-    }
-};
-
-//Chat packet
-struct ChatPacket : public Packet {
-    int player_id;
-    QString message;
-    ChatPacket(int i, QString n) : Packet(CHAT), player_id(i), message(n) {}
-    ~ChatPacket() {}
-    QByteArray packetToBuffer() override {
-        QByteArray buffer;
-        QDataStream out(&buffer,QIODevice::ReadWrite);
-        out << CHAT << player_id << message;
-        return buffer;
-    }
-};
-
 //Item Entity State
 struct ItemEntityStatePacket : public Packet {
     int entity_id;
@@ -140,7 +104,7 @@ struct ItemEntityStatePacket : public Packet {
     int count;
     glm::vec3 pos;
     ItemEntityStatePacket(int id, ItemType it, int c, glm::vec3 p) :
-        Packet(ITEM_ENTITY_STATE), entity_id(id), type(it), count(c), pos(p){}
+        entity_id(id), type(it), count(c), pos(p){}
     ~ItemEntityStatePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
@@ -153,7 +117,7 @@ struct ItemEntityStatePacket : public Packet {
 struct ItemEntityDeletePacket : public Packet {
     int entity_id;
     ItemEntityDeletePacket(int id) :
-        Packet(DELETE_ITEM_ENTITY), entity_id(id){}
+        entity_id(id){}
     ~ItemEntityDeletePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
@@ -162,8 +126,6 @@ struct ItemEntityDeletePacket : public Packet {
         return buffer;
     }
 };
-
-
 
 Packet* bufferToPacket(QByteArray buffer);
 
