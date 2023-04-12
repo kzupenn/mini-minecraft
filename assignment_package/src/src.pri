@@ -16,6 +16,7 @@ SOURCES += \
     $$PWD/scene/inventory.cpp \
     $$PWD/scene/item.cpp \
     $$PWD/scene/crosshair.cpp \
+    $$PWD/scene/rectangle.cpp \
     $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
     $$PWD/scene/transform.cpp \
@@ -50,6 +51,7 @@ HEADERS += \
     $$PWD/scene/font.h \
     $$PWD/scene/item.h \
     $$PWD/scene/crosshair.h \
+    $$PWD/scene/rectangle.h \
     $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
     $$PWD/scene/transform.h \

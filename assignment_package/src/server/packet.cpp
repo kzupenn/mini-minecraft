@@ -17,10 +17,33 @@ Packet* bufferToPacket(QByteArray buffer) {
         int s;
         float f1, f2, f3;
         in >> s >> f1 >> f2 >> f3;
-        return new WorldInitPacket(s, glm::vec3(f1, f2, f3));
+        int ps;
+        std::vector<std::pair<int, QString>> pps;
+        in >> ps;
+        for(int i = 0; i < ps; i++) {
+            int pid;
+            QString n;
+            in >> pid >> n;
+            pps.push_back(std::make_pair(pid, n));
+        }
+        return new WorldInitPacket(s, glm::vec3(f1, f2, f3), pps);
         break;
     }
-    
+    case PLAYER_JOIN:{
+        bool j;
+        int pid;
+        QString n;
+        in >> j >> pid >> n;
+        return new PlayerJoinPacket(j, pid, n);
+        break;
+    }
+    case CHAT:{
+        int pid;
+        QString msg;
+        in >> pid >> msg;
+        return new ChatPacket(pid, msg);
+        break;
+    }
     case CHUNK_CHANGE: {
         int64_t cP;
         int num;
