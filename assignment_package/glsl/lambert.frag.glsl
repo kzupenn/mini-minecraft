@@ -88,7 +88,6 @@ void main()
         }
 
         float a = diffuseColor.w;
-        //vec4 diffuseColor = fs_Col;
         diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
 
         // Calculate the diffuse term for Lambert shading

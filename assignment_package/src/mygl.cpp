@@ -593,8 +593,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             glm::vec3 ray_dir = m_player.getLook() * 3.f;
 
             float dist;
-            glm::ivec3 block_pos;
-            if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, false)) {
+            glm::ivec3 block_pos; Direction d;
+            if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
                 qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
                 m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
                 Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();

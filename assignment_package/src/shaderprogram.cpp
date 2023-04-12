@@ -10,7 +10,7 @@ ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
-      attrUV(-1), unifSampler2D(-1), unifTime(-1), unifWater(-1)
+      unifSampler2D(-1), unifTime(-1), unifWater(-1),
       context(context)
 {}
 
@@ -67,7 +67,6 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     attrCol = context->glGetAttribLocation(prog, "vs_Col");
     attrUV = context->glGetAttribLocation(prog, "vs_UV");
     if(attrCol == -1) attrCol = context->glGetAttribLocation(prog, "vs_ColInstanced");
-    attrUV = context->glGetAttribLocation(prog, "vs_UV");
 
     attrPosOffset = context->glGetAttribLocation(prog, "vs_OffsetInstanced");
 
