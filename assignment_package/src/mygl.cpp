@@ -24,7 +24,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this, QString("Player")),
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
@@ -313,8 +313,7 @@ void MyGL::paintGL() {
     m_multiplayers_mutex.unlock();
 
     glDisable(GL_DEPTH_TEST);
-    m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
-    m_progFlat.setModelMatrix(glm::mat4());
+    //m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
     
     m_progFlat.setViewProjMatrix(overlayTransform);
     m_progOverlay.setViewProjMatrix(overlayTransform);
