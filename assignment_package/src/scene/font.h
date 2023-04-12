@@ -13,13 +13,13 @@ public:
         text(text_string), color(text_color){
         createVBOdata();
     };
-    Font(OpenGLContext* context) : Font(context, "", glm::vec4(1,1,1,1)){};
+    Font(OpenGLContext* context) : Drawable(context), text(""), color(glm::vec4(1)){};
     virtual ~Font(){};
     void setText(std::string); //setters
+    std::string getText() {return text;}
 
     float width;
 
     virtual void createVBOdata();
-    void unbindVBO();
     virtual GLenum drawMode();
 };

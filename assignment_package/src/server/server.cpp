@@ -31,6 +31,13 @@ void Server::handle_client(int client_fd)
             // client has disconnected
             cout << "Client " << client_fd << " disconnected" << endl;
             close(client_fd);
+            broadcast_packet(mkU<PlayerJoinPacket>(false, client_fd, m_players[client_fd].name).get(), client_fd);
+            m_players_mutex.lock();
+            m_players.erase(client_fd);
+            m_players_mutex.unlock();
+            client_fds_mutex.lock();
+            client_fds.erase(std::remove(client_fds.begin(), client_fds.end(), client_fd), client_fds.end());
+            client_fds_mutex.unlock();
             break;
         }
         else
@@ -47,6 +54,14 @@ void Server::handle_client(int client_fd)
 
 void Server::process_packet(Packet* packet, int sender) {
     switch(packet->type) {
+    case PLAYER_JOIN: {
+        PlayerJoinPacket* thispack = dynamic_cast<PlayerJoinPacket*>(packet);
+        m_players_mutex.lock();
+        m_players[sender].name = thispack->name;
+        m_players_mutex.unlock();
+        broadcast_packet(mkU<PlayerJoinPacket>(true, sender, thispack->name).get(), sender);
+        break;
+    }
     case PLAYER_STATE: {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
@@ -55,6 +70,12 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
         broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
+        break;
+    }
+    case CHAT: {
+        ChatPacket* thispack = dynamic_cast<ChatPacket*>(packet);
+        qDebug() << thispack->message;
+        broadcast_packet(mkU<ChatPacket>(sender, thispack->message).get(), sender);
         break;
     }
     default:
@@ -84,13 +105,18 @@ void Server::target_packet(Packet* packet, int target) {
 }
 
 void Server::initClient(int i) {
+    std::vector<std::pair<int, QString>> pps;
     client_fds_mutex.lock();
     client_fds.push_back(i);
     m_players_mutex.lock();
-    m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f);
+    for (map<int, PlayerState>::iterator it = m_players.begin(); it != m_players.end(); it++)
+    {
+        pps.push_back(std::make_pair(it->first, it->second.name));
+    }
+    m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f, QString("Player"));
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
-    target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn).get(), i);
+    target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn, pps).get(), i);
 }
 
 int Server::start()

@@ -3,11 +3,11 @@
 #include <iostream>
 
 
-Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context)
+Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, QString n)
     : Entity(pos, m_context), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
-      airtime(0), maxair(45), inHand(AIR), in_liquid(false), bott_in_liquid(false)
+      airtime(0), maxair(45), inHand(AIR), in_liquid(false), bott_in_liquid(false), name(n)
 {}
 
 Player::~Player()
@@ -279,7 +279,7 @@ void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
 
 
 void Player::createVBOdata() {
-    std::vector<glm::vec4> pos, nor, col, inter;
+    std::vector<glm::vec4> pos, nor, uvs, inter;
     std::vector<int> idx;
     //Front face
     //UR
@@ -373,7 +373,7 @@ void Player::createVBOdata() {
 
     //colors
     for(int i = 0; i < pos.size(); i++) {
-        col.emplace_back(1, 0, 0, 1);
+        uvs.emplace_back(1, 0, 0, 1);
     }
 
     for(int i = 0; i < 6; i++){
@@ -390,7 +390,7 @@ void Player::createVBOdata() {
     for (int i = 0; i < pos.size(); i++) {
        inter.push_back(pos[i]);
        inter.push_back(nor[i]);
-       inter.push_back(col[i]);
+       inter.push_back(uvs[i]);
     }
 
     generateIdx();
