@@ -1,6 +1,8 @@
 # Milestone 2
 
 # Kevin Zhang
+## Multithreading
+See milestone 1
 ## Server
 Set up a peer-to-peer server and packet system. Players can join other players servers by ip. Currently only packets for player movement and world initialization are fully implemented.
 The server also calculates a safe world spawn point for survival-based gameplay.
@@ -8,6 +10,23 @@ The server also calculates a safe world spawn point for survival-based gameplay.
 Added a fontface texture that constructs and draws text from strings. This is used to indicate items in stacks and also for item name descriptions, player tags, and player chat.
 ## Inventory and Items
 Added item and inventory GUI textures. A crosshair was added to the inventory and normal gameplay to identify the cursor position. Items can be moved around in the inventory with left and right click to separate and merge item stacks. The hotbar selection can also be changed with the numpad.
+
+# Aaron Cheng
+## Post-Process/Caves
+## Caves
+Added caves via 3D perlin noise, with a hard cut-off for lava. Used perlin worms for better terrain.
+## Post-Process
+Set up post-processing pipeline to create a water/lava effect.
+## Physics
+Played bobs in liquid (water/lava) and liquids now cause you to sink (non-collidable). Velocity in liquids is slowed.
+
+# Leon Kabue
+## Textures
+Created a textures class for loading images as textures and binding them for drawing in mygl.
+Enabled alpha blending of textures and used seperate vectors to store transparent blocks in a chunk and appended the transparent blocks at the end of the VBOinter so that they could be rendered after the opaque blocks.
+Replaced color vbo with uv vbo for chunks and added new blocktypes, and configured their uv's using a seperate texture map from the one provided.
+Altered the shaderpogram to include uv's and created handles for the in the respective shaders.
+Animated water and lava texture blocks by sampling from different blocks adjacent to each other.
 
 # Milestone 1
 

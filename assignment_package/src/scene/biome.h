@@ -21,6 +21,8 @@ float generateSnowLayer(glm::vec2);
 
 float generateRockLayer(glm::vec2);
 
+float generateCaves(glm::vec3);
+
 std::pair<float, BiomeType> generateGround(glm::vec2);
 
 void erosionDist();
