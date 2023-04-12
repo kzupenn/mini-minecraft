@@ -311,9 +311,15 @@ void MyGL::paintGL() {
 //        m_progLambert.drawInterleaved(*(it->second));
 //    }
     m_multiplayers_mutex.unlock();
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    m_progPostProcess.setType(m_player.getType());
+    m_frame.bindToTextureSlot(3);
 
     glDisable(GL_DEPTH_TEST);
-    //m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
+    m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
     
     m_progFlat.setViewProjMatrix(overlayTransform);
     m_progOverlay.setViewProjMatrix(overlayTransform);
