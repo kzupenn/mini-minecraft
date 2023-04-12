@@ -77,11 +77,17 @@ void main()
 {
     // Material base color (before shading)
 
-//        if (fs_UV.z) {
+        float t = mod(float(uTime), 17) / 17;
+        t = clamp(t, 0.f, 1.f);
 
-//        }
+        vec2 uv = vec2(fs_UV);
 
-        vec4 diffuseColor = texture(u_Texture, vec2(fs_UV));
+        if (fs_UV.z == 1.f) {
+            uv.x = fs_UV.x + t/64.f;
+        }
+
+
+        vec4 diffuseColor = texture(u_Texture, vec2(uv));
 
         if (fs_UV.z == 1.f && fs_UV.y <= 944.f/1024.f) {
             diffuseColor += vec4(0.f, 0.3f, 0.8f, 0.f);
