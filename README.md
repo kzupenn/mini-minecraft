@@ -9,6 +9,14 @@ Added a fontface texture that constructs and draws text from strings. This is us
 ## Inventory and Items
 Added item and inventory GUI textures. A crosshair was added to the inventory and normal gameplay to identify the cursor position. Items can be moved around in the inventory with left and right click to separate and merge item stacks. The hotbar selection can also be changed with the numpad.
 
+# Leon Kabue
+## Textures
+Created a textures class for loading images as textures and binding them for drawing in mygl.
+Enabled alpha blending of textures and used seperate vectors to store transparent blocks in a chunk and appended the transparent blocks at the end of the VBOinter so that they could be rendered after the opaque blocks.
+Replaced color vbo with uv vbo for chunks and added new blocktypes, and configured their uv's using a seperate texture map from the one provided.
+Altered the shaderpogram to include uv's and created handles for the in the respective shaders.
+Animated water and lava texture blocks by sampling from different blocks adjacent to each other.
+
 # Milestone 1
 
 # Leon Kabue
