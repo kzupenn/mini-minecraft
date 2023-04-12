@@ -3,7 +3,6 @@
 
 #include "openglcontext.h"
 #include "scene/crosshair.h"
-#include "scene/rectangle.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
 #include "scene/camera.h"
@@ -17,10 +16,9 @@
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
 #include <netinet/in.h>
-#include <queue>
 #include <smartpointerhelp.h>
 
-#define PORT 3079
+#define PORT 3078
 #define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
@@ -64,21 +62,12 @@ private:
     int client_fd;
     struct sockaddr_in server_address;
     bool open;
-
-    std::mutex m_chat_mutex;
-    std::deque<Font> m_chat;
-    Font m_mychat;
-    bool chatMode;
-    Rectangle m_rectangle;
+    pthread_t receive_thread;
 
     void packet_parser(Packet*);
     void init_client(); //initializes the client
     void send_packet(Packet*);
     void close_client(); //closes client
-
-    //needed to bind vbos on main thread
-    std::mutex chatQueue_mutex;
-    std::queue<std::pair<std::string, glm::vec4>> chatQueue;
 
     //server, if hosting
     uPtr<Server> SERVER;
@@ -116,7 +105,7 @@ public:
     void paintGL() override;
 
     //servers
-    void start(bool isMultiplayer, QString username); //starts the client
+    void start(bool isMultiplayer); //starts the client
     void run_client(); //runs the client
     void packet_processer(Packet*);
     std::string ip;

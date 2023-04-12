@@ -49,7 +49,7 @@ void MainWindow::on_actionCamera_Controls_triggered()
 void MainWindow::slot_setSceneSinglePlayer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
-    ui->mygl->start(false, ui->usernameText->text());
+    ui->mygl->start(false);
 }
 
 void MainWindow::slot_setSceneMultiPlayer() {
@@ -62,14 +62,14 @@ void MainWindow::slot_setSceneMultiPlayer() {
 void MainWindow::slot_setSceneHostServer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
-    ui->mygl->start(false, ui->usernameText->text());
+    ui->mygl->start(false);
 }
 
 void MainWindow::slot_setSceneJoinServer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
     ui->mygl->ip = ui->serverIPText->displayText().toStdString();
-    ui->mygl->start(true, ui->usernameText->text());
+    ui->mygl->start(true);
 }
 
 void MainWindow::slot_setSeed() {

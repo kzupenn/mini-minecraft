@@ -26,16 +26,15 @@ MyGL::MyGL(QWidget *parent)
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this),
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
-      ip("localhost"),
-      m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), mouseMove(true)
+      ip("localhost"), m_crosshair(this), mouseMove(false),
+      m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
 }
 
 //move stuff from constructor to here so that it can be called upon entering game scene
-void MyGL::start(bool joinServer, QString username) {
+void MyGL::start(bool joinServer) {
     setFocusPolicy(Qt::ClickFocus);
 
     setMouseTracking(true); // MyGL will track the mouse's movements even if a mouse button is not pressed
@@ -44,7 +43,6 @@ void MyGL::start(bool joinServer, QString username) {
     //set up overlays
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
     m_crosshair.createVBOdata();
-    m_rectangle.createVBOdata();
 
     //noise function distribution tests
     //distTest();
@@ -63,10 +61,6 @@ void MyGL::start(bool joinServer, QString username) {
     //block until we get world spawn info
     while(!verified_server);
     m_player.setState(m_terrain.worldSpawn, 0, 0, AIR);
-    m_player.name = username;
-
-    PlayerJoinPacket pjp = PlayerJoinPacket(true, 0, username);
-    send_packet(&pjp);
 
     m_player.m_inventory.createVBOdata();
     m_player.m_inventory.hotbar.createVBOdata();
@@ -291,9 +285,6 @@ void MyGL::paintGL() {
     m_frame.bindFrameBuffer();
     glViewport(0,0,this->width(), this->height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
-    m_progPostProcess.setType(m_player.getType());
-    m_frame.bindToTextureSlot(3);
 
     m_progLambert.setTime(m_time);
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
@@ -305,53 +296,32 @@ void MyGL::paintGL() {
     //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
     //m_progLambert.drawInterleaved(m_player);
     m_multiplayers_mutex.lock();
-//    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-//        it->second->createVBOdata();
-//        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
-//        m_progLambert.drawInterleaved(*(it->second));
-//    }
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second->createVBOdata();
+        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
+        m_progLambert.drawInterleaved(*(it->second));
+    }
     m_multiplayers_mutex.unlock();
+
+//    m_progFlat.setModelMatrix(glm::mat4());
+//    m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
+//    m_progFlat.draw(m_worldAxes);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    m_progPostProcess.setType(m_player.getType());
+    m_frame.bindToTextureSlot(3);
 
     glDisable(GL_DEPTH_TEST);
     m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
     m_progFlat.setModelMatrix(glm::mat4());
-    
     m_progFlat.setViewProjMatrix(overlayTransform);
-    m_progOverlay.setViewProjMatrix(overlayTransform);
-
-    //chat gui
-    m_font_texture.bind(0);
-    float shiftChat = 0;
-    //chatQueue_mutex.lock();
-    while(!chatQueue.empty()) {
-        m_chat.push_front(Font(this, chatQueue.front().first, chatQueue.front().second));
-        if(m_chat.size() > 20) m_chat.pop_back();
-        chatQueue.pop();
-    }
-    //chatQueue_mutex.unlock();
-    if(chatMode) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30*m_mychat.width+4, 34, 0)));
-        m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30,30,0)));
-        m_progOverlay.draw(m_mychat);
-        shiftChat = 60;
-    }
-    for(int i = 0; i < m_chat.size(); i++) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130+34*i+shiftChat, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30*m_chat[i].width+4, 34, 0)));
-        m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132+34*i+shiftChat, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30,30,0)));
-        m_progOverlay.draw(m_chat[i]);
-    }
-
-
-    m_progFlat.setModelMatrix(glm::mat4());
     m_progFlat.draw(m_crosshair);
 
     m_progOverlay.setModelMatrix(glm::mat4());
+    m_progOverlay.setViewProjMatrix(overlayTransform);
     m_font_texture.bind(0);
 
     //inventory gui
@@ -427,107 +397,63 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     // statement were used, but I really dislike their
     // syntax so I chose to be lazy and use a long
     // chain of if statements instead
-    if(chatMode && !m_player.m_inventory.showInventory) {
-        if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            if(!m_mychat.getText().empty()){
-                m_chat_mutex.lock();
-                m_chat.push_front(Font(this, m_player.name.toStdString() + ": "+m_mychat.getText(), glm::vec4(1)));
-                if(m_chat.size() > 20) m_chat.pop_back();
-                m_chat_mutex.unlock();
-                ChatPacket cpp = ChatPacket(client_fd, QString::fromStdString(m_mychat.getText()));
-                send_packet(&cpp);
-            }
-            chatMode = false;
-        }
-        else if(e->key() == Qt::Key_Escape) {
-            chatMode = false;
-        }
-        else if(e->key() == Qt::Key_Delete || e->key() == Qt::Key_Backslash || e->key() == Qt::Key_Clear || e->key() == 16777219) {
-            std::string ss = m_mychat.getText();
-            ss.pop_back();
-            m_mychat.setText(ss);
-        }
-        else if(e->key() != Qt::Key_Shift){
-            if(e->modifiers() & Qt::ShiftModifier){
-                m_mychat.setText(m_mychat.getText() + char(e->key()));
-            }
-            else {
-                m_mychat.setText(m_mychat.getText() + char(std::tolower(e->key())));
-            }
-        }
-    }
-    else if(m_player.m_inventory.showInventory) {
-        if (e->key() == Qt::Key_E || e->key() == Qt::Key_Escape) {
-            m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
-            mouseMove = !m_player.m_inventory.showInventory;
-        }
-    }
-    else {
-        if (e->key() == Qt::Key_Escape) {
-            open = false;
-            if(SERVER){
-                SERVER->open = false;
-            }
-            QApplication::quit();
-        } else if (e->key() == Qt::Key_W) {
-            m_inputs.wPressed = true;
-        } else if (e->key() == Qt::Key_S) {
-            m_inputs.sPressed = true;
-        } else if (e->key() == Qt::Key_D) {
-            m_inputs.dPressed = true;
-        } else if (e->key() == Qt::Key_A) {
-            m_inputs.aPressed = true;
-        } else if (e->key() == Qt::Key_Shift) {
-            m_inputs.lshiftPressed = true;
-        } else if (e->key() == Qt::Key_F) {
-            m_inputs.fPressed = true;
-        } else if (e->key() == Qt::Key_Space) {
-            m_inputs.spacePressed = true;
-        } else if (e->key() == Qt::Key_Right) {
-            m_inputs.mouseX = 5.f;
-        } else if (e->key() == Qt::Key_Left) {
-            m_inputs.mouseX = -5.f;
-        } else if (e->key() == Qt::Key_Up) {
-            m_inputs.mouseY = -5.f;
-        } else if (e->key() == Qt::Key_Down) {
-            m_inputs.mouseY = 5.f;
-        }     //inventory hotkeys
-        else if (e->key() == Qt::Key_E) {
-            m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
-            mouseMove = !m_player.m_inventory.showInventory;
-        } else if (e->key() == Qt::Key_Q) {
-            m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
-        } else if (e->key() == Qt::Key_1) {
-            m_player.m_inventory.hotbar.selected = 0;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_2) {
-            m_player.m_inventory.hotbar.selected = 1;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_3) {
-            m_player.m_inventory.hotbar.selected = 2;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_4) {
-            m_player.m_inventory.hotbar.selected = 3;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_5) {
-            m_player.m_inventory.hotbar.selected = 4;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_6) {
-            m_player.m_inventory.hotbar.selected = 5;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_7) {
-            m_player.m_inventory.hotbar.selected = 6;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_8) {
-            m_player.m_inventory.hotbar.selected = 7;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if (e->key() == Qt::Key_9) {
-            m_player.m_inventory.hotbar.selected = 8;
-            m_player.m_inventory.hotbar.createVBOdata();
-        } else if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
-            chatMode = true;
-            m_mychat.setText("");
-        }
+    if (e->key() == Qt::Key_Escape) {
+        QApplication::quit();
+    } else if (e->key() == Qt::Key_W) {
+        m_inputs.wPressed = true;
+    } else if (e->key() == Qt::Key_S) {
+        m_inputs.sPressed = true;
+    } else if (e->key() == Qt::Key_D) {
+        m_inputs.dPressed = true;
+    } else if (e->key() == Qt::Key_A) {
+        m_inputs.aPressed = true;
+    } else if (e->key() == Qt::Key_Shift) {
+        m_inputs.lshiftPressed = true;
+    } else if (e->key() == Qt::Key_F) {
+        m_inputs.fPressed = true;
+    } else if (e->key() == Qt::Key_Space) {
+        m_inputs.spacePressed = true;
+    } else if (e->key() == Qt::Key_Right) {
+        m_inputs.mouseX = 5.f;
+    } else if (e->key() == Qt::Key_Left) {
+        m_inputs.mouseX = -5.f;
+    } else if (e->key() == Qt::Key_Up) {
+        m_inputs.mouseY = -5.f;
+    } else if (e->key() == Qt::Key_Down) {
+        m_inputs.mouseY = 5.f;
+    }     //inventory hotkeys
+    else if (e->key() == Qt::Key_E) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+        mouseMove = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_Q) {
+        m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+    } else if (e->key() == Qt::Key_1) {
+        m_player.m_inventory.hotbar.selected = 0;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_2) {
+        m_player.m_inventory.hotbar.selected = 1;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_3) {
+        m_player.m_inventory.hotbar.selected = 2;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_4) {
+        m_player.m_inventory.hotbar.selected = 3;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_5) {
+        m_player.m_inventory.hotbar.selected = 4;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_6) {
+        m_player.m_inventory.hotbar.selected = 5;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_7) {
+        m_player.m_inventory.hotbar.selected = 6;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_8) {
+        m_player.m_inventory.hotbar.selected = 7;
+        m_player.m_inventory.hotbar.createVBOdata();
+    } else if (e->key() == Qt::Key_9) {
+        m_player.m_inventory.hotbar.selected = 8;
+        m_player.m_inventory.hotbar.createVBOdata();
     }
 }
 
@@ -754,27 +680,19 @@ void MyGL::init_client() {
     QThreadPool::globalInstance()->start(cw);
 }
 
-void MyGL::
-
-send_packet(Packet* packet) {
+void MyGL::send_packet(Packet* packet) {
     QByteArray buffer;
-    switch(packet->type) {
-    case PLAYER_STATE:{
-        buffer = (dynamic_cast<PlayerStatePacket*>(packet))->packetToBuffer();
-        break;
-    }
-    case PLAYER_JOIN: {
-        buffer = (dynamic_cast<PlayerJoinPacket*>(packet))->packetToBuffer();
-        break;
-    }
-    case CHAT: {
-        buffer = (dynamic_cast<ChatPacket*>(packet))->packetToBuffer();
-        break;
-    }
-    default:
-        break;
-    }
-    int bytes_sent = send(client_fd, buffer.data(), buffer.size(), 0);
+        switch(packet->type) {
+        case PLAYER_STATE:{
+            buffer = (dynamic_cast<PlayerStatePacket*>(packet))->packetToBuffer();
+            break;
+        }
+        default:
+            break;
+        }
+        int bytes_sent = send(client_fd, buffer.data(), buffer.size(), 0);
+        //qDebug() << bytes_sent;
+//        return (bytes_sent >= 0);
 }
 
 void MyGL::close_client() {
@@ -786,9 +704,10 @@ void MyGL::packet_processer(Packet* packet) {
     case PLAYER_STATE:{
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_multiplayers_mutex.lock();
-        if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
-            m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand);
+        if(m_multiplayers.find(thispack->player_id) == m_multiplayers.end()) {
+            m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this));
         }
+        m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand);
         m_multiplayers_mutex.unlock();
         break;
     }
@@ -797,36 +716,6 @@ void MyGL::packet_processer(Packet* packet) {
         //TO do: set seed somewhere
         m_terrain.worldSpawn = thispack->spawn;
         verified_server = true;
-        m_multiplayers_mutex.lock();
-        for(std::pair<int, QString> pp: thispack->players) {
-            qDebug() << pp.first << pp.second;
-            m_multiplayers[pp.first] = mkU<Player>(Player(glm::vec3(0), nullptr, this, pp.second));
-        }
-        m_multiplayers_mutex.unlock();
-        break;
-    }
-    case PLAYER_JOIN:{
-        PlayerJoinPacket* thispack = dynamic_cast<PlayerJoinPacket*>(packet);
-        if(thispack->join){
-            m_multiplayers_mutex.lock();
-            chatQueue.push(std::make_pair(thispack->name.toStdString()+" joined the game.", glm::vec4(1,1,0,0)));
-            m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this, thispack->name));
-            m_multiplayers_mutex.unlock();
-        }
-        else {
-            m_multiplayers_mutex.lock();
-            chatQueue.push(std::make_pair(thispack->name.toStdString()+" has left the game.", glm::vec4(1,1,0,0)));
-            m_multiplayers.erase(thispack->player_id);
-            m_multiplayers_mutex.unlock();
-        }
-        break;
-    }
-    case CHAT: {
-        ChatPacket* thispack = dynamic_cast<ChatPacket*>(packet);
-        //make names for player class later
-        std::string s1 = m_multiplayers[thispack->player_id]->name.toStdString();
-        std::string s2 = thispack->message.toStdString();
-        chatQueue.push(std::make_pair(s1+": "+s2, glm::vec4(1)));
         break;
     }
     default:
