@@ -9,6 +9,15 @@ Added a fontface texture that constructs and draws text from strings. This is us
 ## Inventory and Items
 Added item and inventory GUI textures. A crosshair was added to the inventory and normal gameplay to identify the cursor position. Items can be moved around in the inventory with left and right click to separate and merge item stacks. The hotbar selection can also be changed with the numpad.
 
+# Aaron Cheng
+## Post-Process/Caves
+## Caves
+Added caves via 3D perlin noise, with a hard cut-off for lava. Used perlin worms for better terrain.
+## Post-Process
+Set up post-processing pipeline to create a water/lava effect.
+## Physics
+Played bobs in liquid (water/lava) and liquids now cause you to sink (non-collidable). Velocity in liquids is slowed.
+
 # Leon Kabue
 ## Textures
 Created a textures class for loading images as textures and binding them for drawing in mygl.
