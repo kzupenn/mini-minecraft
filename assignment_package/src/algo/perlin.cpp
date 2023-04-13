@@ -32,7 +32,12 @@ float surflet3D(vec3 p, vec3 gridPoint, glm::vec4 perlinSeed) {
     // Compute the distance between p and the grid point along each axis, and warp it with a
     // quintic function so we can smooth our cells
     vec3 t2 = abs(p - gridPoint);
-    vec3 t = vec3(1.f) - 6.f * vecPow(t2, 5.f) + 15.f * vecPow(t2, 4.f) - 10.f * vecPow(t2, 3.f);
+    float distX = abs(t2.x);
+    float distY = abs(t2.y);
+    float distZ = abs(t2.z);
+    float tX = 1 - 6 * pow(distX, 5.f) + 15 * pow(distX, 4.f) - 10 * pow(distX, 3.f);
+    float tY = 1 - 6 * pow(distY, 5.f) + 15 * pow(distY, 4.f) - 10 * pow(distY, 3.f);
+    float tZ = 1 - 6 * pow(distZ, 5.f) + 15 * pow(distZ, 4.f) - 10 * pow(distZ, 3.f);
     // Get the random vector for the grid point (assume we wrote a function random2
     // that returns a vec2 in the range [0, 1])
     vec3 gradient = random3(gridPoint, perlinSeed) * 2.f - vec3(1);
@@ -41,7 +46,7 @@ float surflet3D(vec3 p, vec3 gridPoint, glm::vec4 perlinSeed) {
     // Get the value of our height field by dotting grid->P with our gradient
     float height = dot(diff, gradient);
     // Scale our height field (i.e. reduce it) by our polynomial falloff function
-    return height * t.x * t.y * t.z;
+    return height * tX * tY * tZ;
 }
 
 float perlinNoise(vec2 uv, vec4 seed, int g) {

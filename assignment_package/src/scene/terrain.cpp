@@ -346,10 +346,11 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 break;
             }
             }
-            float mx = maxy * (std::rand() % 1 + 0.95);
+            float rd = std::rand() % 1;
+            float mx = maxy * (rd / 10.f + 0.95);
             for(int y = fmin(128, mx); y > 0; y--) {
                 float n = generateCaves(vec3(x+xx, y, z+zz));
-                if (n > -0.3f && n < 0.2f) {
+                if (n > -0.075 && n < 0.075) {
                     if (y < 25) cPtr->setBlockAt(xx, y, zz, LAVA);
                     else cPtr->setBlockAt(xx, y, zz, EMPTY);
                 }

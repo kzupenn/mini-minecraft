@@ -171,9 +171,16 @@ void Chunk::createVBOdata() {
                     if(i+delta[l] < 0){
                         if (!checkTransparent(curr)) drawFace = (m_neighbors.find(XNEG) != m_neighbors.end()
                                 && checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
-                        else {
+                        else if (curr == EMPTY) {
                             drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
-                                && m_neighbors[XNEG]->getBlockAt(15, j, k) != curr;
+                                && m_neighbors[XNEG]->getBlockAt(15, j, k) != EMPTY;
+                            if (m_neighbors.find(XNEG) != m_neighbors.end())
+                                oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
+                        } else {
+                            drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
+                                && (m_neighbors[XNEG]->getBlockAt(15, j, k) == EMPTY
+                                || !checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k))
+                                || m_neighbors[XNEG]->getBlockAt(15, j, k) != curr);
                             if (m_neighbors.find(XNEG) != m_neighbors.end())
                                 oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
                         }
@@ -181,9 +188,16 @@ void Chunk::createVBOdata() {
                     else if(i+delta[l] > 15){
                         if (!checkTransparent(curr)) drawFace = (m_neighbors.find(XPOS) != m_neighbors.end()
                                 && checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
-                        else {
+                        else if (curr == EMPTY) {
                             drawFace = m_neighbors.find(XPOS) != m_neighbors.end()
-                                && m_neighbors[XPOS]->getBlockAt(0, j, k) != curr;
+                                && m_neighbors[XPOS]->getBlockAt(0, j, k) != EMPTY;
+                            if (m_neighbors.find(XPOS) != m_neighbors.end())
+                                oth = m_neighbors[XPOS]->getBlockAt(0, j, k);
+                        } else {
+                            drawFace = m_neighbors.find(XPOS) != m_neighbors.end()
+                                && (m_neighbors[XPOS]->getBlockAt(0, j, k) == EMPTY
+                                || !checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k))
+                                || m_neighbors[XPOS]->getBlockAt(0, j, k) != curr);
                             if (m_neighbors.find(XPOS) != m_neighbors.end())
                                 oth = m_neighbors[XPOS]->getBlockAt(0, j, k);
                         }
@@ -194,9 +208,16 @@ void Chunk::createVBOdata() {
                     else if(k+delta[l+2] < 0){
                         if (!checkTransparent(curr)) drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end()
                                 && checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
-                        else {
+                        else if (curr == EMPTY) {
                             drawFace = m_neighbors.find(ZNEG) != m_neighbors.end()
-                                && m_neighbors[ZNEG]->getBlockAt(i, j, 15) != curr;
+                                && m_neighbors[ZNEG]->getBlockAt(i, j, 15) != EMPTY;
+                            if (m_neighbors.find(ZNEG) != m_neighbors.end())
+                                oth = m_neighbors[ZNEG]->getBlockAt(i, j, 15);
+                        } else {
+                            drawFace = m_neighbors.find(ZNEG) != m_neighbors.end()
+                                && (m_neighbors[ZNEG]->getBlockAt(i, j, 15) == EMPTY
+                                || !checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15))
+                                || m_neighbors[ZNEG]->getBlockAt(i, j, 15) != curr);
                             if (m_neighbors.find(ZNEG) != m_neighbors.end())
                                 oth = m_neighbors[ZNEG]->getBlockAt(i, j, 15);
                         }
@@ -204,9 +225,16 @@ void Chunk::createVBOdata() {
                     else if(k+delta[l+2] > 15){
                         if (!checkTransparent(curr)) drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end()
                                 && checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
-                        else {
+                        else if (curr == EMPTY) {
                             drawFace = m_neighbors.find(ZPOS) != m_neighbors.end()
-                                && m_neighbors[ZPOS]->getBlockAt(i, j, 0) != curr;
+                                && m_neighbors[ZPOS]->getBlockAt(i, j, 0) != EMPTY;
+                            if (m_neighbors.find(ZPOS) != m_neighbors.end())
+                                oth = m_neighbors[ZPOS]->getBlockAt(i, j, 0);
+                        } else {
+                            drawFace = m_neighbors.find(ZPOS) != m_neighbors.end()
+                                && (m_neighbors[ZPOS]->getBlockAt(i, j, 0) == EMPTY
+                                || !checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0))
+                                || m_neighbors[ZPOS]->getBlockAt(i, j, 0) != curr);
                             if (m_neighbors.find(ZPOS) != m_neighbors.end())
                                 oth = m_neighbors[ZPOS]->getBlockAt(i, j, 0);
                         }
