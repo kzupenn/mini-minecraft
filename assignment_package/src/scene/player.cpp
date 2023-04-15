@@ -86,7 +86,7 @@ bool Player::checkAirborne() {
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
-    glm::vec3 down(0, -0.0001, 0);
+    glm::vec3 down(0, -0.0001f, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock; Direction d;
         if (mcr_terrain.gridMarch(c, down, &dist, &outblock, d)) return false;
@@ -118,10 +118,10 @@ void Player::computePhysics(float dT) {
 void Player::checkCollision()
 {
     glm::vec3 p = m_position;
-    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+1.8f, p.z-0.3),
-                                     glm::vec3(p.x+0.3, p.y+1.8f, p.z+0.3),
-                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z+0.3),
-                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z-0.3),
+    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+2.f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+2.f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+2.f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+2.f, p.z-0.3),
                                      glm::vec3(p.x+0.3, p.y+1, p.z-0.3),
                                      glm::vec3(p.x+0.3, p.y+1, p.z+0.3),
                                      glm::vec3(p.x-0.3, p.y+1, p.z+0.3),
@@ -135,7 +135,7 @@ void Player::checkCollision()
     for (int i = 0; i < corners.size(); i++) {
         if (i % 4 == 3) {
             in_liquid = in_liquid || liquid;
-            bott_in_liquid = bott_in_liquid || (i < 4 && in_liquid);
+            bott_in_liquid = bott_in_liquid || (i < 8 && in_liquid);
             liquid = true;
         }
         glm::vec3 cur = corners[i];
@@ -154,17 +154,22 @@ void Player::checkCollision()
                                     &y, &b, d);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
                                     &z, &b, d);
-
+        float eps = 0.25f;
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);
+            if (min.x <= eps) min.x = 0;
         }
         if (yF && y < glm::abs(min.y)) {
             min.y = y * glm::sign(min.y);
+            if (min.y <= eps) min.y = 0;
+
         }
         if (zF && z < glm::abs(min.z)) {
             min.z = z * glm::sign(min.z);
+            if (min.z <= eps) min.z = 0;
         }
     }
+    //qDebug() << min.x << " " << min.y << " " << min.z;
     m_velocity.x = min.x;
     m_velocity.y = min.y;
     m_velocity.z = min.z;
@@ -287,7 +292,7 @@ void Player::createVBOdata() {
     pos.emplace_back(0.3, 0, 0.3, 1);
     pos.emplace_back(0.3, 0, -0.3, 1);
 
-    pos.emplace_back(-0.3, 1.8, -0.3, 1);
+    pos.emplace_back(-0.3, 1,8, -0.3, 1);
     pos.emplace_back(-0.3, 1.8, 0.3, 1);
     pos.emplace_back(0.3, 1.8, 0.3, 1);
     pos.emplace_back(0.3, 1.8, -0.3, 1);

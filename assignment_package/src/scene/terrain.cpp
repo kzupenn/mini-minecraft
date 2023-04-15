@@ -1221,7 +1221,6 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
     glm::ivec3 currCell = glm::ivec3(glm::floor(rayOrigin));
     rayDirection = glm::normalize(rayDirection); // Now all t values represent world dist.
     float curr_t = 0.f;
-    int count = 0;
     while(curr_t < maxLen) {
         float min_t = glm::sqrt(3.f);
         float interfaceAxis = -1; // Track axis for which t is smallest
@@ -1257,11 +1256,7 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
             BlockType cellType = getBlockAt(currCell.x, currCell.y, currCell.z);
             if(cellType != EMPTY && cellType != WATER && cellType != LAVA) {
                 *out_blockHit = currCell;
-                if (count == 0) {
-                    *out_dist = 0;
-                } else {
-                    *out_dist = glm::min(maxLen, curr_t);
-                }
+                *out_dist = glm::min(maxLen, curr_t);
                 float mn = 2.f;
                 glm::vec3 cur = glm::vec3(currCell);
                 for (auto &f : faces) {
@@ -1277,7 +1272,6 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
             *out_dist = glm::min(maxLen, curr_t);
             return false;
         }
-        count++;
     }
     *out_dist = glm::min(maxLen, curr_t);
     return false;
