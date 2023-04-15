@@ -337,7 +337,9 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             }
             case RIVER: {
                 int y = maxy;
-                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                float depth = abs(0.5-generateRiver(glm::vec2(xx+x, zz+z)))*1000*8;
+                for(; y > maxy-depth; y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
                 break;
             }
             default:{
@@ -349,7 +351,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             float mx = maxy * (std::rand() % 1 + 0.95);
             for(int y = fmin(128, mx); y > 0; y--) {
                 float n = generateCaves(vec3(x+xx, y, z+zz));
-                if (n > -0.3f && n < 0.2f) {
+                if (n > -0.001f && n < 0.001f) {
                     if (y < 25) cPtr->setBlockAt(xx, y, zz, LAVA);
                     else cPtr->setBlockAt(xx, y, zz, EMPTY);
                 }

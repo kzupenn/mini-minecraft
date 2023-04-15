@@ -7,7 +7,7 @@
 #include "scene/player.h"
 #include "server/packet.h"
 
-#define PORT 3079
+#include "port.h"
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 10
 

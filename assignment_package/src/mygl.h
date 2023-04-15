@@ -20,7 +20,7 @@
 #include <queue>
 #include <smartpointerhelp.h>
 
-#define PORT 3079
+#include "server/port.h"
 #define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext

@@ -22,8 +22,13 @@ vec2 random2( vec2 p, vec4 seed) {
 }
 
 vec3 random3( vec3 p, vec4 seed) {
-    return fract(sin(abs(vec3(dot(p+vec3(0, seed[2], seed[3]), vec3(seed)),
-                 dot(p, vec3(seed[1], seed[3], seed[2])),
-                 dot(p+vec3(seed[3], seed[2], seed[1]), vec3(seed))
-            ))));
+//    return fract(sin(abs(vec3(dot(p+vec3(0, seed[2], seed[3]), vec3(seed)),
+//                 dot(p, vec3(seed[1], seed[3], seed[2])),
+//                 dot(p+vec3(seed[3], seed[2], seed[1]), vec3(seed))
+//            ))));
+    return fract(sin(vec3(dot(p,vec3(127.1, 311.7, 563.5)),
+                              dot(p,vec3(269.5, 183.3, 451.6)),
+                              dot(p, vec3(420.6, 631.2, 952.8))
+                        )) * 43758.5453f);
+
 }

@@ -57,6 +57,7 @@ HEADERS += \
     $$PWD/scene/transform.h \
     $$PWD/server/getip.h \
     $$PWD/server/packet.h \
+    $$PWD/server/port.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \

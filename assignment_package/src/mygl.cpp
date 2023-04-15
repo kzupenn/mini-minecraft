@@ -305,11 +305,11 @@ void MyGL::paintGL() {
     //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
     //m_progLambert.drawInterleaved(m_player);
     m_multiplayers_mutex.lock();
-//    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-//        it->second->createVBOdata();
-//        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
-//        m_progLambert.drawInterleaved(*(it->second));
-//    }
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second->createVBOdata();
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
+        m_progFlat.draw(*(it->second));
+    }
     m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
