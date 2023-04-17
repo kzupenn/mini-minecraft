@@ -14,6 +14,8 @@ private:
     float airtime, maxair;
     bool in_liquid, bott_in_liquid;
     BlockType camera_block;
+    std::vector<glm::vec4> pos, nor, uvs, inter;
+    std::vector<GLuint> idx;
 
     void processInputs(InputBundle &inputs);
     bool checkAirborne();

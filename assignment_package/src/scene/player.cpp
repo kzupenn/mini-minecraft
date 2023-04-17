@@ -280,9 +280,8 @@ void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
     inHand = i;
 }
 
-void Player::createRectPrism(glm::ivec2 p1, glm::ivec2 p2, glm::vec4 t, glm::ivec3 dim) {
-    std::vector<glm::vec4> pos, nor, uvs, inter;
-    std::vector<GLuint> idx;
+void Player::createRectPrism(glm::ivec2 p1, glm::ivec2 p2,
+                             glm::vec4 t, glm::ivec3 dim) {
     int w = dim.x;
     int h = dim.y;
     int d = dim.z;
@@ -395,20 +394,11 @@ void Player::createRectPrism(glm::ivec2 p1, glm::ivec2 p2, glm::vec4 t, glm::ive
         idx.push_back(i*4+3);
     }
 
-    m_count = idx.size();
     for (int i = 0; i < pos.size(); i++) {
        inter.push_back(pos[i]);
        inter.push_back(nor[i]);
        inter.push_back(uvs[i] / 64.f);
     }
-
-    generateIdx();
-    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
-    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
-
-    generateInter();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
 }
 
 void Player::createVBOdata() {
@@ -424,6 +414,16 @@ void Player::createVBOdata() {
     createRectPrism(glm::ivec2(0, 16), glm::ivec2(15, 31), glm::vec4(0, -12, 4, 0), glm::ivec3(4, 12, 4));
     //left leg
     createRectPrism(glm::ivec2(16, 48), glm::ivec2(31, 63), glm::vec4(0, -12, -4, 0), glm::ivec3(4, 12, 4));
+
+    m_count = idx.size();
+
+    generateIdx();
+    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
+    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+    generateInter();
+    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
+    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
 }
 
 void Player::draw(ShaderProgram* m_prog, Texture& skin) {
