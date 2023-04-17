@@ -135,7 +135,7 @@ void Player::checkCollision()
     for (int i = 0; i < corners.size(); i++) {
         if (i % 4 == 3) {
             in_liquid = in_liquid || liquid;
-            bott_in_liquid = bott_in_liquid || (i < 4 && in_liquid);
+            bott_in_liquid = bott_in_liquid || (i >= 8 && in_liquid);
             liquid = true;
         }
         glm::vec3 cur = corners[i];
@@ -154,15 +154,18 @@ void Player::checkCollision()
                                     &y, &b, d);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
                                     &z, &b, d);
-
+        float eps = 0.25f;
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);
+            if (min.x <= eps) min.x = 0;
         }
         if (yF && y < glm::abs(min.y)) {
             min.y = y * glm::sign(min.y);
+            if (min.y <= eps) min.y = 0;
         }
         if (zF && z < glm::abs(min.z)) {
             min.z = z * glm::sign(min.z);
+            if (min.z <= eps) min.z = 0;
         }
     }
     m_velocity.x = min.x;
@@ -277,104 +280,111 @@ void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
     inHand = i;
 }
 
-
-void Player::createVBOdata() {
+void Player::createRectPrism(glm::ivec2 p1, glm::ivec2 p2, glm::vec4 t, glm::ivec3 dim) {
     std::vector<glm::vec4> pos, nor, uvs, inter;
-    std::vector<int> idx;
-    //Front face
-    //UR
-    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
-    //LR
-    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
-    //LL
-    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
-    //UL
-    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
+    std::vector<GLuint> idx;
+    int w = dim.x;
+    int h = dim.y;
+    int d = dim.z;
 
-    //Right face
-    //UR
-    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
-    //LR
-    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
-    //LL
-    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
-    //UL
-    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
+    //top
+    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
 
-    //Left face
-    //UR
-    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
-    //LR
-    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
-    //LL
-    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
-    //UL
-    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+    //bott
+    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
 
-    //Back face
-    //UR
-    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
-    //LR
-    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
-    //LL
-    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
-    //UL
-    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
+    //front
+    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
 
-    //Top face
-    //UR
-    pos.emplace_back(1.0f, 1.0f, 0.0f, 1.0f);
-    //LR
-    pos.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
-    //LL
-    pos.emplace_back(0.0f, 1.0f, 1.0f, 1.0f);
-    //UL
-    pos.emplace_back(0.0f, 1.0f, 0.0f, 1.0f);
+    //left
+    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
 
-    //Bottom face
-    //UR
-    pos.emplace_back(1.0f, 0.0f, 1.0f, 1.0f);
-    //LR
-    pos.emplace_back(1.0f, 0.0f, 0.0f, 1.0f);
-    //LL
-    pos.emplace_back(0.0f, 0.0f, 0.0f, 1.0f);
-    //UL
-    pos.emplace_back(0.0f, 0.0f, 1.0f, 1.0f);
+    //back
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
 
-//    for(int i = 0; i < pos.size(); i++) {
-//        pos[i] += glm::vec4(m_position, 1.f);
-//        //qDebug() << pos[i].x << " " << pos[i].y << " " << pos[i].z << " ";
-//    }
+    //right
+    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
+    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
 
-    //Front
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(0,0,1,0);
+    //top
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(0, 1, 0, 0);
     }
-    //Right
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(1,0,0,0);
+    //bott
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(0, -1, 0, 0);
     }
-    //Left
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(-1,0,0,0);
+    //+x=front
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(1, 0, 0, 0);
     }
-    //Back
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(0,0,-1,0);
+    //+z=left
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(0, 0, 1, 0);
     }
-    //Top
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(0,1,0,0);
+    //-x=back
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(-1, 0, 0, 0);
     }
-    //Bottom
-    for(int i = 0; i < 4; i++){
-        nor.emplace_back(0,-1,0,0);
+    //-z=right
+    for (int i = 0; i < 4; i++) {
+        nor.emplace_back(0, 0, -1, 0);
     }
 
-    //colors
-    for(int i = 0; i < pos.size(); i++) {
-        uvs.emplace_back(1, 0, 0, 1);
-    }
+    glm::vec4 b = glm::vec4(p1.x, p1.y, 0, 0);
+
+    //top
+    uvs.emplace_back(b + glm::vec4(d + w - 1, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w - 1, 0, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, 0, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, d - 1, 0, 0));
+
+    //bott
+    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
+
+    //front
+    uvs.emplace_back(b + glm::vec4(d, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w - 1, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w - 1, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, p2.y, 0, 0));
+
+    //left
+    uvs.emplace_back(b + glm::vec4(d + w, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, p2.y, 0, 0));
+
+    //back
+    uvs.emplace_back(b + glm::vec4(w + 2 * d, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(p2.x, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(p2.x, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d, p2.y, 0, 0));
+
+    //right
+    uvs.emplace_back(b + glm::vec4(0, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d - 1, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d - 1, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(0, p2.y, 0, 0));
 
     for(int i = 0; i < 6; i++){
         idx.push_back(i*4);
@@ -386,11 +396,10 @@ void Player::createVBOdata() {
     }
 
     m_count = idx.size();
-
     for (int i = 0; i < pos.size(); i++) {
        inter.push_back(pos[i]);
        inter.push_back(nor[i]);
-       inter.push_back(uvs[i]);
+       inter.push_back(uvs[i] / 64.f);
     }
 
     generateIdx();
@@ -400,8 +409,32 @@ void Player::createVBOdata() {
     generateInter();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
     mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
-
 }
+
+void Player::createVBOdata() {
+    //head
+    createRectPrism(glm::ivec2(0, 0), glm::ivec2(31, 15), glm::vec4(0, 8, 0, 0), glm::ivec3(8, 8, 8));
+    //torso
+    createRectPrism(glm::ivec2(16, 16), glm::ivec2(39, 31), glm::vec4(), glm::ivec3(8, 12, 4));
+    //right arm
+    createRectPrism(glm::ivec2(40, 16), glm::ivec2(55, 31), glm::vec4(0, 0, 4, 0), glm::ivec3(4, 12, 4));
+    //left arm
+    createRectPrism(glm::ivec2(32, 48), glm::ivec2(47, 63), glm::vec4(0, 0, -4, 0), glm::ivec3(4, 12, 4));
+    //right leg
+    createRectPrism(glm::ivec2(0, 16), glm::ivec2(15, 31), glm::vec4(0, -12, 4, 0), glm::ivec3(4, 12, 4));
+    //left leg
+    createRectPrism(glm::ivec2(16, 48), glm::ivec2(31, 63), glm::vec4(0, -12, -4, 0), glm::ivec3(4, 12, 4));
+}
+
+void Player::draw(ShaderProgram* m_prog, Texture& skin) {
+    skin.bind(0);
+    createVBOdata();
+    float ratio = 0.6f / 8;
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           glm::scale(glm::mat4(1), glm::vec3(ratio)));
+    m_prog->drawInterleaved(*this);
+}
+
 GLenum Player::drawMode() {
     return GL_TRIANGLES;
 }

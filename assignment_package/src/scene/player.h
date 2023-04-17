@@ -66,6 +66,8 @@ public:
 
     float getTheta();
     float getPhi();
+    void createRectPrism(glm::ivec2 p1, glm::ivec2 p2, glm::vec4 t, glm::ivec3 dim);
+    void draw(ShaderProgram* m_prog, Texture& skin);
 
     ItemType inHand;
     QString name;
@@ -74,4 +76,5 @@ public:
 
     virtual GLenum drawMode();
     virtual void createVBOdata();
+
 };

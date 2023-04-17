@@ -54,6 +54,7 @@ private:
     Texture m_block_texture;
     Texture m_font_texture;
     Texture m_inventory_texture;
+    Texture m_skin_texture;
 
     long long m_currentMSecsSinceEpoch;
 

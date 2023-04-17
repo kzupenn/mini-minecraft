@@ -28,7 +28,7 @@ MyGL::MyGL(QWidget *parent)
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), mouseMove(false)
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_skin_texture(this), mouseMove(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -150,6 +150,9 @@ void MyGL::initializeGL()
     m_inventory_texture.create(":/textures/inventory.png");
     m_inventory_texture.load(2);
 
+    m_skin_texture.create(":/textures/steve.png");
+    m_skin_texture.load(4);
+
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
 
     //Create the instance of the world axes
@@ -193,7 +196,7 @@ void MyGL::resizeGL(int w, int h) {
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
 
-    m_block_texture.bind(0);
+    //m_block_texture.bind(0);
     //m_font_texture.bind(1);
 
     printGLErrorLog();
@@ -299,17 +302,14 @@ void MyGL::paintGL() {
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_block_texture.bind(0);
     renderTerrain();
     //m_player.createVBOdata();
     //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
     //m_progLambert.drawInterleaved(m_player);
     m_multiplayers_mutex.lock();
-//    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-//        it->second->createVBOdata();
-//        m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
-//        m_progLambert.drawInterleaved(*(it->second));
-//    }
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        it->second->draw(&m_progLambert, m_skin_texture);
+    }
     m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
@@ -357,7 +357,6 @@ void MyGL::paintGL() {
     m_progFlat.draw(m_crosshair);
 
     m_progOverlay.setModelMatrix(glm::mat4());
-    m_font_texture.bind(0);
 
     //inventory gui
     m_inventory_texture.bind(0);
