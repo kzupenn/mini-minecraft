@@ -9,12 +9,13 @@ void BlockTypeWorker::run() {
     t->instantiateChunkAt(x, z);
 }
 
-VBOWorker::VBOWorker(Chunk* cc):c(cc){};
+VBOWorker::VBOWorker(Chunk* cc):c(cc){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+};
 VBOWorker::~VBOWorker(){
 
 };
 void VBOWorker::run(){
-    QThread::currentThread()->setPriority(QThread::HighestPriority);
     c->createVBOdata();
 }
 
@@ -23,7 +24,6 @@ t(tt), s(ss), x(xx), y(yy), z(zz){}
 StructureWorker::~StructureWorker(){};
 
 void StructureWorker:: run() {
-    //QThread::currentThread()->setPriority(QThread::LowestPriority);
     switch(s) {
     case VILLAGE_CENTER:{
         t->processMegaStructure(generateVillage(glm::vec2(x, z)));
@@ -33,27 +33,30 @@ void StructureWorker:: run() {
     }
 }
 
-ServerConnectionWorker::ServerConnectionWorker(Server* ss): s(ss){}
+ServerConnectionWorker::ServerConnectionWorker(Server* ss): s(ss){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+}
 ServerConnectionWorker::~ServerConnectionWorker(){};
 
 void ServerConnectionWorker:: run() {
-    QThread::currentThread()->setPriority(QThread::NormalPriority);
     s->start();
 }
 
-ServerThreadWorker::ServerThreadWorker(Server* ss, int tt): s(ss), t(tt){}
+ServerThreadWorker::ServerThreadWorker(Server* ss, int tt): s(ss), t(tt){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+}
 ServerThreadWorker::~ServerThreadWorker(){};
 
 void ServerThreadWorker:: run() {
-    QThread::currentThread()->setPriority(QThread::NormalPriority);
     s->handle_client(t);
 }
 
-ClientWorker::ClientWorker(MyGL* ss): s(ss){}
+ClientWorker::ClientWorker(MyGL* ss): s(ss){
+    QThread::currentThread()->setPriority(QThread::NormalPriority);
+}
 ClientWorker::~ClientWorker(){};
 
 void ClientWorker:: run() {
-    QThread::currentThread()->setPriority(QThread::NormalPriority);
     s->run_client();
 }
 

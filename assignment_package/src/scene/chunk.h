@@ -86,8 +86,6 @@ public:
     void unbindVBOdata();
     virtual GLenum drawMode();
 
-    //for debugging
-    glm::vec3 debugColor;
 
     //for terrain gen
     BiomeType biome; //biome of chunk, taking 8,8
