@@ -99,7 +99,7 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
 
-
+    m_player.createVBOdata();
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -269,7 +269,6 @@ void MyGL::setupTerrainThreads() {
 
             }
         }
-        m_time = 0;
     }
 }
 
@@ -303,12 +302,10 @@ void MyGL::paintGL() {
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     renderTerrain();
-    //m_player.createVBOdata();
-    //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
-    //m_progLambert.drawInterleaved(m_player);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        it->second->draw(&m_progLambert, m_skin_texture);
+        it->second->createVBOdata();
+        it->second->draw(&m_progLambert, m_skin_texture, m_time);
     }
     m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());

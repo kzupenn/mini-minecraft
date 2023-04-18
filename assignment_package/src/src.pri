@@ -10,6 +10,7 @@ SOURCES += \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
+    $$PWD/prism.cpp \
     $$PWD/quad.cpp \
     $$PWD/scene/biome.cpp \
     $$PWD/scene/font.cpp \
@@ -46,6 +47,7 @@ HEADERS += \
     $$PWD/framebuffer.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
+    $$PWD/prism.h \
     $$PWD/quad.h \
     $$PWD/scene/biome.h \
     $$PWD/scene/font.h \

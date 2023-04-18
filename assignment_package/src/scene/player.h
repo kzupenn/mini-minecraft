@@ -1,5 +1,6 @@
 #pragma once
 #include "entity.h"
+#include "prism.h"
 #include "camera.h"
 #include "scene/inventory.h"
 #include "terrain.h"
@@ -14,8 +15,6 @@ private:
     float airtime, maxair;
     bool in_liquid, bott_in_liquid;
     BlockType camera_block;
-    std::vector<glm::vec4> pos, nor, uvs, inter;
-    std::vector<GLuint> idx;
 
     void processInputs(InputBundle &inputs);
     bool checkAirborne();
@@ -27,8 +26,9 @@ public:
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
+    Prism head, torso, right_arm, right_leg, left_arm, left_leg;
 
-    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*, QString n);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     
     virtual ~Player() override;
     Inventory m_inventory;
@@ -68,15 +68,12 @@ public:
 
     float getTheta();
     float getPhi();
-    void createRectPrism(glm::ivec2 p1, glm::ivec2 p2, glm::vec4 t, glm::ivec3 dim);
-    void draw(ShaderProgram* m_prog, Texture& skin);
+    void createVBOdata();
+    void draw(ShaderProgram* m_prog, Texture& skin, float tick);
 
     ItemType inHand;
     QString name;
 
     void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
-
-    virtual GLenum drawMode();
-    virtual void createVBOdata();
 
 };

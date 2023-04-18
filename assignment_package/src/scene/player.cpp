@@ -4,10 +4,16 @@
 
 
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, QString n)
-    : Entity(pos, m_context), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
+    : Entity(pos), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
-      airtime(0), maxair(45), inHand(AIR), in_liquid(false), bott_in_liquid(false), name(n)
+      airtime(0), maxair(45), inHand(AIR), in_liquid(false), bott_in_liquid(false), name(n),
+      head(Prism(m_context, glm::ivec3(8, 8, 8), glm::ivec2(0, 0), glm::ivec2(31, 15))),
+      torso(Prism(m_context, glm::ivec3(8, 12, 4), glm::ivec2(16, 16), glm::ivec2(39, 31))),
+      right_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
+      right_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
+      left_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
+      left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31)))
 {}
 
 Player::~Player()
@@ -280,161 +286,72 @@ void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
     inHand = i;
 }
 
-void Player::createRectPrism(glm::ivec2 p1, glm::ivec2 p2,
-                             glm::vec4 t, glm::ivec3 dim) {
-    int w = dim.x;
-    int h = dim.y;
-    int d = dim.z;
-
-    //top
-    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
-
-    //bott
-    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
-
-    //front
-    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
-
-    //left
-    pos.emplace_back(t + glm::vec4(d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, -h, w / 2, 1));
-
-    //back
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, w / 2, 1));
-
-    //right
-    pos.emplace_back(t + glm::vec4(-d / 2, 0, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, 0, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(d / 2, -h, -w / 2, 1));
-    pos.emplace_back(t + glm::vec4(-d / 2, -h, -w / 2, 1));
-
-    //top
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 1, 0, 0);
-    }
-    //bott
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, -1, 0, 0);
-    }
-    //+x=front
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(1, 0, 0, 0);
-    }
-    //+z=left
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 0, 1, 0);
-    }
-    //-x=back
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(-1, 0, 0, 0);
-    }
-    //-z=right
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 0, -1, 0);
-    }
-
-    glm::vec4 b = glm::vec4(p1.x, p1.y, 0, 0);
-
-    //top
-    uvs.emplace_back(b + glm::vec4(d + w - 1, d - 1, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d, d - 1, 0, 0));
-
-    //bott
-    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
-
-    //front
-    uvs.emplace_back(b + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d, p2.y, 0, 0));
-
-    //left
-    uvs.emplace_back(b + glm::vec4(d + w, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w, p2.y, 0, 0));
-
-    //back
-    uvs.emplace_back(b + glm::vec4(w + 2 * d, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(p2.x, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(p2.x, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d, p2.y, 0, 0));
-
-    //right
-    uvs.emplace_back(b + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(0, p2.y, 0, 0));
-
-    for(int i = 0; i < 6; i++){
-        idx.push_back(i*4);
-        idx.push_back(i*4+1);
-        idx.push_back(i*4+2);
-        idx.push_back(i*4);
-        idx.push_back(i*4+2);
-        idx.push_back(i*4+3);
-    }
-
-    for (int i = 0; i < pos.size(); i++) {
-       inter.push_back(pos[i]);
-       inter.push_back(nor[i]);
-       inter.push_back(uvs[i] / 64.f);
-    }
+void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
+    skin.bind(0);
+    float ratio = 0.6f / 8;
+    glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
+    glm::mat4 dir = glm::rotate(glm::mat4(1), glm::atan(m_forward.z, m_forward.x), m_up);
+    //torso
+    glm::mat4 torso_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           torso_trans *
+                           dir);
+    m_prog->drawInterleaved(torso);
+    //head
+    glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 32, 0));
+    glm::vec3 axis = glm::cross(m_forward, glm::vec3(1, 0, 0));
+    float angle = glm::dot(glm::normalize(axis), glm::vec3(1, 0, 0));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           head_trans *
+                           glm::rotate(glm::mat4(1), glm::degrees(angle), axis));
+    //right arm
+    m_prog->drawInterleaved(head);
+    glm::mat4 outleft = glm::rotate(glm::mat4(1), 20.f, m_forward);
+    glm::mat4 outright = glm::rotate(glm::mat4(1), -20.f, m_forward);
+    float period = 40.f;
+    float off = 45 * sin(tick / period);
+    glm::mat4 rot1 = glm::rotate(glm::mat4(1), glm::radians(off), glm::vec3(m_right));
+    glm::mat4 rot2 = glm::rotate(glm::mat4(1), glm::radians(-off), glm::vec3(m_right));
+    glm::mat4 right_arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, -4));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           right_arm_trans *
+                           rot1 *
+                           outright *
+                           dir);
+    m_prog->drawInterleaved(right_arm);
+    glm::mat4 left_arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 4));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           left_arm_trans *
+                           rot2 *
+                           outleft *
+                           dir);
+    m_prog->drawInterleaved(left_arm);
+    glm::mat4 right_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, -6));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           right_leg_trans *
+                           rot2 *
+                           dir);
+    m_prog->drawInterleaved(right_leg);
+    glm::mat4 left_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, 6));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           sc *
+                           left_leg_trans *
+                           rot1 *
+                           dir);
+    m_prog->drawInterleaved(left_leg);
 }
 
 void Player::createVBOdata() {
-    //head
-    createRectPrism(glm::ivec2(0, 0), glm::ivec2(31, 15), glm::vec4(0, 8, 0, 0), glm::ivec3(8, 8, 8));
-    //torso
-    createRectPrism(glm::ivec2(16, 16), glm::ivec2(39, 31), glm::vec4(), glm::ivec3(8, 12, 4));
-    //right arm
-    createRectPrism(glm::ivec2(40, 16), glm::ivec2(55, 31), glm::vec4(0, 0, 4, 0), glm::ivec3(4, 12, 4));
-    //left arm
-    createRectPrism(glm::ivec2(32, 48), glm::ivec2(47, 63), glm::vec4(0, 0, -4, 0), glm::ivec3(4, 12, 4));
-    //right leg
-    createRectPrism(glm::ivec2(0, 16), glm::ivec2(15, 31), glm::vec4(0, -12, 4, 0), glm::ivec3(4, 12, 4));
-    //left leg
-    createRectPrism(glm::ivec2(16, 48), glm::ivec2(31, 63), glm::vec4(0, -12, -4, 0), glm::ivec3(4, 12, 4));
-
-    m_count = idx.size();
-
-    generateIdx();
-    mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_bufIdx);
-    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, idx.size()* sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
-
-    generateInter();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufInter);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, inter.size() * sizeof(glm::vec4), inter.data(), GL_STATIC_DRAW);
+    head.createVBOdata();
+    torso.createVBOdata();
+    right_arm.createVBOdata();
+    right_leg.createVBOdata();
+    left_arm.createVBOdata();
+    left_leg.createVBOdata();
 }
 
-void Player::draw(ShaderProgram* m_prog, Texture& skin) {
-    skin.bind(0);
-    createVBOdata();
-    float ratio = 0.6f / 8;
-    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-                           glm::scale(glm::mat4(1), glm::vec3(ratio)));
-    m_prog->drawInterleaved(*this);
-}
-
-GLenum Player::drawMode() {
-    return GL_TRIANGLES;
-}
