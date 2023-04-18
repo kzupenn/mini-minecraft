@@ -181,7 +181,6 @@ void Terrain::setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,in
 }
 
 Chunk* Terrain::instantiateChunkAt(int x, int z) {
-    //semaphore blocking to limit thread count
     x = floor(x/16.f)*16;
     z = floor(z/16.f)*16;
 
@@ -373,8 +372,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
         chunkStructures.insert(chunkStructures.end(), metaSubStructures[toKey(x, z)].begin(), metaSubStructures[toKey(x, z)].end());
         metaSubStructures.erase(toKey(x, z)); //remove from memory to save space once added to the chunk structure list
     }
-
     metaSubStructures_mutex.unlock();
+
     //checks and generates metaStructures
     for(std::pair<std::pair<int64_t, int>, StructureType> metaS: getMetaStructures(glm::vec2(x, z))){
         metaStructures_mutex.lock();
@@ -402,8 +401,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             if(md.con == nullptr || md.con(md.pos.x, md.pos.y, md.pos.z, cPtr))
                 cPtr->setBlockAt(md.pos.x, md.pos.y, md.pos.z, md.type);
         }
+        metaData.erase(key);
     }
-    metaData.erase(key);
     metaData_mutex.unlock();
 
     cPtr->dataGen = true;
@@ -740,6 +739,7 @@ void Terrain::buildStructure(const Structure& s) {
         for(int i = -5; i <= 5; i++) {
             for(int j = -5; j <= 5; j++) {
                 float f = noise1D(glm::vec2(xx+i, zz+j), SEED.getSeed(57091, 850135, 323));
+                qDebug() << f;
                 if(f < 0.33)
                     setBlockAt(xx+i, 1000-1, zz+j, PATH);
                 else if(f < 0.66)
