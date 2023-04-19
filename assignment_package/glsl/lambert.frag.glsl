@@ -89,6 +89,8 @@ void main()
 
         vec4 diffuseColor = texture(u_Texture, vec2(uv));
 
+
+
         if (fs_UV.z == 1.f && fs_UV.y <= 944.f/1024.f) {
             diffuseColor += vec4(0.f, 0.3f, 0.8f, 0.f);
         }
@@ -108,5 +110,11 @@ void main()
                                                             //lit by our point light are not completely black.
 
         // Compute final shaded color
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
+        vec4 final_color = vec4(diffuseColor.rgb * lightIntensity, a);
+
+        if (final_color.a == 0.f) {
+            discard;
+        }
+
+        out_Col = final_color;
 }
