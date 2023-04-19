@@ -13,6 +13,7 @@ SOURCES += \
     $$PWD/quad.cpp \
     $$PWD/scene/biome.cpp \
     $$PWD/scene/font.cpp \
+    $$PWD/scene/icons.cpp \
     $$PWD/scene/inventory.cpp \
     $$PWD/scene/item.cpp \
     $$PWD/scene/crosshair.cpp \
@@ -49,6 +50,7 @@ HEADERS += \
     $$PWD/quad.h \
     $$PWD/scene/biome.h \
     $$PWD/scene/font.h \
+    $$PWD/scene/icons.h \
     $$PWD/scene/item.h \
     $$PWD/scene/crosshair.h \
     $$PWD/scene/rectangle.h \

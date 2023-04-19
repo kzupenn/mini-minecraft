@@ -1,5 +1,6 @@
 #include "biome.h"
 #include "algo/fractal.h"
+#include "algo/noise.h"
 #include "algo/perlin.h"
 #include "algo/worley.h"
 #include "terrain.h"
@@ -269,6 +270,13 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
+    float c = fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
+    float r_width = noise1D(pp,SEED.getSeed(8702.024,9507.16,44.434));
+    for(int i = pp.x-r_width; i <= pp.x+r_width; i++) {
+        for(int j = pp.y-r_width; j <= pp.y+r_width; j++) {
+
+        }
+    }
     return fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
 }
 

@@ -66,7 +66,15 @@ Packet* bufferToPacket(QByteArray buffer) {
         return new BlockChangePacket(cP, yP, bt);
         break;
     }
-
+    case HIT: {
+        bool b;
+        float s;
+        float d;
+        float f1, f2, f3;
+        in >> b >> s >> f1 >> f2 >> f3;
+        return new HitPacket(b, s, d, glm::vec3(f1, f2, f3));
+        break;
+    }
     default:
         qDebug() << "weird packet received:" << pt;
         break;

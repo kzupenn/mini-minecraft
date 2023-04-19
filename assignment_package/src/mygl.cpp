@@ -25,10 +25,10 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this, QString("Player")),
-      m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_icon_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), mouseMove(false)
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), mouseMove(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -45,6 +45,9 @@ void MyGL::start(bool joinServer, QString username) {
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
     m_crosshair.createVBOdata();
     m_rectangle.createVBOdata();
+    m_heart.createVBOdata();
+    m_halfheart.createVBOdata();
+    m_fullheart.createVBOdata();
 
     //noise function distribution tests
     //distTest();
@@ -149,6 +152,9 @@ void MyGL::initializeGL()
 
     m_inventory_texture.create(":/textures/inventory.png");
     m_inventory_texture.load(2);
+
+    m_icon_texture.create(":/textures/icons.png");
+    m_icon_texture.load(5);
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
 
@@ -327,37 +333,54 @@ void MyGL::paintGL() {
     //chat gui
     m_font_texture.bind(0);
     float shiftChat = 0;
-    //chatQueue_mutex.lock();
+
     while(!chatQueue.empty()) {
         m_chat.push_front(Font(this, chatQueue.front().first, chatQueue.front().second));
         if(m_chat.size() > 20) m_chat.pop_back();
         chatQueue.pop();
     }
-    //chatQueue_mutex.unlock();
+
     if(chatMode) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30*m_mychat.width+4, 34, 0)));
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+148, 0))*
+                                  glm::scale(glm::mat4(), glm::vec3(30*m_mychat.width+10, 34, 0)));
         m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132, 0))*
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+150, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30,30,0)));
         m_progOverlay.draw(m_mychat);
         shiftChat = 60;
     }
     for(int i = 0; i < m_chat.size(); i++) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130+34*i+shiftChat, 0))*
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+148+34*i+shiftChat, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30*m_chat[i].width+4, 34, 0)));
         m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132+34*i+shiftChat, 0))*
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+150+34*i+shiftChat, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30,30,0)));
         m_progOverlay.draw(m_chat[i]);
     }
 
-
+    //crosshair
     m_progFlat.setModelMatrix(glm::mat4());
     m_progFlat.draw(m_crosshair);
 
-    m_progOverlay.setModelMatrix(glm::mat4());
-    m_font_texture.bind(0);
+    //armor and health bars
+    m_icon_texture.bind(0);
+    for(int i = 0; i < 10; i++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*i, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_heart);
+    }
+    int fullhps = 0;
+    for(; fullhps < m_player.health/2; fullhps++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*fullhps, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_fullheart);
+    }
+    if(m_player.health%2) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*fullhps, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_halfheart);
+    }
+
 
     //inventory gui
     m_inventory_texture.bind(0);

@@ -74,8 +74,22 @@ void Server::process_packet(Packet* packet, int sender) {
     }
     case CHAT: {
         ChatPacket* thispack = dynamic_cast<ChatPacket*>(packet);
-        qDebug() << thispack->message;
         broadcast_packet(mkU<ChatPacket>(sender, thispack->message).get(), sender);
+        break;
+    }
+    case HIT: {
+        HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
+        m_players_mutex.lock();
+        //TO DO: perform grid marching hit detections here
+        m_players_mutex.unlock();
+        break;
+    }
+    case BLOCK_CHANGE: {
+        BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
+        glm::vec2 xz = toCoords(thispack->chunkPos);
+        this->m_terrain.setBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
+        // TO DO: add changes to a separate change tracker for each chunk
+        broadcast_packet(mkU<BlockChangePacket>(thispack->chunkPos, thispack->yPos, thispack->newBlock).get(), 0);
         break;
     }
     default:

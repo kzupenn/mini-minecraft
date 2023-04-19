@@ -5,5 +5,6 @@
         <file>textures/ascii.png</file>
         <file>textures/inventory.png</file>
         <file>textures/block_item_textures.png</file>
+        <file>textures/icons.png</file>
     </qresource>
 </RCC>

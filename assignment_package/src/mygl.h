@@ -3,6 +3,7 @@
 
 #include "openglcontext.h"
 #include "scene/crosshair.h"
+#include "scene/icons.h"
 #include "scene/rectangle.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
@@ -54,6 +55,11 @@ private:
     Texture m_block_texture;
     Texture m_font_texture;
     Texture m_inventory_texture;
+    Texture m_icon_texture;
+
+    Heart m_heart;
+    HalfHeart m_halfheart;
+    FullHeart m_fullheart;
 
     long long m_currentMSecsSinceEpoch;
 

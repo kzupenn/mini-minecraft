@@ -11,7 +11,8 @@ using namespace glm;
 enum PacketType: unsigned char {
     PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT,
     CHUNK_CHANGE, BLOCK_CHANGE,
-    ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY
+    ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY,
+    HIT
 };
 
 struct Packet{
@@ -159,6 +160,20 @@ struct ItemEntityDeletePacket : public Packet {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::ReadWrite);
         out << DELETE_ITEM_ENTITY << entity_id;
+        return buffer;
+    }
+};
+//hit
+struct HitPacket : public Packet {
+    glm::vec3 direction;
+    float strength, damage;
+    bool left_click;
+    HitPacket(bool b, float s, float dd, glm::vec3 d): left_click(b), strength(s), damage(dd), direction(d), Packet(HIT){}
+    ~HitPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << HIT << left_click << strength << direction.x << direction.y << direction.z;
         return buffer;
     }
 };
