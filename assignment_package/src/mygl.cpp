@@ -99,8 +99,6 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
 
-    m_player.createVBOdata();
-
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
 }
@@ -224,7 +222,10 @@ void MyGL::tick() {
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
-    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi(), m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
+    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(),
+                                             m_player.getTheta(),
+                                             m_player.getPhi(),
+                                             m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
     send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -305,6 +306,7 @@ void MyGL::paintGL() {
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         it->second->createVBOdata();
+        it->second->orientCamera();
         it->second->draw(&m_progLambert, m_skin_texture, m_time);
     }
     m_multiplayers_mutex.unlock();

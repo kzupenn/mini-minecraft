@@ -18,7 +18,6 @@ private:
 
     void processInputs(InputBundle &inputs);
     bool checkAirborne();
-    void orientCamera();
     void computePhysics(float dT);
     void checkCollision();
 
@@ -36,6 +35,7 @@ public:
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
     void tick(float dT, InputBundle &input) override;
+    void orientCamera();
 
 
     // Player overrides all of Entity's movement

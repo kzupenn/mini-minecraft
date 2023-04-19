@@ -80,43 +80,43 @@ void Prism::createVBOdata() {
         nor.emplace_back(0, 0, -1, 0);
     }
 
-    glm::vec4 b = glm::vec4(p1.x, p1.y, 0, 0);
+    glm::vec4 b = glm::vec4(p1.x, p1.y, 0, 1);
 
     //top
-    uvs.emplace_back(b + glm::vec4(d + w - 1, d - 1, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, 0, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
     uvs.emplace_back(b + glm::vec4(d, 0, 0, 0));
     uvs.emplace_back(b + glm::vec4(d, d - 1, 0, 0));
 
     //bott
-    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + 2 * w, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + 2 * w, 0, 0, 0));
     uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w, 0, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + 2 * w - 1, d - 1, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, d - 1, 0, 0));
 
     //front
     uvs.emplace_back(b + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, d + h, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, d + h, 0, 0));
 
     //left
     uvs.emplace_back(b + glm::vec4(d + w, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d + w, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d, d + h, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d + w, d + h, 0, 0));
 
     //back
     uvs.emplace_back(b + glm::vec4(w + 2 * d, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(p2.x, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(p2.x, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(w + 2 * d, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(2 * (w + d), d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(2 * (w + d), d + h, 0, 0));
+    uvs.emplace_back(b + glm::vec4(w + 2 * d, d + h, 0, 0));
 
     //right
     uvs.emplace_back(b + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d - 1, d, 0, 0));
-    uvs.emplace_back(b + glm::vec4(d - 1, p2.y, 0, 0));
-    uvs.emplace_back(b + glm::vec4(0, p2.y, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, d, 0, 0));
+    uvs.emplace_back(b + glm::vec4(d, d + h, 0, 0));
+    uvs.emplace_back(b + glm::vec4(0, d + h, 0, 0));
 
     for(int i = 0; i < 6; i++){
         idx.push_back(i*4);
@@ -131,6 +131,7 @@ void Prism::createVBOdata() {
     for (int i = 0; i < pos.size(); i++) {
        inter.push_back(pos[i]);
        inter.push_back(nor[i]);
+       uvs[i].y = tx - uvs[i].y;
        inter.push_back(uvs[i] / tx);
     }
 

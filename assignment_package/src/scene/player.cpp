@@ -288,61 +288,69 @@ void Player::setState(glm::vec3 p, float f1, float f2, ItemType i) {
 
 void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     skin.bind(0);
-    float ratio = 0.6f / 8;
+    float ratio = 1.8f / 32;
     glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
-    glm::mat4 dir = glm::rotate(glm::mat4(1), glm::atan(m_forward.z, m_forward.x), m_up);
+    glm::mat4 dir = glm::rotate(glm::mat4(1), glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
     //torso
     glm::mat4 torso_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+//                           dir *
                            sc *
-                           torso_trans *
-                           dir);
+                           torso_trans);
     m_prog->drawInterleaved(torso);
     //head
     glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 32, 0));
     glm::vec3 axis = glm::cross(m_forward, glm::vec3(1, 0, 0));
-    float angle = glm::dot(glm::normalize(axis), glm::vec3(1, 0, 0));
+    float angle = glm::acos(glm::dot(glm::normalize(axis), glm::vec3(1, 0, 0)));
+//    qDebug() << angle;
+//    qDebug() << m_forward.x << " " << m_forward.y << " " << m_forward.z;
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
                            sc *
                            head_trans *
-                           glm::rotate(glm::mat4(1), glm::degrees(angle), axis));
+                           glm::rotate(glm::mat4(1), angle, axis));
     //right arm
     m_prog->drawInterleaved(head);
-    glm::mat4 outleft = glm::rotate(glm::mat4(1), 20.f, m_forward);
-    glm::mat4 outright = glm::rotate(glm::mat4(1), -20.f, m_forward);
-    float period = 40.f;
+    glm::mat4 outleft = glm::rotate(glm::mat4(1), glm::radians(-20.f), glm::vec3(1, 0, 0));
+    glm::mat4 outright = glm::rotate(glm::mat4(1), glm::radians(20.f), glm::vec3(1, 0, 0));
+    float period = 20.f;
     float off = 45 * sin(tick / period);
-    glm::mat4 rot1 = glm::rotate(glm::mat4(1), glm::radians(off), glm::vec3(m_right));
-    glm::mat4 rot2 = glm::rotate(glm::mat4(1), glm::radians(-off), glm::vec3(m_right));
+    glm::mat4 rot1 = glm::rotate(glm::mat4(1), glm::radians(off), glm::vec3(0, 0, 1));
+    glm::mat4 rot2 = glm::rotate(glm::mat4(1), glm::radians(-off), glm::vec3(0, 0, 1));
     glm::mat4 right_arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, -4));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
                            sc *
                            right_arm_trans *
                            rot1 *
-                           outright *
-                           dir);
+                           outright/* *
+                           dir*/);
     m_prog->drawInterleaved(right_arm);
+    //left arm
     glm::mat4 left_arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 4));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+//                           dir *
                            sc *
                            left_arm_trans *
                            rot2 *
-                           outleft *
-                           dir);
+                           outleft /**
+                           dir*/);
     m_prog->drawInterleaved(left_arm);
-    glm::mat4 right_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, -6));
+    //right leg
+    glm::mat4 right_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, -2));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+//                           dir *
                            sc *
                            right_leg_trans *
-                           rot2 *
-                           dir);
+                           rot2 /**
+                           dir*/);
     m_prog->drawInterleaved(right_leg);
-    glm::mat4 left_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, 6));
+    //left leg
+    glm::mat4 left_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, 2));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+//                           dir *
                            sc *
                            left_leg_trans *
-                           rot1 *
-                           dir);
+                           rot1 /**
+                           dir*/);
     m_prog->drawInterleaved(left_leg);
 }
 
