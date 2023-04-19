@@ -27,3 +27,27 @@ public:
     void createVBOdata() override;
     GLenum drawMode() override;
 };
+
+class Armor: public Drawable {
+public:
+    Armor(OpenGLContext* context) : Drawable(context){}
+    virtual ~Armor(){}
+    void createVBOdata() override;
+    GLenum drawMode() override;
+};
+
+class FullArmor: public Drawable {
+public:
+    FullArmor(OpenGLContext* context) : Drawable(context){}
+    virtual ~FullArmor(){}
+    void createVBOdata() override;
+    GLenum drawMode() override;
+};
+
+class HalfArmor: public Drawable {
+public:
+    HalfArmor(OpenGLContext* context) : Drawable(context){}
+    virtual ~HalfArmor(){}
+    void createVBOdata() override;
+    GLenum drawMode() override;
+};

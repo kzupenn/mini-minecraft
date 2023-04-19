@@ -61,6 +61,10 @@ private:
     HalfHeart m_halfheart;
     FullHeart m_fullheart;
 
+    Armor m_armor;
+    HalfArmor m_halfarmor;
+    FullArmor m_fullarmor;
+
     long long m_currentMSecsSinceEpoch;
 
     //multiplayer stuffs

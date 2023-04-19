@@ -28,7 +28,7 @@ MyGL::MyGL(QWidget *parent)
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_icon_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), mouseMove(false)
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), mouseMove(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -48,6 +48,9 @@ void MyGL::start(bool joinServer, QString username) {
     m_heart.createVBOdata();
     m_halfheart.createVBOdata();
     m_fullheart.createVBOdata();
+    m_armor.createVBOdata();
+    m_halfarmor.createVBOdata();
+    m_fullarmor.createVBOdata();
 
     //noise function distribution tests
     //distTest();
@@ -381,6 +384,23 @@ void MyGL::paintGL() {
         m_progOverlay.draw(m_halfheart);
     }
 
+    for(int i = 0; i < 10; i++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*i-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_armor);
+    }
+    int fullars = 0;
+    for(; fullars < m_player.armor/2; fullars++) {
+        int i = 9-fullars;
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*i-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_fullarmor);
+    }
+    if(m_player.armor%2) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*(9-fullars)-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_halfarmor);
+    }
 
     //inventory gui
     m_inventory_texture.bind(0);
