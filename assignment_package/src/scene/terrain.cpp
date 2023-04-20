@@ -330,8 +330,10 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 break;
             }
             case OCEAN:{
+                float bedrock = generateBedrock(glm::vec2(x+xx,z+zz));
                 int y = maxy;
-                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                for(; y >= glm::max(3.0, OCEAN_LEVEL*bedrock/ocean_level); y--) cPtr->setBlockAt(xx, y, zz, WATER);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, SAND);
                 break;
             }
             case RIVER: {

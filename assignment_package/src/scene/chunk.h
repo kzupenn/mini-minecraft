@@ -52,12 +52,15 @@ class Chunk : public Drawable{
 private:
     // All of the blocks contained within this Chunk
     std::array<BlockType, 65536> m_blocks;
+
+    // non-generated changes made to terrain
+    std::map<glm::ivec3, BlockType> m_changes;
+
     // This Chunk's four neighbors to the north, south, east, and west
     // The third input to this map just lets us use a Direction as
     // a key for this map.
     // These allow us to properly determine
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
-
 
     //for vbo
     std::vector<glm::vec4> VBOinter;
@@ -75,7 +78,7 @@ public:
 
     virtual void createVBOdata();
     //locks for multithreading stages
-    bool dataBound, dataGen, surfaceGen;
+    std::atomic_bool dataBound, dataGen, surfaceGen;
 
     bool hasTransparent;
 

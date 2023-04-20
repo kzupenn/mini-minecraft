@@ -48,6 +48,11 @@ private:
     //meta data, stores chunk changes until that chunk is loaded, after which it loads those changes in
     std::mutex metaData_mutex;
     std::map<int64_t, std::vector<metadata>> metaData;
+
+    //for user changes, to be implemented strictly after all changes to simulate user changes
+    std::mutex metaChangeData_mutex;
+    std::map<int64_t, std::vector<metadata>> metaChangeData;
+
     //generates mega structures
     std::mutex metaStructures_mutex;
     std::map<std::pair<int64_t, int>, StructureType> metaStructures; //marks the meta structure to prevent regeneration
@@ -100,6 +105,8 @@ public:
     void setBlockAt(int x, int y, int z, BlockType t);
     // like setblock, but checks a conditional before placing
     void setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,int,Chunk*));
+    // setblock for changes ma
+    //void changeBlockAt(int x, int y, int z, BlockType t);
 
     // Draws every Chunk that falls within the bounding box
     // described by the min and max coords, using the provided

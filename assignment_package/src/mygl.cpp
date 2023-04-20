@@ -760,7 +760,6 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
                 if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
                 if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
-                qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
             }
         } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
@@ -903,6 +902,20 @@ void MyGL::packet_processer(Packet* packet) {
             m_multiplayers.erase(thispack->player_id);
             m_multiplayers_mutex.unlock();
         }
+        break;
+    }
+    case CHUNK_CHANGE:{
+        ChunkChangePacket* thispack = dynamic_cast<ChunkChangePacket*>(packet);
+        glm::ivec2 chunkp = toCoords(thispack->chunkPos);
+        for(std::pair<vec3, BlockType> &p: thispack->changes) {
+            m_terrain.setBlockAt(chunkp.x+p.first.x, p.first.y, chunkp.y+p.first.z, p.second);
+        }
+        break;
+    }
+    case BLOCK_CHANGE:{
+        BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
+        glm::ivec2 xz = toCoords(thispack->chunkPos);
+        m_terrain.setBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
         break;
     }
     case CHAT: {
