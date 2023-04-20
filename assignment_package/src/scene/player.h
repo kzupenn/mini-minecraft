@@ -13,7 +13,7 @@ private:
     bool m_flightMode;
     float theta, phi; //horiz, vert
     float airtime, maxair;
-    bool in_liquid, bott_in_liquid;
+    bool in_liquid, bott_in_liquid, shift;
     BlockType camera_block;
 
     void processInputs(InputBundle &inputs);
@@ -26,8 +26,8 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
     Prism head, torso, right_arm, right_leg, left_arm, left_leg;
-    float start_swing;
-    bool swinging;
+    float start_swing, swing_dir;
+    bool swinging, stopped, created;
 
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     
@@ -77,6 +77,6 @@ public:
     ItemType inHand;
     QString name;
 
-    void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
+    void setState(glm::vec3, glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
 
 };

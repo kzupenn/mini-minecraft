@@ -66,10 +66,11 @@ void Server::process_packet(Packet* packet, int sender) {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
         m_players[sender].pos = thispack->player_pos;
+        m_players[sender].velo = thispack->player_velo;
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
-        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
+        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
         break;
     }
     case CHAT: {
@@ -113,7 +114,7 @@ void Server::initClient(int i) {
     {
         pps.push_back(std::make_pair(it->first, it->second.name));
     }
-    m_players[i] = PlayerState(glm::vec3(0, 80, 0), 0.f, 0.f, QString("Player"));
+    m_players[i] = PlayerState(glm::vec3(0, 80, 0), glm::vec3(), 0.f, 0.f, QString("Player"));
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
     target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn, pps).get(), i);

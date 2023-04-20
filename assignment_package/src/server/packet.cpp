@@ -7,10 +7,10 @@ Packet* bufferToPacket(QByteArray buffer) {
     switch(pt) {
     case PLAYER_STATE:{
         int pid;
-        float f1, f2, f3, f4, f5;
+        float f1, f2, f3, f4, f5, f6, f7, f8;
         ItemType c;
-        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5 >> c;
-        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), f4, f5, c);
+        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5 >> f6 >> f7 >> f8 >> c;
+        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), glm::vec3(f4, f5, f6), f7, f8, c);
         break;
     }
     case WORLD_INIT:{

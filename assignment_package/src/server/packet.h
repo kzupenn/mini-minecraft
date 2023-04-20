@@ -88,17 +88,19 @@ struct BlockChangePacket: Packet {
 struct PlayerStatePacket : public Packet{
     int player_id; //id by server assigned client_fd
     vec3 player_pos;
+    vec3 player_velo;
     float player_phi, player_theta;
     ItemType player_hand;
 
-    PlayerStatePacket(int i, glm::vec3 p, int t, int ph, ItemType it) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_theta(t), player_phi(ph), player_hand(it) {}
-    PlayerStatePacket(glm::vec3 p, int t, int ph, ItemType it) : PlayerStatePacket(0, p, t, ph, it) {}
+    PlayerStatePacket(int i, glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_velo(v), player_theta(t), player_phi(ph), player_hand(it) {}
+    PlayerStatePacket(glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it) : PlayerStatePacket(0, p, v, t, ph, it) {}
     ~PlayerStatePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         out << PLAYER_STATE << player_id
             << player_pos.x << player_pos.y << player_pos.z
+            << player_velo.x << player_velo.y << player_velo.z
             << player_theta << player_phi << player_hand;
         return buffer;
     }

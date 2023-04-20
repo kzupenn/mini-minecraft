@@ -7,16 +7,17 @@
 #include "scene/player.h"
 #include "server/packet.h"
 
-#define PORT 3079
+#define PORT 3080
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 10
 
 struct PlayerState {
     float phi, theta;
+    glm::vec3 velo;
     glm::vec3 pos;
     QString name;
-    PlayerState(glm::vec3 p, float t, float ph, QString n)
-        : phi(ph), theta(t), pos(p), name(n){};
+    PlayerState(glm::vec3 p, glm::vec3 v, float t, float ph, QString n)
+        : phi(ph), theta(t), velo(v) , pos(p), name(n){};
     PlayerState(){};
 };
 

@@ -62,7 +62,7 @@ void MyGL::start(bool joinServer, QString username) {
 
     //block until we get world spawn info
     while(!verified_server);
-    m_player.setState(m_terrain.worldSpawn, 0, 0, AIR);
+    m_player.setState(m_terrain.worldSpawn, glm::vec3(), 0, 0, AIR);
     m_player.name = username;
 
     PlayerJoinPacket pjp = PlayerJoinPacket(true, 0, username);
@@ -223,6 +223,7 @@ void MyGL::tick() {
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
     PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(),
+                                             m_player.getVelocity(),
                                              m_player.getTheta(),
                                              m_player.getPhi(),
                                              m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
@@ -306,13 +307,17 @@ void MyGL::paintGL() {
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         Player* cur = it->second.get();
-        cur->createVBOdata();
+        if (!cur->created) {
+            cur->createVBOdata();
+            qDebug() << "created";
+        }
         cur->orientCamera();
-        if (glm::length(cur->getVelocity()) > 0) {
-            if (!cur->swinging) {
-                qDebug() << m_time;
+        if (glm::length(cur->getVelocity()) > 0.00005) {
+            if (!cur->swinging && cur->stopped) {
                 cur->start_swing = m_time;
                 cur->swinging = true;
+                cur->stopped = false;
+                cur->swing_dir *= -1;
             }
         } else {
             cur->swinging = false;
@@ -800,7 +805,7 @@ void MyGL::packet_processer(Packet* packet) {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_multiplayers_mutex.lock();
         if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
-            m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand);
+            m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand);
         }
         m_multiplayers_mutex.unlock();
         break;
