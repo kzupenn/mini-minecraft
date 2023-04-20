@@ -69,7 +69,6 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
-        qDebug() << "Player: " << sender << "State: " << thispack->player_theta << thispack->player_phi;
         broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
         break;
     }

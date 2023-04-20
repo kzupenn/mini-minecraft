@@ -26,6 +26,8 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
     Prism head, torso, right_arm, right_leg, left_arm, left_leg;
+    float start_swing;
+    bool swinging;
 
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     
@@ -63,6 +65,7 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+    glm::vec3 getVelocity();
     void setType(BlockType bt);
     int getType();
 

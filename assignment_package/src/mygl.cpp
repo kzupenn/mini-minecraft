@@ -305,8 +305,18 @@ void MyGL::paintGL() {
     renderTerrain();
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        it->second->createVBOdata();
-        it->second->orientCamera();
+        Player* cur = it->second.get();
+        cur->createVBOdata();
+        cur->orientCamera();
+        if (glm::length(cur->getVelocity()) > 0) {
+            if (!cur->swinging) {
+                qDebug() << m_time;
+                cur->start_swing = m_time;
+                cur->swinging = true;
+            }
+        } else {
+            cur->swinging = false;
+        }
         it->second->draw(&m_progLambert, m_skin_texture, m_time);
     }
     m_multiplayers_mutex.unlock();
