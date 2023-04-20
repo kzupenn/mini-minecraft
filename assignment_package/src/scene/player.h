@@ -73,6 +73,7 @@ public:
     float getPhi();
     void createVBOdata();
     void draw(ShaderProgram* m_prog, Texture& skin, float tick);
+    void drawArm(ShaderProgram* m_prog, Texture& skin);
 
     ItemType inHand;
     QString name;

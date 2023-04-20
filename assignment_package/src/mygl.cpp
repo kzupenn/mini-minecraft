@@ -45,6 +45,7 @@ void MyGL::start(bool joinServer, QString username) {
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
     m_crosshair.createVBOdata();
     m_rectangle.createVBOdata();
+    m_player.createVBOdata();
 
     //noise function distribution tests
     //distTest();
@@ -304,13 +305,12 @@ void MyGL::paintGL() {
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     renderTerrain();
+
+    m_player.drawArm(&m_progLambert, m_skin_texture);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         Player* cur = it->second.get();
-        if (!cur->created) {
-            cur->createVBOdata();
-            qDebug() << "created";
-        }
+        if (!cur->created) cur->createVBOdata();
         cur->orientCamera();
         if (glm::length(cur->getVelocity()) > 0.00005) {
             if (!cur->swinging && cur->stopped) {
@@ -322,7 +322,7 @@ void MyGL::paintGL() {
         } else {
             cur->swinging = false;
         }
-        it->second->draw(&m_progLambert, m_skin_texture, m_time);
+        cur->draw(&m_progLambert, m_skin_texture, m_time);
     }
     m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());

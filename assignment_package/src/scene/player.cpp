@@ -373,6 +373,27 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     m_prog->drawInterleaved(left_leg);
 }
 
+void Player::drawArm(ShaderProgram* m_prog, Texture& skin) {
+    skin.bind(0);
+    float ratio = 1.8f / 42;
+    glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
+    glm::mat4 arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 20, 10));
+    glm::mat4 inward = glm::rotate(glm::mat4(1), glm::radians(-20.f), glm::vec3(0, 1, 0));
+    glm::mat4 outward = glm::rotate(glm::mat4(1), glm::radians(110.f), glm::vec3(0, 0, 1));
+    glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
+    float len = glm::sqrt(pow(m_forward.x, 2) + pow(m_forward.z, 2));
+    glm::mat4 vert = glm::rotate(glm::mat4(1), glm::atan(m_forward.y, len), glm::vec3(0, 0, 1));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           horiz *
+                           vert *
+                           sc *
+                           arm_trans *
+                           outward *
+                           inward *
+                           glm::scale(glm::mat4(1), glm::vec3(1, 2, 1)));
+    m_prog->drawInterleaved(right_arm);
+}
+
 void Player::createVBOdata() {
     head.createVBOdata();
     torso.createVBOdata();
