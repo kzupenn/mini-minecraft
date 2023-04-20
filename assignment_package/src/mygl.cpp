@@ -78,6 +78,7 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.hotbar.createVBOdata();
     Item a = Item(this, DIAMOND_HOE, 1);
     Item b = Item(this, DIAMOND_LEGGINGS, 1);
+    Item bb = Item(this, GOLDEN_LEGGINGS, 1);
     Item c = Item(this, GOLD_NUGGET, 64);
     Item d = Item(this, IRON_NUGGET, 8);
     Item e = Item(this, IRON_BOOTS, 1);
@@ -104,6 +105,13 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(bb);
+
+    m_player.m_inventory.armor[0] = j;
+    m_player.m_inventory.armor[1] = h;
+    m_player.m_inventory.armor[2] = b;
+    m_player.m_inventory.armor[3] = e;
+    m_player.armor = m_player.m_inventory.calcArmor();
 
 
 
@@ -415,6 +423,7 @@ void MyGL::paintGL() {
     //inventory items
     m_block_texture.bind(0);
     if(m_player.m_inventory.showInventory){
+        //inventory
         for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
             std::optional<Item>& item = m_player.m_inventory.items[i];
             if(item) {
@@ -422,6 +431,7 @@ void MyGL::paintGL() {
                            60, 30, glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0));
             }
         }
+        //hotbar
         for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
             std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
             if(item) {
@@ -429,6 +439,18 @@ void MyGL::paintGL() {
                             60, 30,
                            glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0),
                            glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0));
+            }
+        }
+        //armor
+        for(int i = 0; i < 4; i++) {
+            std::optional<Item> item = m_player.m_inventory.armor[i];
+            if(item){
+                float dx = -550.f*158.f/256.f;
+                float dy = 550.f*118.f/256.f-36.f/256.f*550.f*i;
+                item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                            60, 30,
+                           glm::vec3(dx, dy, 0),
+                           glm::vec3(dx+65, -5+dy, 0));
             }
         }
     }
@@ -609,6 +631,20 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
     if(m_player.m_inventory.showInventory) {
         QPoint cur = 2*mapFromGlobal(QCursor::pos());
         cur = QPoint(cur.x()-width(), height()-cur.y());
+        for(int i = 0; i < 4; i++) {
+            float dx = -550.f*158.f/256.f-36.f/256.f*550.f;
+            float dy = 550.f*118.f/256.f-36.f/256.f*550.f*i;
+            if(cur.x() >= dx && cur.x() <= dx+36.f/256.f*550.f
+                    && cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                std::optional<Item> foo = m_player.m_inventory.armor[i];
+                if(e->buttons() & Qt::LeftButton && m_player.m_inventory.isArmor(m_cursor_item, i)) {
+                    m_player.m_inventory.armor[i] = m_cursor_item;
+                    m_cursor_item = foo;
+                    m_player.armor = m_player.m_inventory.calcArmor();
+                }
+                break;
+            }
+        }
         for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
             float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
             float dy = -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f;
