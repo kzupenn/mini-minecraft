@@ -300,8 +300,8 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     m_prog->drawInterleaved(torso);
     //head
     glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 32, 0));
-    glm::vec3 axis = glm::cross(m_forward, glm::vec3(1, 0, 0));
-    float angle = glm::acos(glm::dot(glm::normalize(axis), glm::vec3(1, 0, 0)));
+    glm::vec3 axis = glm::cross(glm::vec3(1, 0, 0), m_forward);
+    float angle = glm::acos(glm::dot(glm::normalize(m_forward), glm::vec3(1, 0, 0)));
 //    qDebug() << angle;
 //    qDebug() << m_forward.x << " " << m_forward.y << " " << m_forward.z;
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
