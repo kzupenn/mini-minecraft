@@ -290,24 +290,24 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     skin.bind(0);
     float ratio = 1.8f / 32;
     glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
-    glm::mat4 dir = glm::rotate(glm::mat4(1), glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
+    glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
+    glm::mat4 vert = glm::rotate(glm::mat4(1), glm::atan(m_forward.y, m_forward.x), glm::vec3(0, 0, 1));
     //torso
     glm::mat4 torso_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-//                           dir *
                            sc *
                            torso_trans);
     m_prog->drawInterleaved(torso);
     //head
-    glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 32, 0));
-    glm::vec3 axis = glm::cross(glm::vec3(1, 0, 0), m_forward);
-    float angle = glm::acos(glm::dot(glm::normalize(m_forward), glm::vec3(1, 0, 0)));
+    glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
 //    qDebug() << angle;
 //    qDebug() << m_forward.x << " " << m_forward.y << " " << m_forward.z;
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
                            sc *
                            head_trans *
-                           glm::rotate(glm::mat4(1), angle, axis));
+                           horiz *
+                           vert *
+                           glm::translate(glm::mat4(1), glm::vec3(0, 8, 0)));
     //right arm
     m_prog->drawInterleaved(head);
     glm::mat4 outleft = glm::rotate(glm::mat4(1), glm::radians(-20.f), glm::vec3(1, 0, 0));
@@ -321,36 +321,29 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
                            sc *
                            right_arm_trans *
                            rot1 *
-                           outright/* *
-                           dir*/);
+                           outright);
     m_prog->drawInterleaved(right_arm);
     //left arm
     glm::mat4 left_arm_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 4));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-//                           dir *
                            sc *
                            left_arm_trans *
                            rot2 *
-                           outleft /**
-                           dir*/);
+                           outleft);
     m_prog->drawInterleaved(left_arm);
     //right leg
     glm::mat4 right_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, -2));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-//                           dir *
                            sc *
                            right_leg_trans *
-                           rot2 /**
-                           dir*/);
+                           rot2);
     m_prog->drawInterleaved(right_leg);
     //left leg
     glm::mat4 left_leg_trans = glm::translate(glm::mat4(1), glm::vec3(0, 12, 2));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-//                           dir *
                            sc *
                            left_leg_trans *
-                           rot1 /**
-                           dir*/);
+                           rot1);
     m_prog->drawInterleaved(left_leg);
 }
 
