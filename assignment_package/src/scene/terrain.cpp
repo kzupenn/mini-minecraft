@@ -491,7 +491,7 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             if(hasChunkAt(x, z)){
                 uPtr<Chunk> &chunk = getChunkAt(x, z);
                 //only renders chunks with generated terrain data                
-                if(chunk->dataGen){
+                if(chunk != NULL && chunk->dataGen){
                     if (chunk->hasTransparent) {
                         transparentChunks.push_back(glm::vec2(x, z));
                     } else {
