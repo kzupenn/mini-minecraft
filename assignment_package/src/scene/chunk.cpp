@@ -106,8 +106,12 @@ const static std::unordered_map<Direction, Direction, EnumHash> oppositeDirectio
 
 void Chunk::linkNeighbor(uPtr<Chunk> &neighbor, Direction dir) {
     if(neighbor != nullptr) {
+        this->neighbor_mutex.lock();
         this->m_neighbors[dir] = neighbor.get();
+        this->neighbor_mutex.unlock();
+        neighbor->neighbor_mutex.lock();
         neighbor->m_neighbors[oppositeDirection.at(dir)] = this;
+        neighbor->neighbor_mutex.unlock();
     }
 }
 
@@ -145,6 +149,11 @@ const int UVorder[6][4] = {
 };
 void Chunk::createVBOdata() {
     createVBO_mutex.lock();
+    std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors_copy;
+    neighbor_mutex.lock();
+    m_neighbors_copy.insert(m_neighbors.begin(), m_neighbors.end());
+    neighbor_mutex.unlock();
+
     std::vector<glm::vec4> VBOpos;
     std::vector<glm::vec4> VBOnor;
     std::vector<glm::vec4> VBOuv;
@@ -169,46 +178,54 @@ void Chunk::createVBOdata() {
                     BlockType oth = EMPTY;
                     bool drawFace = false;
                     if(i+delta[l] < 0){
-                        if (!checkTransparent(curr)) drawFace = (m_neighbors.find(XNEG) != m_neighbors.end()
-                                && checkTransparent(m_neighbors[XNEG]->getBlockAt(15, j, k)));
+                        if (!checkTransparent(curr)) {
+                            drawFace = m_neighbors_copy.find(XNEG) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = checkTransparent(m_neighbors_copy[XNEG]->getBlockAt(15, j, k));
+                        }
                         else {
-                            drawFace = m_neighbors.find(XNEG) != m_neighbors.end()
-                                && m_neighbors[XNEG]->getBlockAt(15, j, k) != curr;
-                            if (m_neighbors.find(XNEG) != m_neighbors.end())
-                                oth = m_neighbors[XNEG]->getBlockAt(15, j, k);
+                            drawFace = m_neighbors_copy.find(XNEG) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = m_neighbors_copy[XNEG]->getBlockAt(15, j, k) != curr;
+                            if (m_neighbors_copy.find(XNEG) != m_neighbors_copy.end())
+                                oth = m_neighbors_copy[XNEG]->getBlockAt(15, j, k);
                         }
                     }
                     else if(i+delta[l] > 15){
-                        if (!checkTransparent(curr)) drawFace = (m_neighbors.find(XPOS) != m_neighbors.end()
-                                && checkTransparent(m_neighbors[XPOS]->getBlockAt(0, j, k)));
+                        if (!checkTransparent(curr)) {
+                            drawFace = m_neighbors_copy.find(XPOS) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = checkTransparent(m_neighbors_copy[XPOS]->getBlockAt(0, j, k));
+                        }
                         else {
-                            drawFace = m_neighbors.find(XPOS) != m_neighbors.end()
-                                && m_neighbors[XPOS]->getBlockAt(0, j, k) != curr;
-                            if (m_neighbors.find(XPOS) != m_neighbors.end())
-                                oth = m_neighbors[XPOS]->getBlockAt(0, j, k);
+                            drawFace = m_neighbors_copy.find(XPOS) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = m_neighbors_copy[XPOS]->getBlockAt(0, j, k) != curr;
+                            if (m_neighbors_copy.find(XPOS) != m_neighbors_copy.end())
+                                oth = m_neighbors_copy[XPOS]->getBlockAt(0, j, k);
                         }
                     }
                     else if(j+delta[l+1] < 0 || j+delta[l+1] > 255){
                         if (curr != EMPTY) drawFace = true;
                     }
                     else if(k+delta[l+2] < 0){
-                        if (!checkTransparent(curr)) drawFace = (m_neighbors.find(ZNEG) != m_neighbors.end()
-                                && checkTransparent(m_neighbors[ZNEG]->getBlockAt(i, j, 15)));
+                        if (!checkTransparent(curr)) {
+                            drawFace = m_neighbors_copy.find(ZNEG) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = checkTransparent(m_neighbors_copy[ZNEG]->getBlockAt(i, j, 15));
+                        }
                         else {
-                            drawFace = m_neighbors.find(ZNEG) != m_neighbors.end()
-                                && m_neighbors[ZNEG]->getBlockAt(i, j, 15) != curr;
-                            if (m_neighbors.find(ZNEG) != m_neighbors.end())
-                                oth = m_neighbors[ZNEG]->getBlockAt(i, j, 15);
+                            drawFace = m_neighbors_copy.find(ZNEG) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = m_neighbors_copy[ZNEG]->getBlockAt(i, j, 15) != curr;
+                            if (m_neighbors_copy.find(ZNEG) != m_neighbors_copy.end())
+                                oth = m_neighbors_copy[ZNEG]->getBlockAt(i, j, 15);
                         }
                     }
                     else if(k+delta[l+2] > 15){
-                        if (!checkTransparent(curr)) drawFace = (m_neighbors.find(ZPOS) != m_neighbors.end()
-                                && checkTransparent(m_neighbors[ZPOS]->getBlockAt(i, j, 0)));
+                        if (!checkTransparent(curr)){
+                            drawFace = m_neighbors_copy.find(ZPOS) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = checkTransparent(m_neighbors_copy[ZPOS]->getBlockAt(i, j, 0));
+                        }
                         else {
-                            drawFace = m_neighbors.find(ZPOS) != m_neighbors.end()
-                                && m_neighbors[ZPOS]->getBlockAt(i, j, 0) != curr;
-                            if (m_neighbors.find(ZPOS) != m_neighbors.end())
-                                oth = m_neighbors[ZPOS]->getBlockAt(i, j, 0);
+                            drawFace = m_neighbors_copy.find(ZPOS) != m_neighbors_copy.end();
+                            if(drawFace) drawFace = m_neighbors_copy[ZPOS]->getBlockAt(i, j, 0) != curr;
+                            if (m_neighbors_copy.find(ZPOS) != m_neighbors_copy.end())
+                                oth = m_neighbors_copy[ZPOS]->getBlockAt(i, j, 0);
                         }
                     }
                     else if(getBlockAt(i+delta[l], j+delta[l+1], k+delta[l+2]) == EMPTY){

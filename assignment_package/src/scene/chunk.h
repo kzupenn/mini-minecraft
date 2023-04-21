@@ -83,6 +83,7 @@ private:
 
     std::mutex setBlock_mutex;
     std::mutex createVBO_mutex;
+    std::mutex neighbor_mutex;
 public:
     Chunk(OpenGLContext*);
     Chunk* getNeighborChunk(Direction d);

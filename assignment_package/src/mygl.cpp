@@ -681,7 +681,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     else {
                         if(m_player.m_inventory.items[i].has_value()) {
-                            int toMerge = m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
+                            int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
                             m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge);
 
                             m_player.m_inventory.items[i]->item_count -= toMerge;
@@ -730,7 +730,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     else {
                         if(m_player.m_inventory.hotbar.items[i].has_value()) {
-                            int toMerge = m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
+                            int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
                             m_cursor_item = Item(this, m_player.m_inventory.hotbar.items[i]->type, toMerge);
 
                             m_player.m_inventory.hotbar.items[i]->item_count -= toMerge;

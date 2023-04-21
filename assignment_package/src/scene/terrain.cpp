@@ -22,7 +22,6 @@
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), mp_context(context), m_generatedTerrain(), setSpawn(false)
 {
-    //QThreadPool::globalInstance()->setMaxThreadCount(100);
 }
 
 Terrain::~Terrain() {
@@ -421,7 +420,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             //unlock the map so other threads can use it after marking this one as generating
             metaStructures_mutex.unlock();
             StructureWorker* sw = new StructureWorker(this, metaS.second, toCoords(metaS.first.first).x, metaS.first.second, toCoords(metaS.first.first).y);
-            QThreadPool::globalInstance()->start(sw);
+            terrainWorkers.start(sw);
         }
         else{
             metaStructures_mutex.unlock();
@@ -463,28 +462,20 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
     //createVBOThread(cPtr);
     // Set the neighbor pointers of itself and its neighbors
     if(hasChunkAt(x, z + 16)) {
-        m_chunks_mutex.lock();
         auto &chunkNorth = m_chunks[toKey(x, z + 16)];
         cPtr->linkNeighbor(chunkNorth, ZPOS);
-         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x, z - 16)) {
-         m_chunks_mutex.lock();
         auto &chunkSouth = m_chunks[toKey(x, z - 16)];
         cPtr->linkNeighbor(chunkSouth, ZNEG);
-         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x + 16, z)) {
-         m_chunks_mutex.lock();
         auto &chunkEast = m_chunks[toKey(x + 16, z)];
         cPtr->linkNeighbor(chunkEast, XPOS);
-         m_chunks_mutex.unlock();
     }
     if(hasChunkAt(x - 16, z)) {
-         m_chunks_mutex.lock();
         auto &chunkWest = m_chunks[toKey(x - 16, z)];
         cPtr->linkNeighbor(chunkWest, XNEG);
-         m_chunks_mutex.unlock();
     }
 
 
@@ -628,12 +619,12 @@ void Terrain::createGroundThread(glm::vec2 p) {
     if(hasChunkAt(p.x, p.y)) return;
 
     BlockTypeWorker* btw = new BlockTypeWorker(this, p.x, p.y);
-    QThreadPool::globalInstance()->start(btw);
+    terrainWorkers.start(btw);
 }
 
 void Terrain::createVBOThread(Chunk* c) {
     VBOWorker* vw = new VBOWorker(c);
-    QThreadPool::globalInstance()->start(vw);
+    VBOWorkers.start(vw);
 }
 
 void Terrain::processMegaStructure(const std::vector<Structure>& s) {

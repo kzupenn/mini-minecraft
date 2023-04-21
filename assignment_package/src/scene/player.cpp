@@ -82,6 +82,9 @@ void Player::processInputs(InputBundle &inputs) {
 }
 
 bool Player::checkAirborne() {
+    //hover in air if in unloaded chunk
+    if(!mcr_terrain.hasChunkAt(m_position.x, m_position.z)) return true;
+
     std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
