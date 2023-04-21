@@ -19,7 +19,7 @@ std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
         for(int i = 0; i < 16; i+=16) {
             for(int j = 0; j < 16; j+=16) {
                 ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
-                if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS){
+                if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS_BLOCK){
                     ret.push_back(Structure(OAK_TREE, pp));
                 }
             }

@@ -105,8 +105,10 @@ public:
     void setBlockAt(int x, int y, int z, BlockType t);
     // like setblock, but checks a conditional before placing
     void setBlockAt(int x, int y, int z, BlockType t, bool(*con)(int,int,int,Chunk*));
-    // setblock for changes ma
-    //void changeBlockAt(int x, int y, int z, BlockType t);
+    // setblock for changes made after terrain generation
+    void changeBlockAt(int x, int y, int z, BlockType t);
+    // gets all changed blocks in chunks
+    std::vector<std::pair<int64_t, vec3Map>> getChunkChanges();
 
     // Draws every Chunk that falls within the bounding box
     // described by the min and max coords, using the provided

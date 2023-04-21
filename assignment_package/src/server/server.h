@@ -33,6 +33,8 @@ private:
     //actions to do when a client joins
     //send over world seed, entity and player list, etc
     void initClient(int);
+    //generates terrain around a player
+    void generateTerrain(int x, int z);
 
     Terrain m_terrain;
     std::mutex m_players_mutex;

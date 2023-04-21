@@ -278,7 +278,7 @@ void Chunk::createVBOdata() {
 
                         if (curr == EMPTY) curr = oth;
                         switch(curr){
-                        case GRASS:
+                        case GRASS_BLOCK:
                             if (Face != 2 && Face != 3) { //side
 
                                 UVs[0] = glm::vec4(25.f/64.f + 1.f/1024, 63.f/64.f + 1.f/1024, 0.f, 1.f),

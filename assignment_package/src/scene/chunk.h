@@ -16,11 +16,12 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SAND, SNOW, COBBLESTONE,
+    EMPTY, GRASS_BLOCK, DIRT, STONE, WATER, SAND, SNOW, COBBLESTONE,
     OAK_PLANKS, SPRUCE_PLANKS, JUNGLE_PLANKS, BIRCH_PLANKS, ACACIA_PLANKS,
     OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG,
     OAK_LEAVES, BOOKSHELF, GLASS, PATH, SANDSTONE,
-    LAVA, BEDROCK, CACTUS, ICE};
+    LAVA, BEDROCK, CACTUS, ICE,
+    GRASS};
 
 // The six cardinal directions in 3D space
 enum Direction : unsigned char
@@ -40,6 +41,23 @@ struct EnumHash {
     }
 };
 
+// for sorting ivec3
+struct KeyFuncsiv3
+{
+    size_t operator()(const glm::ivec3& k)const
+    {
+        return std::hash<int>()(k.x) ^ std::hash<int>()(k.y) ^ std::hash<int>()(k.z);
+    }
+
+    bool operator()(const glm::ivec3& a, const glm::ivec3& b)const
+    {
+            return a.x == b.x && a.y == b.y && a.z == b.z;
+    }
+};
+
+typedef std::unordered_map<glm::ivec3,BlockType,KeyFuncsiv3,KeyFuncsiv3> vec3Map;
+
+
 // One Chunk is a 16 x 256 x 16 section of the world,
 // containing all the Minecraft blocks in that area.
 // We divide the world into Chunks in order to make
@@ -52,9 +70,6 @@ class Chunk : public Drawable{
 private:
     // All of the blocks contained within this Chunk
     std::array<BlockType, 65536> m_blocks;
-
-    // non-generated changes made to terrain
-    std::map<glm::ivec3, BlockType> m_changes;
 
     // This Chunk's four neighbors to the north, south, east, and west
     // The third input to this map just lets us use a Direction as
@@ -93,6 +108,8 @@ public:
     //for terrain gen
     BiomeType biome; //biome of chunk, taking 8,8
     int heightMap[16][16]; //height map of surface level ground, to generate surface structs
+    // non-generated changes made to terrain
+    vec3Map m_changes;
 };
 
 bool isTransparent(int x, int y, int z, Chunk* c);

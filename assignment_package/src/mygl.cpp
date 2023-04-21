@@ -754,12 +754,16 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             glm::ivec3 block_pos; Direction d;
             if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
                 qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-                Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
-                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+                //m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+                //Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+
+                BlockChangePacket bcp = BlockChangePacket(toKey(block_pos.x, block_pos.z), block_pos.y, EMPTY);
+                send_packet(&bcp);
+
+//                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+//                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+//                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+//                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
             }
         } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
@@ -770,12 +774,16 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         glm::ivec3 block_pos; Direction dir;
         bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
         if (found) {
+            //TO DO: make block placed be the block in the inventory slot
             BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
             glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
-            m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+            //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             qDebug() << QString::fromStdString(glm::to_string(neighbor));
             qDebug() << dist;
+
+            BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
+            send_packet(&bcp);
             }
         }
     }
@@ -854,6 +862,10 @@ send_packet(Packet* packet) {
         buffer = (dynamic_cast<ChatPacket*>(packet))->packetToBuffer();
         break;
     }
+    case BLOCK_CHANGE: {
+        buffer = (dynamic_cast<BlockChangePacket*>(packet))->packetToBuffer();
+        break;
+    }
     default:
         break;
     }
@@ -907,15 +919,25 @@ void MyGL::packet_processer(Packet* packet) {
     case CHUNK_CHANGE:{
         ChunkChangePacket* thispack = dynamic_cast<ChunkChangePacket*>(packet);
         glm::ivec2 chunkp = toCoords(thispack->chunkPos);
+        qDebug() << "chunk change received";
         for(std::pair<vec3, BlockType> &p: thispack->changes) {
-            m_terrain.setBlockAt(chunkp.x+p.first.x, p.first.y, chunkp.y+p.first.z, p.second);
+            qDebug() << p.first.x << p.first.y << p.first.z;
+            m_terrain.changeBlockAt(chunkp.x+p.first.x, p.first.y, chunkp.y+p.first.z, p.second);
         }
         break;
     }
     case BLOCK_CHANGE:{
         BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
         glm::ivec2 xz = toCoords(thispack->chunkPos);
-        m_terrain.setBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
+        qDebug() << xz.x << thispack->yPos << xz.y << thispack->newBlock;
+        m_terrain.changeBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
+
+        Chunk* c = m_terrain.getChunkAt(xz.x, xz.y).get();
+
+        if (xz.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+        if (xz.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+        if (xz.y % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+        if (xz.y % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
         break;
     }
     case CHAT: {
