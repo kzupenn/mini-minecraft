@@ -1241,7 +1241,9 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
             }
         }
         if(interfaceAxis == -1) {
-            throw std::out_of_range("interfaceAxis was -1 after the for loop in gridMarch!");
+            return false;
+            qDebug() << "interfaceAxis was -1 after the for loop in gridMarch!";
+            //throw std::out_of_range("interfaceAxis was -1 after the for loop in gridMarch!");
         }
         curr_t += min_t; // min_t is declared in slide 7 algorithm
         rayOrigin += rayDirection * min_t;

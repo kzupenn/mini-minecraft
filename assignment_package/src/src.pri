@@ -13,6 +13,7 @@ SOURCES += \
     $$PWD/prism.cpp \
     $$PWD/quad.cpp \
     $$PWD/scene/biome.cpp \
+    $$PWD/scene/cubedisplay.cpp \
     $$PWD/scene/font.cpp \
     $$PWD/scene/inventory.cpp \
     $$PWD/scene/item.cpp \
@@ -50,6 +51,7 @@ HEADERS += \
     $$PWD/prism.h \
     $$PWD/quad.h \
     $$PWD/scene/biome.h \
+    $$PWD/scene/cubedisplay.h \
     $$PWD/scene/font.h \
     $$PWD/scene/item.h \
     $$PWD/scene/crosshair.h \

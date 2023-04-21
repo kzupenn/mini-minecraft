@@ -13,6 +13,7 @@
 #include "server/server.h"
 #include "framebuffer.h"
 #include "quad.h"
+#include "scene/cube.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>

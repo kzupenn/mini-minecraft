@@ -307,6 +307,7 @@ void MyGL::paintGL() {
     renderTerrain();
 
     m_player.drawArm(&m_progLambert, m_skin_texture);
+    m_player.drawCubeDisplay(&m_progFlat);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         Player* cur = it->second.get();
