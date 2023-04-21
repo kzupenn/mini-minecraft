@@ -15,9 +15,11 @@ SOURCES += \
     $$PWD/scene/biome.cpp \
     $$PWD/scene/cubedisplay.cpp \
     $$PWD/scene/font.cpp \
+    $$PWD/scene/icons.cpp \
     $$PWD/scene/inventory.cpp \
     $$PWD/scene/item.cpp \
     $$PWD/scene/crosshair.cpp \
+    $$PWD/scene/itementity.cpp \
     $$PWD/scene/rectangle.cpp \
     $$PWD/scene/runnables.cpp \
     $$PWD/scene/structure.cpp \
@@ -53,14 +55,17 @@ HEADERS += \
     $$PWD/scene/biome.h \
     $$PWD/scene/cubedisplay.h \
     $$PWD/scene/font.h \
+    $$PWD/scene/icons.h \
     $$PWD/scene/item.h \
     $$PWD/scene/crosshair.h \
+    $$PWD/scene/itementity.h \
     $$PWD/scene/rectangle.h \
     $$PWD/scene/runnables.h \
     $$PWD/scene/structure.h \
     $$PWD/scene/transform.h \
     $$PWD/server/getip.h \
     $$PWD/server/packet.h \
+    $$PWD/server/port.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \

@@ -19,6 +19,25 @@ Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
     QThreadPool::globalInstance()->start(sw);
 }
 
+void Server::generateTerrain(int x, int z) {
+    //does rendering stuff
+    int minx = glm::floor(x/64.f)*64;
+    int miny = glm::floor(z/64.f)*64;
+    for(int dx = minx-192; dx <= minx+192; dx+=64) {
+        for(int dy = miny-192; dy <= miny+192; dy+=64) {
+            if(m_terrain.m_generatedTerrain.find(toKey(dx, dy)) == m_terrain.m_generatedTerrain.end()){
+                m_terrain.m_generatedTerrain.insert(toKey(dx, dy));
+                for(int ddx = dx; ddx < dx + 64; ddx+=16) {
+                    for(int ddy = dy; ddy < dy + 64; ddy+=16) {
+                        //qDebug() << "creating ground for " << ddx << ddy;
+                        m_terrain.createGroundThread(glm::vec2(ddx, ddy));
+                    }
+                }
+            }
+        }
+    }
+}
+
 void Server::handle_client(int client_fd)
 {
     QByteArray buffer;
@@ -70,13 +89,28 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
         m_players_mutex.unlock();
+
+        generateTerrain(thispack->player_pos.x, thispack->player_pos.z);
         broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
         break;
     }
     case CHAT: {
         ChatPacket* thispack = dynamic_cast<ChatPacket*>(packet);
-        qDebug() << thispack->message;
         broadcast_packet(mkU<ChatPacket>(sender, thispack->message).get(), sender);
+        break;
+    }
+    case HIT: {
+        HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
+        m_players_mutex.lock();
+        //TO DO: perform grid marching hit detections here
+        m_players_mutex.unlock();
+        break;
+    }
+    case BLOCK_CHANGE: {
+        BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
+        glm::vec2 xz = toCoords(thispack->chunkPos);
+        this->m_terrain.changeBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
+        broadcast_packet(mkU<BlockChangePacket>(thispack->chunkPos, thispack->yPos, thispack->newBlock).get(), 0);
         break;
     }
     default:
@@ -118,6 +152,16 @@ void Server::initClient(int i) {
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
     target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn, pps).get(), i);
+    std::vector<std::pair<int64_t, vec3Map>> chunkChangesToSend = m_terrain.getChunkChanges();
+    for(std::pair<int64_t, vec3Map> p: chunkChangesToSend) {
+        std::vector<std::pair<vec3, BlockType>> ch;
+        for(auto& it: p.second){
+            ch.push_back(std::make_pair(glm::vec3(it.first), it.second));
+        }
+        if(ch.size() > 0) {
+            target_packet(mkU<ChunkChangePacket>(p.first, ch).get(), i);
+        }
+    }
 }
 
 int Server::start()
@@ -181,5 +225,19 @@ int Server::start()
 
 void Server::shutdown() {
     open = false;
+}
+
+void Server::tick() {
+//    std::vector<int> itemsToRemove;
+//    for(auto& iter: m_terrain.item_entities) {
+//        iter.second.tick();
+//        if(iter.second.untouchable_ticks == 0) {
+//            for(auto& piter: m_players) {
+//                if(glm::distance(piter.second.pos, iter.second.pos) < 1) {
+
+//                }
+//            }
+//        }
+//    }
 }
 

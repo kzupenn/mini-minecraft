@@ -15,7 +15,8 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       left_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
       left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
       display(m_context), start_swing(0), swinging(false), stopped(true),
-      created(false), swing_dir(1), shift(false)
+      created(false), swing_dir(1), shift(false),
+      health(20), armor(0), inHand(AIR)
 {}
 
 Player::~Player()
@@ -92,10 +93,14 @@ void Player::processInputs(InputBundle &inputs) {
 }
 
 bool Player::checkAirborne() {
+    //hover in air if in unloaded chunk
+    if(!mcr_terrain.hasChunkAt(m_position.x, m_position.z)) return true;
+
     std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
+
     glm::vec3 down(0, -0.15, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock; Direction d;
@@ -135,10 +140,10 @@ void Player::computePhysics(float dT) {
 void Player::checkCollision()
 {
     glm::vec3 p = m_position;
-    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+1.8f, p.z-0.3),
-                                     glm::vec3(p.x+0.3, p.y+1.8f, p.z+0.3),
-                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z+0.3),
-                                     glm::vec3(p.x-0.3, p.y+1.8f, p.z-0.3),
+    std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+2.f, p.z-0.3),
+                                     glm::vec3(p.x+0.3, p.y+2.f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+2.f, p.z+0.3),
+                                     glm::vec3(p.x-0.3, p.y+2.f, p.z-0.3),
                                      glm::vec3(p.x+0.3, p.y+1, p.z-0.3),
                                      glm::vec3(p.x+0.3, p.y+1, p.z+0.3),
                                      glm::vec3(p.x-0.3, p.y+1, p.z+0.3),
@@ -189,6 +194,7 @@ void Player::checkCollision()
             if (min.z <= eps) min.z = 0;
         }
     }
+    //qDebug() << min.x << " " << min.y << " " << min.z;
     m_velocity.x = min.x;
     m_velocity.y = min.y;
     m_velocity.z = min.z;

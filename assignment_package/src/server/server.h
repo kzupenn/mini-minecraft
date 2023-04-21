@@ -7,7 +7,8 @@
 #include "scene/player.h"
 #include "server/packet.h"
 
-#define PORT 3080
+#include "port.h"
+
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 10
 
@@ -34,6 +35,8 @@ private:
     //actions to do when a client joins
     //send over world seed, entity and player list, etc
     void initClient(int);
+    //generates terrain around a player
+    void generateTerrain(int x, int z);
 
     Terrain m_terrain;
     std::mutex m_players_mutex;
@@ -46,9 +49,20 @@ private:
     int seed;
 public:
     Server(int);
+
+    //starts the server
     int start();
+
+    //client handler
     void handle_client(int);
+
+    //determines if we can accept clients yet
     bool setup, open;
+
+    //shuts down the server, doesn't quite work yet
     void shutdown();
+
+    //server tick
+    void tick();
 };
 

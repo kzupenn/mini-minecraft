@@ -35,6 +35,8 @@ public:
     
     virtual ~Player() override;
     Inventory m_inventory;
+    int health;
+    int armor;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 

@@ -3,6 +3,7 @@
 
 #include "openglcontext.h"
 #include "scene/crosshair.h"
+#include "scene/icons.h"
 #include "scene/rectangle.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
@@ -21,7 +22,7 @@
 #include <queue>
 #include <smartpointerhelp.h>
 
-#define PORT 3079
+#include "server/port.h"
 #define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
@@ -55,6 +56,16 @@ private:
     Texture m_block_texture;
     Texture m_font_texture;
     Texture m_inventory_texture;
+    Texture m_icon_texture;
+
+    Heart m_heart;
+    HalfHeart m_halfheart;
+    FullHeart m_fullheart;
+
+    Armor m_armor;
+    HalfArmor m_halfarmor;
+    FullArmor m_fullarmor;
+    
     Texture m_skin_texture;
 
     long long m_currentMSecsSinceEpoch;

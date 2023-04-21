@@ -101,6 +101,74 @@ bool Inventory::addItem(Item& item, int slot_num) {
     }
 }
 
+int Inventory::calcArmor() {
+    int ret = 0;
+    for(std::optional<Item> it: armor) {
+        if(it){
+            switch(it->type) {
+            case GOLDEN_HELMET:
+                ret+=2;
+                break;
+            case GOLDEN_CHESTPLATE:
+                ret+=5;
+                break;
+            case GOLDEN_LEGGINGS:
+                ret+=3;
+                break;
+            case GOLDEN_BOOTS:
+                ret+=1;
+                break;
+            case IRON_HELMET:
+                ret+=2;
+                break;
+            case IRON_CHESTPLATE:
+                ret+=6;
+                break;
+            case IRON_LEGGINGS:
+                ret+=5;
+                break;
+            case IRON_BOOTS:
+                ret+=2;
+                break;
+            case DIAMOND_HELMET:
+                ret+=3;
+                break;
+            case DIAMOND_CHESTPLATE:
+                ret+=8;
+                break;
+            case DIAMOND_LEGGINGS:
+                ret+=6;
+                break;
+            case DIAMOND_BOOTS:
+                ret+=3;
+                break;
+            default:
+            break;
+            }
+        }
+    }
+    return ret;
+}
+
+bool Inventory::isArmor(std::optional<Item>& item, int slot_num) {
+    if(!item) return true; //allow empty
+    switch(slot_num) {
+    case 0:
+        return (item->type == GOLDEN_HELMET || item->type == IRON_HELMET || item->type == DIAMOND_HELMET);
+        break;
+    case 1:
+        return (item->type == GOLDEN_CHESTPLATE || item->type == IRON_CHESTPLATE || item->type == DIAMOND_CHESTPLATE);
+        break;
+    case 2:
+        return (item->type == GOLDEN_LEGGINGS || item->type == IRON_LEGGINGS || item->type == DIAMOND_LEGGINGS);
+        break;
+    case 3:
+        return (item->type == GOLDEN_BOOTS || item->type == IRON_BOOTS || item->type == DIAMOND_BOOTS);
+        break;
+    default: return false;
+    }
+}
+
 void Hotbar::createVBOdata() {
     std::vector<glm::vec4> pos, uvs, col;
     std::vector<int> idx;
@@ -156,18 +224,3 @@ void Hotbar::createVBOdata() {
     }
 }
 
-//TO do
-Item Inventory::takeItem(int num, int slot_num) {
-//    if(slot_num < hotbar.max_slots) {
-//        if(!hotbar.items[slot_num]) {
-//            return Item(nullptr);
-//        }
-//        else {
-//            return
-//        }
-//    }
-//    else {
-//        slot_num
-//    }
-    return Item(nullptr);
-}

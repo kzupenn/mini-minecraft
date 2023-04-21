@@ -25,10 +25,11 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this, QString("Player")),
-      m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
+      m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_icon_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), m_skin_texture(this), mouseMove(false)
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this), 
+      mouseMove(false),
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -45,6 +46,14 @@ void MyGL::start(bool joinServer, QString username) {
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
     m_crosshair.createVBOdata();
     m_rectangle.createVBOdata();
+    m_heart.createVBOdata();
+    m_halfheart.createVBOdata();
+    m_fullheart.createVBOdata();
+    m_armor.createVBOdata();
+    m_halfarmor.createVBOdata();
+    m_fullarmor.createVBOdata();
+    
+    //player model
     m_player.createVBOdata();
 
     //noise function distribution tests
@@ -73,6 +82,7 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.hotbar.createVBOdata();
     Item a = Item(this, DIAMOND_HOE, 1);
     Item b = Item(this, DIAMOND_LEGGINGS, 1);
+    Item bb = Item(this, GOLDEN_LEGGINGS, 1);
     Item c = Item(this, GOLD_NUGGET, 64);
     Item d = Item(this, IRON_NUGGET, 8);
     Item e = Item(this, IRON_BOOTS, 1);
@@ -99,6 +109,13 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
+    m_player.m_inventory.addItem(bb);
+
+    m_player.m_inventory.armor[0] = j;
+    m_player.m_inventory.armor[1] = h;
+    m_player.m_inventory.armor[2] = b;
+    m_player.m_inventory.armor[3] = e;
+    m_player.armor = m_player.m_inventory.calcArmor();
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -151,6 +168,9 @@ void MyGL::initializeGL()
 
     m_skin_texture.create(":/textures/steve.png");
     m_skin_texture.load(4);
+    
+    m_icon_texture.create(":/textures/icons.png");
+    m_icon_texture.load(5);
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/width(), 1.f/height(), 1.f));
 
@@ -216,6 +236,13 @@ void MyGL::tick() {
     long long ct = QDateTime::currentMSecsSinceEpoch();
     float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
+
+    //server tick
+    if(SERVER){
+        if(SERVER->setup) {
+            SERVER->tick();
+        }
+    }
 
     if (mouseMove) updateMouse();
     m_player.tick(dt, m_inputs);
@@ -342,36 +369,71 @@ void MyGL::paintGL() {
     //chat gui
     m_font_texture.bind(0);
     float shiftChat = 0;
-    //chatQueue_mutex.lock();
+
     while(!chatQueue.empty()) {
         m_chat.push_front(Font(this, chatQueue.front().first, chatQueue.front().second));
         if(m_chat.size() > 20) m_chat.pop_back();
         chatQueue.pop();
     }
-    //chatQueue_mutex.unlock();
+
     if(chatMode) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130, 0))*
-                                  glm::scale(glm::mat4(), glm::vec3(30*m_mychat.width+4, 34, 0)));
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+148, 0))*
+                                  glm::scale(glm::mat4(), glm::vec3(30*m_mychat.width+10, 34, 0)));
         m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132, 0))*
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+150, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30,30,0)));
         m_progOverlay.draw(m_mychat);
         shiftChat = 60;
     }
     for(int i = 0; i < m_chat.size(); i++) {
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+130+34*i+shiftChat, 0))*
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+10, -height()+148+34*i+shiftChat, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30*m_chat[i].width+4, 34, 0)));
         m_progFlat.draw(m_rectangle);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+132+34*i+shiftChat, 0))*
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width()+12, -height()+150+34*i+shiftChat, 0))*
                                   glm::scale(glm::mat4(), glm::vec3(30,30,0)));
         m_progOverlay.draw(m_chat[i]);
     }
 
-
+    //crosshair
     m_progFlat.setModelMatrix(glm::mat4());
     m_progFlat.draw(m_crosshair);
 
-    m_progOverlay.setModelMatrix(glm::mat4());
+    //armor and health bars
+    m_icon_texture.bind(0);
+    for(int i = 0; i < 10; i++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*i, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_heart);
+    }
+    int fullhps = 0;
+    for(; fullhps < m_player.health/2; fullhps++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*fullhps, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_fullheart);
+    }
+    if(m_player.health%2) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-450 + 35*fullhps, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_halfheart);
+    }
+
+    for(int i = 0; i < 10; i++) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*i-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_armor);
+    }
+    int fullars = 0;
+    for(; fullars < m_player.armor/2; fullars++) {
+        int i = 9-fullars;
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*i-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_fullarmor);
+    }
+    if(m_player.armor%2) {
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(450 - 35*(9-fullars)-35, -height()+110, 0))*
+                                     glm::scale(glm::mat4(), glm::vec3(35,35,0)));
+        m_progOverlay.draw(m_halfarmor);
+    }
 
     //inventory gui
     m_inventory_texture.bind(0);
@@ -386,6 +448,7 @@ void MyGL::paintGL() {
     //inventory items
     m_block_texture.bind(0);
     if(m_player.m_inventory.showInventory){
+        //inventory
         for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
             std::optional<Item>& item = m_player.m_inventory.items[i];
             if(item) {
@@ -393,6 +456,7 @@ void MyGL::paintGL() {
                            60, 30, glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0), glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*32.f/256.f-(i/9)*36.f/256.f*550.f, 0));
             }
         }
+        //hotbar
         for(int i = 0; i < m_player.m_inventory.hotbar.items.size(); i++){
             std::optional<Item>& item = m_player.m_inventory.hotbar.items[i];
             if(item) {
@@ -400,6 +464,18 @@ void MyGL::paintGL() {
                             60, 30,
                            glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9), -550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0),
                            glm::vec3(-550.f*158.f/256.f+36.f/256.f*550.f*(i%9)+65, -5-550.f*148.f/256.f-(i/9)*36.f/256.f*550.f, 0));
+            }
+        }
+        //armor
+        for(int i = 0; i < 4; i++) {
+            std::optional<Item> item = m_player.m_inventory.armor[i];
+            if(item){
+                float dx = -550.f*158.f/256.f;
+                float dy = 550.f*118.f/256.f-36.f/256.f*550.f*i;
+                item->draw(&m_progOverlay, m_block_texture, m_font_texture,
+                            60, 30,
+                           glm::vec3(dx, dy, 0),
+                           glm::vec3(dx+65, -5+dy, 0));
             }
         }
     }
@@ -580,6 +656,20 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
     if(m_player.m_inventory.showInventory) {
         QPoint cur = 2*mapFromGlobal(QCursor::pos());
         cur = QPoint(cur.x()-width(), height()-cur.y());
+        for(int i = 0; i < 4; i++) {
+            float dx = -550.f*158.f/256.f-36.f/256.f*550.f;
+            float dy = 550.f*118.f/256.f-36.f/256.f*550.f*i;
+            if(cur.x() >= dx && cur.x() <= dx+36.f/256.f*550.f
+                    && cur.y() <= dy+36.f/256.f*550.f && cur.y() >= dy) {
+                std::optional<Item> foo = m_player.m_inventory.armor[i];
+                if(e->buttons() & Qt::LeftButton && m_player.m_inventory.isArmor(m_cursor_item, i)) {
+                    m_player.m_inventory.armor[i] = m_cursor_item;
+                    m_cursor_item = foo;
+                    m_player.armor = m_player.m_inventory.calcArmor();
+                }
+                break;
+            }
+        }
         for(int i = 0; i < m_player.m_inventory.items.size(); i++) {
             float dx = -550.f*158.f/256.f+36.f/256.f*550.f*(i%9);
             float dy = -550.f*32.f/256.f-(i/9)*36.f/256.f*550.f;
@@ -616,7 +706,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     else {
                         if(m_player.m_inventory.items[i].has_value()) {
-                            int toMerge = (m_player.m_inventory.items[i]->item_count+1)/2;
+                            int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
                             m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge);
 
                             m_player.m_inventory.items[i]->item_count -= toMerge;
@@ -689,13 +779,16 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             glm::ivec3 block_pos; Direction d;
             if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
                 qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-                m_terrain.setBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-                Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
-                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
-                qDebug() << "blocks changed = " << m_terrain.getChunkAt(32, 32).get()->blocksChanged;
+                //m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+                //Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+
+                BlockChangePacket bcp = BlockChangePacket(toKey(block_pos.x, block_pos.z), block_pos.y, EMPTY);
+                send_packet(&bcp);
+
+//                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+//                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+//                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+//                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
             }
         } else if (e->buttons() & Qt::RightButton) {
         float bound = 3.f;
@@ -706,12 +799,16 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         glm::ivec3 block_pos; Direction dir;
         bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
         if (found) {
+            //TO DO: make block placed be the block in the inventory slot
             BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
             glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
-            m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+            //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
             qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
             qDebug() << QString::fromStdString(glm::to_string(neighbor));
             qDebug() << dist;
+
+            BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
+            send_packet(&bcp);
             }
         }
     }
@@ -790,6 +887,10 @@ send_packet(Packet* packet) {
         buffer = (dynamic_cast<ChatPacket*>(packet))->packetToBuffer();
         break;
     }
+    case BLOCK_CHANGE: {
+        buffer = (dynamic_cast<BlockChangePacket*>(packet))->packetToBuffer();
+        break;
+    }
     default:
         break;
     }
@@ -838,6 +939,30 @@ void MyGL::packet_processer(Packet* packet) {
             m_multiplayers.erase(thispack->player_id);
             m_multiplayers_mutex.unlock();
         }
+        break;
+    }
+    case CHUNK_CHANGE:{
+        ChunkChangePacket* thispack = dynamic_cast<ChunkChangePacket*>(packet);
+        glm::ivec2 chunkp = toCoords(thispack->chunkPos);
+        qDebug() << "chunk change received";
+        for(std::pair<vec3, BlockType> &p: thispack->changes) {
+            qDebug() << p.first.x << p.first.y << p.first.z;
+            m_terrain.changeBlockAt(chunkp.x+p.first.x, p.first.y, chunkp.y+p.first.z, p.second);
+        }
+        break;
+    }
+    case BLOCK_CHANGE:{
+        BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
+        glm::ivec2 xz = toCoords(thispack->chunkPos);
+        qDebug() << xz.x << thispack->yPos << xz.y << thispack->newBlock;
+        m_terrain.changeBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
+
+        Chunk* c = m_terrain.getChunkAt(xz.x, xz.y).get();
+
+        if (xz.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+        if (xz.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+        if (xz.y % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+        if (xz.y % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
         break;
     }
     case CHAT: {

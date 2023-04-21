@@ -1,5 +1,6 @@
 #include "biome.h"
 #include "algo/fractal.h"
+#include "algo/noise.h"
 #include "algo/perlin.h"
 #include "algo/worley.h"
 #include "terrain.h"
@@ -8,7 +9,7 @@
 
 using namespace glm;
 
-#define river_width 0.007
+#define river_width 0.001
 
 const bool TESTING = false;
 
@@ -269,7 +270,14 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    return fBm(pp*0.25f, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
+    float c = fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
+    float r_width = noise1D(pp,SEED.getSeed(8702.024,9507.16,44.434));
+    for(int i = pp.x-r_width; i <= pp.x+r_width; i++) {
+        for(int j = pp.y-r_width; j <= pp.y+r_width; j++) {
+
+        }
+    }
+    return fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
 }
 
 //
@@ -280,7 +288,8 @@ float generateRockLayer(vec2 pp) {
     return 100+10*perlinNoise(pp, SEED.getSeed(8008.714,9810.119,9169.679,9032.367), 64);
 }
 float generateCaves(vec3 pp) {
-    return perlinNoise3D(pp, SEED.getSeed(6230.714,4545.119,9169.679,2300.367), 128);
+    return perlinNoise3D(pp, SEED.getSeed(60.714,45.119,99.679,20.367), 128);
+    //return perlinNoise3D(pp, SEED.getSeed(6230.714,4545.119,9169.679,2300.367), 128);
 }
 
 //noise distribution tests

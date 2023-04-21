@@ -25,16 +25,19 @@ public:
     Inventory(OpenGLContext* context, int max_count, bool has_hotbar) : Drawable(context), max_slots(max_count), cnt(context), hotbar(context, 0), showInventory(false){
         if(has_hotbar) hotbar = Hotbar(context, 9);
         items.resize(max_slots, std::nullopt);
+        armor.resize(4, std::nullopt);
     };
 
     virtual ~Inventory(){};
     virtual void createVBOdata();
     virtual GLenum drawMode();
     std::vector<std::optional<Item>> items;
+    std::vector<std::optional<Item>> armor;
 
     bool addItem(Item&); //adds item to first free slot
     bool addItem(Item&, int); //adds item to slot number
-    Item takeItem(int num, int slot_num); //take items from the slot
+    int calcArmor(); //returns total armor value
+    bool isArmor(std::optional<Item>&, int); //checks if the
 
     Hotbar hotbar;
     bool showInventory;
