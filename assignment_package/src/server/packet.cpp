@@ -77,6 +77,7 @@ Packet* bufferToPacket(QByteArray buffer) {
     }
     default:
         qDebug() << "weird packet received:" << pt;
+        return new Packet(BAD_PACKET);
         break;
     }
 }
