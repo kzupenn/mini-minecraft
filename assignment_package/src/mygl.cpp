@@ -29,7 +29,7 @@ MyGL::MyGL(QWidget *parent)
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
       m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this), 
-      mouseMove(false),
+      mouseMove(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
