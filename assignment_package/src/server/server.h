@@ -8,15 +8,17 @@
 #include "server/packet.h"
 
 #include "port.h"
+
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 10
 
 struct PlayerState {
     float phi, theta;
+    glm::vec3 velo;
     glm::vec3 pos;
     QString name;
-    PlayerState(glm::vec3 p, float t, float ph, QString n)
-        : phi(ph), theta(t), pos(p), name(n){};
+    PlayerState(glm::vec3 p, glm::vec3 v, float t, float ph, QString n)
+        : phi(ph), theta(t), velo(v) , pos(p), name(n){};
     PlayerState(){};
 };
 

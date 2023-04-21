@@ -385,7 +385,8 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 break;
             }
             }
-            float mx = maxy * (std::rand() % 1 + 0.95);
+            float rd = std::rand() % 1;
+            float mx = maxy * (rd / 10.f + 0.95);
             for(int y = fmin(128, mx); y > 0; y--) {
                 float n = generateCaves(vec3(x+xx, y, z+zz));
                 if (n > -0.001f && n < 0.001f) {
@@ -1287,7 +1288,9 @@ bool Terrain::gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection,
             }
         }
         if(interfaceAxis == -1) {
-            throw std::out_of_range("interfaceAxis was -1 after the for loop in gridMarch!");
+            return false;
+            qDebug() << "interfaceAxis was -1 after the for loop in gridMarch!";
+            //throw std::out_of_range("interfaceAxis was -1 after the for loop in gridMarch!");
         }
         curr_t += min_t; // min_t is declared in slide 7 algorithm
         rayOrigin += rayDirection * min_t;

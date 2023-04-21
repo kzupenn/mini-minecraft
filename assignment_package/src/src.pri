@@ -10,8 +10,10 @@ SOURCES += \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
+    $$PWD/prism.cpp \
     $$PWD/quad.cpp \
     $$PWD/scene/biome.cpp \
+    $$PWD/scene/cubedisplay.cpp \
     $$PWD/scene/font.cpp \
     $$PWD/scene/icons.cpp \
     $$PWD/scene/inventory.cpp \
@@ -48,8 +50,10 @@ HEADERS += \
     $$PWD/framebuffer.h \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
+    $$PWD/prism.h \
     $$PWD/quad.h \
     $$PWD/scene/biome.h \
+    $$PWD/scene/cubedisplay.h \
     $$PWD/scene/font.h \
     $$PWD/scene/icons.h \
     $$PWD/scene/item.h \

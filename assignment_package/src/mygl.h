@@ -14,6 +14,7 @@
 #include "server/server.h"
 #include "framebuffer.h"
 #include "quad.h"
+#include "scene/cube.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -64,6 +65,8 @@ private:
     Armor m_armor;
     HalfArmor m_halfarmor;
     FullArmor m_fullarmor;
+    
+    Texture m_skin_texture;
 
     long long m_currentMSecsSinceEpoch;
 

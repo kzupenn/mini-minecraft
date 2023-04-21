@@ -289,6 +289,7 @@ float generateRockLayer(vec2 pp) {
 }
 float generateCaves(vec3 pp) {
     return perlinNoise3D(pp, SEED.getSeed(60.714,45.119,99.679,20.367), 128);
+    //return perlinNoise3D(pp, SEED.getSeed(6230.714,4545.119,9169.679,2300.367), 128);
 }
 
 //noise distribution tests

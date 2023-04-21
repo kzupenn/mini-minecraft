@@ -44,6 +44,7 @@ glm::vec3 vecPow(glm::vec3 &v, float f) {
 //    return height * t.x * t.y * t.z;
 //}
 
+
 float perlinNoise(vec2 uv, vec4 seed, int g) {
     float gridSizePerlin = 1.f/g;
     uv *= gridSizePerlin;

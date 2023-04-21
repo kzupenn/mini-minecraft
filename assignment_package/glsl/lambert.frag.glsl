@@ -94,7 +94,7 @@ void main()
         }
 
         float a = diffuseColor.w;
-        diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
+//        diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
 
         // Calculate the diffuse term for Lambert shading
         float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));

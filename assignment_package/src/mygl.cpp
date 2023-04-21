@@ -28,7 +28,8 @@ MyGL::MyGL(QWidget *parent)
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_icon_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), mouseMove(false)
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this), 
+      mouseMove(false),
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -51,6 +52,9 @@ void MyGL::start(bool joinServer, QString username) {
     m_armor.createVBOdata();
     m_halfarmor.createVBOdata();
     m_fullarmor.createVBOdata();
+    
+    //player model
+    m_player.createVBOdata();
 
     //noise function distribution tests
     //distTest();
@@ -68,7 +72,7 @@ void MyGL::start(bool joinServer, QString username) {
 
     //block until we get world spawn info
     while(!verified_server);
-    m_player.setState(m_terrain.worldSpawn, 0, 0, AIR);
+    m_player.setState(m_terrain.worldSpawn, glm::vec3(), 0, 0, AIR);
     m_player.name = username;
 
     PlayerJoinPacket pjp = PlayerJoinPacket(true, 0, username);
@@ -112,8 +116,6 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.armor[2] = b;
     m_player.m_inventory.armor[3] = e;
     m_player.armor = m_player.m_inventory.calcArmor();
-
-
 
     // Tell the timer to redraw 60 times per second
     m_timer.start(16);
@@ -164,6 +166,9 @@ void MyGL::initializeGL()
     m_inventory_texture.create(":/textures/inventory.png");
     m_inventory_texture.load(2);
 
+    m_skin_texture.create(":/textures/steve.png");
+    m_skin_texture.load(4);
+    
     m_icon_texture.create(":/textures/icons.png");
     m_icon_texture.load(5);
 
@@ -210,7 +215,7 @@ void MyGL::resizeGL(int w, int h) {
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
 
-    m_block_texture.bind(0);
+    //m_block_texture.bind(0);
     //m_font_texture.bind(1);
 
     printGLErrorLog();
@@ -245,7 +250,11 @@ void MyGL::tick() {
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
-    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(), m_player.getTheta(), m_player.getPhi(), m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
+    PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(),
+                                             m_player.getVelocity(),
+                                             m_player.getTheta(),
+                                             m_player.getPhi(),
+                                             m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
     send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -290,7 +299,6 @@ void MyGL::setupTerrainThreads() {
 
             }
         }
-        m_time = 0;
     }
 }
 
@@ -323,16 +331,26 @@ void MyGL::paintGL() {
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
-    m_block_texture.bind(0);
     renderTerrain();
-    //m_player.createVBOdata();
-    //m_progLambert.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(m_player.mcr_position)));
-    //m_progLambert.drawInterleaved(m_player);
+
+    m_player.drawArm(&m_progLambert, m_skin_texture);
+    m_player.drawCubeDisplay(&m_progFlat);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        it->second->createVBOdata();
-        m_progFlat.setModelMatrix(glm::translate(glm::mat4(1.f), glm::vec3(it->second->m_position)));
-        m_progFlat.draw(*(it->second));
+        Player* cur = it->second.get();
+        if (!cur->created) cur->createVBOdata();
+        cur->orientCamera();
+        if (glm::length(cur->getVelocity()) > 0.00005) {
+            if (!cur->swinging && cur->stopped) {
+                cur->start_swing = m_time;
+                cur->swinging = true;
+                cur->stopped = false;
+                cur->swing_dir *= -1;
+            }
+        } else {
+            cur->swinging = false;
+        }
+        cur->draw(&m_progLambert, m_skin_texture, m_time);
     }
     m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
@@ -889,7 +907,7 @@ void MyGL::packet_processer(Packet* packet) {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_multiplayers_mutex.lock();
         if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
-            m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_theta, thispack->player_phi, thispack->player_hand);
+            m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand);
         }
         m_multiplayers_mutex.unlock();
         break;
