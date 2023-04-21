@@ -232,6 +232,13 @@ void MyGL::tick() {
     float dt = 0.001 * (ct - m_currentMSecsSinceEpoch);
     m_currentMSecsSinceEpoch = ct;
 
+    //server tick
+    if(SERVER){
+        if(SERVER->setup) {
+            SERVER->tick();
+        }
+    }
+
     if (mouseMove) updateMouse();
     m_player.tick(dt, m_inputs);
     setupTerrainThreads();

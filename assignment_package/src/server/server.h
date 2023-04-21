@@ -47,9 +47,20 @@ private:
     int seed;
 public:
     Server(int);
+
+    //starts the server
     int start();
+
+    //client handler
     void handle_client(int);
+
+    //determines if we can accept clients yet
     bool setup, open;
+
+    //shuts down the server, doesn't quite work yet
     void shutdown();
+
+    //server tick
+    void tick();
 };
 

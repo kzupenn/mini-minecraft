@@ -1,5 +1,6 @@
 #pragma once
 #include "QtCore/qthreadpool.h"
+#include "scene/itementity.h"
 #include "smartpointerhelp.h"
 #include "glm_includes.h"
 #include "chunk.h"
@@ -138,6 +139,9 @@ public:
 
     bool gridMarch(glm::vec3 rayOrigin, glm::vec3 rayDirection, float *out_dist,
                    glm::ivec3 *out_blockHit, Direction &out_dir) const;
+
+    //item entities
+    std::unordered_map<int, ItemEntity> item_entities;
 };
 
 

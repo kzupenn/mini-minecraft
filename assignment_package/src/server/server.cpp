@@ -225,3 +225,17 @@ void Server::shutdown() {
     open = false;
 }
 
+void Server::tick() {
+//    std::vector<int> itemsToRemove;
+//    for(auto& iter: m_terrain.item_entities) {
+//        iter.second.tick();
+//        if(iter.second.untouchable_ticks == 0) {
+//            for(auto& piter: m_players) {
+//                if(glm::distance(piter.second.pos, iter.second.pos) < 1) {
+
+//                }
+//            }
+//        }
+//    }
+}
+
