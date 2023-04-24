@@ -23,11 +23,11 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this),
+      m_progLambert(this), m_progFlat(this), m_progOverlay(this), m_progInstanced(this), m_progPostProcess(this), m_progSky(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain, this, QString("Player")),
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
-      m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
+      m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this), m_sky(this),
       m_rectangle(this), m_crosshair(this), m_mychat(this), mouseMove(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -127,11 +127,13 @@ void MyGL::initializeGL()
 
     // Set a few settings/modes in OpenGL rendering
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
     glEnable(GL_LINE_SMOOTH);
 
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // Set the color with which the screen is filled at the start of each render call.
     glClearColor(0.37f, 0.74f, 1.0f, 1);
 
@@ -162,7 +164,7 @@ void MyGL::initializeGL()
     m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/instanced.frag.glsl");
     m_progPostProcess.create(":/glsl/post.vert.glsl", ":/glsl/post.frag.glsl");
     m_progOverlay.create(":/glsl/overlay.vert.glsl", ":/glsl/overlay.frag.glsl");
-
+    m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
     // Set a color with which to draw geometry.
     // This will ultimately not be used when you change
     // your program to render Chunks with vertex colors
@@ -176,6 +178,7 @@ void MyGL::initializeGL()
 
     m_frame.create();
     m_quad.createVBOdata();
+    m_sky.createVBOdata();
 }
 
 void MyGL::resizeGL(int w, int h) {
@@ -190,6 +193,10 @@ void MyGL::resizeGL(int w, int h) {
     m_progLambert.setViewProjMatrix(viewproj);
     m_progFlat.setViewProjMatrix(viewproj);
     m_progOverlay.setViewProjMatrix(viewproj);
+    m_progSky.setViewProjMatrix(glm::inverse(viewproj));
+
+    m_progSky.setDimensions(width(), height());
+    m_progSky.setEye(m_player.m_position);
 
     overlayTransform = glm::scale(glm::mat4(1), glm::vec3(1.f/w, 1.f/h, 1.f));
 
@@ -266,7 +273,6 @@ void MyGL::setupTerrainThreads() {
 
             }
         }
-        m_time = 0;
     }
 }
 
@@ -287,9 +293,33 @@ void MyGL::sendPlayerDataToGUI() const{
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
+
+
     // Clear the screen so that we only see newly drawn images
     m_frame.bindFrameBuffer();
     glViewport(0,0,this->width(), this->height());
+
+    //set sky color
+    int modVal = 1000;
+    float time = (float)((m_time+(modVal*4)) % (modVal*4)) / (modVal*4);
+    glm::vec3 daySky = glm::vec3(0.37f, 0.74f, 1.0f);
+    glm::vec3 nightSky = glm::vec3(2.0/255.0, 1.0/255.0, 78.0/255.0);
+    if (time <= 0.5) {
+        glm::vec3 sky = daySky;
+
+        if (time*2 < 0.25) {
+            sky = glm::mix(daySky, nightSky, (0.25 - time*2)/0.25);
+        }
+        if (time*2 > 0.75) {
+            sky = glm::mix(nightSky, daySky, (1 - time*2)/0.25);
+        }
+
+        glClearColor(sky.x, sky.y, sky.z, 1);
+    } else {
+        glm::vec3 sky = nightSky;
+
+        glClearColor(sky.x, sky.y, sky.z, 1.0);
+    }
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     m_progPostProcess.setType(m_player.getType());
@@ -299,6 +329,14 @@ void MyGL::paintGL() {
     m_progFlat.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
+
+    m_progSky.setViewProjMatrix(glm::inverse(m_player.mcr_camera.getViewProj()));
+    m_progSky.setDimensions(width(), height());
+    m_progSky.setEye(m_player.mcr_position);
+    m_progSky.setTime(m_time);
+
+    m_progSky.draw(m_sky);
+
     m_block_texture.bind(0);
     renderTerrain();
     //m_player.createVBOdata();

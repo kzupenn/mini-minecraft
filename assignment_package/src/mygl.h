@@ -35,6 +35,8 @@ private:
     ShaderProgram m_progOverlay; //for overlays
     ShaderProgram m_progInstanced;// A shader program that is designed to be compatible with instanced rendering
     ShaderProgram m_progPostProcess;
+    ShaderProgram m_progSky;
+
 
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
@@ -43,6 +45,7 @@ private:
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
     FrameBuffer m_frame;
     Quad m_quad;
+    Quad m_sky;
 
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
     std::optional<Item> m_cursor_item; // Item player is handling in inventory mode

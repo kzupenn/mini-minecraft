@@ -6,10 +6,10 @@ Quad::Quad(OpenGLContext *mp_context) : Drawable(mp_context)
 void Quad::createVBOdata()
 {
     GLuint idx[6]{0, 1, 2, 0, 2, 3};
-    glm::vec4 vert_pos[4] {glm::vec4(-1.f, -1.f, 0.99f, 1.f),
-                           glm::vec4(1.f, -1.f, 0.99f, 1.f),
-                           glm::vec4(1.f, 1.f, 0.99f, 1.f),
-                           glm::vec4(-1.f, 1.f, 0.99f, 1.f)};
+    glm::vec4 vert_pos[4] {glm::vec4(-1.f, -1.f, .999999f, 1.f),
+                           glm::vec4(1.f, -1.f, .999999f, 1.f),
+                           glm::vec4(1.f, 1.f, .999999f, 1.f),
+                           glm::vec4(-1.f, 1.f, .999999f, 1.f)};
 
     glm::vec2 vert_UV[4] {glm::vec2(0.f, 0.f),
                           glm::vec2(1.f, 0.f),
