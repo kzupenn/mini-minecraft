@@ -32,7 +32,7 @@ const vec3 sunColorDawn = vec3(255, 246, 79) / 255.0;
 const vec3 sunColorDusk = vec3(255, 246, 79) / 255.0;
 const vec3 sunColorDay = vec3(255, 249, 196) / 255.0;
 
-const vec3 moonColor = vec3(98.0, 98.0, 110.0) / 255.0;
+const vec3 moonColor = vec3(200.0, 233.0, 248.0) / 255.0;
 
 
 float random1(vec3 p) {
@@ -105,7 +105,7 @@ void main()
     if (time4 >= 0.5) {
         vec3 moonDir = normalize(vec3(0.f, 1.f, 1.f));
         sunDir = moonDir;
-        sunColor = moonColor;
+        sunColor = 0.25 * moonColor;
     }
     vec4 fs_LightVec = vec4(sunDir, 0.f);  // Compute the direction in which the light source lies
 

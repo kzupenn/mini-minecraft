@@ -36,7 +36,7 @@ const vec3 sunColorDawn = vec3(255, 246, 79) / 255.0;
 const vec3 sunColorDusk = vec3(255, 246, 79) / 255.0;
 const vec3 sunColorDay = vec3(255, 249, 196) / 255.0;
 
-const vec3 moonColor = vec3(98.0, 98.0, 110.0) / 255.0;
+const vec3 moonColor = vec3(200.0, 233.0, 248.0) / 255.0;
 
 vec2 sphereToUV(vec3 p) {
     float phi = atan(p.z, p.x);
@@ -49,7 +49,7 @@ vec2 sphereToUV(vec3 p) {
 
 vec3 uvToSunset(vec2 uv) {
     if(uv.y < 0.45) {
-        return sunset[0];
+        return sunset[2];
     }
 //    else if(uv.y < 0.4) {
 //        return mix(sunset[0], sunset[1], (uv.y - 0.35) / 0.05);
@@ -58,7 +58,7 @@ vec3 uvToSunset(vec2 uv) {
 //        return mix(sunset[0], sunset[2], (uv.y - 0.4) / 0.05);
 //    }
     else if(uv.y < 0.5) {
-        return mix(sunset[0], sunset[3], (uv.y - 0.45) / 0.05);
+        return mix(sunset[2], sunset[3], (uv.y - 0.45) / 0.05);
     }
     else if(uv.y < 0.6) {
         return mix(sunset[3], sunset[4], (uv.y - 0.5) / 0.1);
@@ -186,7 +186,7 @@ void main()
     vec3 sunDirSet = normalize(vec3(0, 1, 0.f) + sunMotion);
 
     vec3 sunDir = sunDirRise;
-    if (time2 > 0.5) {
+    if (time2 >= 0.5) {
         sunDir = sunDirSet;
         sunColor = mix(sunColorDay, sunColorDusk, time);
     } else {
@@ -199,7 +199,7 @@ void main()
         sunColor = moonColor;
     } else {
         float raySunDot = dot(rayDir, sunDir);
-        float SUNSET_THRESHOLD = 0.6;
+        float SUNSET_THRESHOLD = 0.9;
         float DUSK_THRESHOLD = -0.1;
         if(raySunDot > SUNSET_THRESHOLD) {
             skyColor = sunsetColor;
