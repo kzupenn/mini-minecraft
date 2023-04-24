@@ -56,6 +56,7 @@ void MyGL::start(bool joinServer, QString username) {
     
     //player model
     m_player.createVBOdata();
+    m_player.setDimension(glm::vec3(0.6, 0.6, 1.8));
 
     //noise function distribution tests
     //distTest();
@@ -855,10 +856,13 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                         found = true;
                         hit_direction = p -> m_position - m_player.m_position;
                         HitPacket hp = HitPacket(0, hit_direction);
+                        p -> hit = true;
                         send_packet(&hp);
                         break;
                     }
                 }
+                //qDebug() << cur;
+                cur += step;
             }
             if (!found) {
                 float dist; glm::ivec3 block_pos; Direction d;

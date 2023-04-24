@@ -26,9 +26,10 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
     Prism head, torso, right_arm, right_leg, left_arm, left_leg;
+    std::vector<Prism> parts;
     CubeDisplay display;
     float start_swing, swing_dir;
-    bool swinging, stopped, created;
+    bool swinging, stopped, created, hit;
 
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     

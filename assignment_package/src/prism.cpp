@@ -16,6 +16,10 @@ GLenum Prism::drawMode() {
     return GL_TRIANGLES;
 }
 
+void Prism::setHit(bool h) {
+    hit = h;
+}
+
 void Prism::createVBOdata() {
     std::vector<glm::vec4> pos, nor, uvs, inter;
     std::vector<GLuint> idx;
@@ -117,6 +121,8 @@ void Prism::createVBOdata() {
     uvs.emplace_back(b + glm::vec4(d, d, 0, 0));
     uvs.emplace_back(b + glm::vec4(d, d + h, 0, 0));
     uvs.emplace_back(b + glm::vec4(0, d + h, 0, 0));
+
+    if (hit) for (auto &u : uvs) u.w = 1;
 
     for(int i = 0; i < 6; i++){
         idx.push_back(i*4);

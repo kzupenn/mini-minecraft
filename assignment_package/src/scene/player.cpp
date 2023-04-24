@@ -14,8 +14,9 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       right_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
       left_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
       left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
+      parts {head, torso, right_arm, right_leg, left_arm, left_leg},
       display(m_context), start_swing(0), swinging(false), stopped(true),
-      created(false), swing_dir(1), shift(false),
+      created(false), swing_dir(1), shift(false), hit(false),
       health(20), armor(0), inHand(AIR)
 {}
 
@@ -416,6 +417,7 @@ void Player::drawCubeDisplay(ShaderProgram* m_prog) {
 }
 
 void Player::createVBOdata() {
+    for (Prism p : parts) p.setHit(hit);
     head.createVBOdata();
     torso.createVBOdata();
     right_arm.createVBOdata();
