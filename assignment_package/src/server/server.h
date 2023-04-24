@@ -17,9 +17,65 @@ struct PlayerState {
     glm::vec3 velo;
     glm::vec3 pos;
     QString name;
+    //hp, armor
+    int armor, health;
+    //creative mode
+    bool creative;
+    //fall damage calculations
+    bool isFalling;
+    float fallHeight;
+
     PlayerState(glm::vec3 p, glm::vec3 v, float t, float ph, QString n)
-        : phi(ph), theta(t), velo(v) , pos(p), name(n){};
+        : phi(ph), theta(t), velo(v) , pos(p), name(n), armor(0), health(20), creative(true), isFalling(false), fallHeight(0){};
     PlayerState(){};
+    int calcArmor(std::vector<ItemType> armor) {
+        int ret = 0;
+        for(ItemType it: armor) {
+            if(it){
+                switch(it) {
+                case GOLDEN_HELMET:
+                    ret+=2;
+                    break;
+                case GOLDEN_CHESTPLATE:
+                    ret+=5;
+                    break;
+                case GOLDEN_LEGGINGS:
+                    ret+=3;
+                    break;
+                case GOLDEN_BOOTS:
+                    ret+=1;
+                    break;
+                case IRON_HELMET:
+                    ret+=2;
+                    break;
+                case IRON_CHESTPLATE:
+                    ret+=6;
+                    break;
+                case IRON_LEGGINGS:
+                    ret+=5;
+                    break;
+                case IRON_BOOTS:
+                    ret+=2;
+                    break;
+                case DIAMOND_HELMET:
+                    ret+=3;
+                    break;
+                case DIAMOND_CHESTPLATE:
+                    ret+=8;
+                    break;
+                case DIAMOND_LEGGINGS:
+                    ret+=6;
+                    break;
+                case DIAMOND_BOOTS:
+                    ret+=3;
+                    break;
+                default:
+                break;
+                }
+            }
+        }
+        return ret;
+    }
 };
 
 class Server{

@@ -13,8 +13,8 @@ float noise1D( vec3 p, vec4 seed) {
 }
 
 vec2 random2( vec2 p, vec4 seed) {
-    return fract(sin(abs(vec2(dot(p+vec2(seed[2], seed[3]), vec2(seed)),
-                 dot(p+vec2(seed), vec2(seed[2], seed[3]))))));
+    return fract(sin(abs(vec2(dot(p, vec2(seed)),
+                 dot(p, vec2(seed[2], seed[3]))))));
 }
 
 vec3 random3( vec3 p, vec4 seed) {
@@ -22,9 +22,9 @@ vec3 random3( vec3 p, vec4 seed) {
 //                 dot(p, vec3(seed[1], seed[3], seed[2])),
 //                 dot(p+vec3(seed[3], seed[2], seed[1]), vec3(seed))
 //            ))));
-    return fract(sin(vec3(dot(p,vec3(127.1, 311.7, 563.5)),
-                              dot(p,vec3(269.5, 183.3, 451.6)),
-                              dot(p, vec3(420.6, 631.2, 952.8))
-                        )) * 43758.5453f);
+    return fract(sin(vec3(dot(p,vec3(12.71, 31.17, 56.35)),
+                              dot(p,vec3(26.95, 18.33, 45.16)),
+                              dot(p, vec3(42.06, 63.12, 95.28))
+                        )) * 458.5453f);
 
 }

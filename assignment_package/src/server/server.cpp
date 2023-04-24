@@ -88,10 +88,46 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].velo = thispack->player_velo;
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
+        m_players[sender].armor = m_players[sender].calcArmor({thispack->player_helmet, thispack->player_chest, thispack->player_leg, thispack->player_boots});
+        m_players[sender].creative = thispack->player_creative;
+        if(!thispack->player_creative) {
+            //take fall damage
+            if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
+                m_players[sender].isFalling = false;
+                int damage = glm::max(0, (int)(m_players[sender].fallHeight-thispack->player_pos.y)-3);
+                if(damage>0){
+                    m_players[sender].health = glm::max(0, m_players[sender].health-damage);
+                    //use a hit packet to simulate fall damage
+                    target_packet(mkU<HitPacket>(false, damage, glm::vec3(0, 0.2, 0)).get(), sender);
+                    //if player dies, broadcast that they died
+                    if(m_players[sender].health == 0) {
+                        broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
+                    }
+                }
+            }
+            //start falling
+            else if(!m_players[sender].isFalling && thispack->player_velo.y <= -0.01) {
+                m_players[sender].isFalling = true;
+                m_players[sender].fallHeight = thispack->player_pos.y;
+            }
+        }
+        else {
+            m_players[sender].isFalling = false;
+        }
         m_players_mutex.unlock();
 
         generateTerrain(thispack->player_pos.x, thispack->player_pos.z);
-        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand).get(), sender);
+        broadcast_packet(mkU<PlayerStatePacket>(sender, thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi,
+                                                thispack->player_hand, thispack->player_helmet, thispack->player_chest, thispack->player_leg, thispack->player_boots, thispack->player_creative).get(), sender);
+        break;
+    }
+    case ITEM_ENTITY_STATE: {
+        ItemEntityStatePacket* thispack = dynamic_cast<ItemEntityStatePacket*>(packet);
+        m_terrain.item_entities_mutex.lock();
+        int foo = m_terrain.item_entity_id++;
+        m_terrain.item_entities.insert(std::make_pair(foo, ItemEntity(thispack->pos, Item(thispack->type, thispack->count), nullptr)));
+        broadcast_packet(mkU<ItemEntityStatePacket>(foo, thispack->type, thispack->count, thispack->pos).get(), 0);
+        m_terrain.item_entities_mutex.unlock();
         break;
     }
     case CHAT: {
@@ -103,6 +139,7 @@ void Server::process_packet(Packet* packet, int sender) {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
         m_players_mutex.lock();
         //TO DO: perform grid marching hit detections here
+        //TO DO: if another player is hit by the grid march, send a hit packet to the target
         m_players_mutex.unlock();
         break;
     }

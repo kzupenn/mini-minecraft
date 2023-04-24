@@ -9,9 +9,7 @@
 
 using namespace glm;
 
-#define river_width 0.001
-
-const bool TESTING = false;
+const bool TESTING = true;
 
 //terrain generation
 //makes sporatic divets to make smooth terrain appear with erosion
@@ -180,8 +178,8 @@ float generateErosion(vec2 pp) {
 }
 
 std::pair<float, BiomeType> generateGround (vec2 pp) {
-    float rain = fBm(pp, 12, SEED.getSeed(3885.207,977.211,3437.496,3504.515), 2048);
-    float temp = fBm(pp, 12, SEED.getSeed(5716.522,6415.354,3175.466,3309.938), 2048);
+    float rain = fBm(pp, 12, SEED.getSeed(3885.207,977.211,3437.496,3504.515), 4096);
+    float temp = fBm(pp, 12, SEED.getSeed(5716.522,6415.354,3175.466,3309.938), 4096);
 
     float crain = rain * std::sqrt(1 - 0.5*temp*temp);
     float ctemp = 1-(temp * std::sqrt(1 - 0.5*rain*rain));
@@ -195,7 +193,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
     //TO DO: remove this later
     if(TESTING) {
-        std::pair<float, BiomeType> testret = std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TEST_BIOME]), TEST_BIOME);
+        std::pair<float, BiomeType> testret = std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[DESERT]), DESERT);
         float height = output/adjmag;
         float rivercoef = generateRiver(pp);
         float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-river_width)), 0.f, 1.f), 3);
@@ -270,14 +268,21 @@ float generateBeach(vec2 pp) {
 }
 
 float generateRiver(vec2 pp) {
-    float c = fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
-    float r_width = noise1D(pp,SEED.getSeed(8702.024,9507.16,44.434));
+    float cmax = -1;
+    float r_width = 5.f;
+
     for(int i = pp.x-r_width; i <= pp.x+r_width; i++) {
         for(int j = pp.y-r_width; j <= pp.y+r_width; j++) {
-
+            float d = glm::sqrt(abs(pp.x-i)*abs(pp.x-i)+abs(pp.y-j)*abs(pp.y-j));
+            if(d <= r_width) {
+                float c = fBm(glm::vec2(i,j), 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
+                float m = 1.f/(1+ d*0.33);
+                c = 0.5 + (c-0.5)*1;
+                if(abs(c-0.5f) < abs(cmax-0.5f)) cmax = c;
+            }
         }
     }
-    return fBm(pp, 8, SEED.getSeed(8702.024,9507.16,44.434,1153.193)*4.f, 512);
+    return cmax;
 }
 
 //
@@ -288,7 +293,7 @@ float generateRockLayer(vec2 pp) {
     return 100+10*perlinNoise(pp, SEED.getSeed(8008.714,9810.119,9169.679,9032.367), 64);
 }
 float generateCaves(vec3 pp) {
-    return perlinNoise3D(pp, SEED.getSeed(60.714,45.119,99.679,20.367), 128);
+    return fBm(pp, 4, SEED.getSeed(60.714,45.119,99.679,20.367), 1024);
     //return perlinNoise3D(pp, SEED.getSeed(6230.714,4545.119,9169.679,2300.367), 128);
 }
 

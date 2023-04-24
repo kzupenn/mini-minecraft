@@ -29,7 +29,7 @@ MyGL::MyGL(QWidget *parent)
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
       m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this), 
-      mouseMove(false)
+      mouseMove(false), isDead(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -250,11 +250,23 @@ void MyGL::tick() {
 
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
 
+    ItemType inHand, onHead, onChest, onLeg, onFoot;
+    if(!m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]) inHand = AIR;
+    else inHand = m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type;
+    if(!m_player.m_inventory.armor[0]) onHead = AIR;
+    else onHead = m_player.m_inventory.armor[0]->type;
+    if(!m_player.m_inventory.armor[1]) onChest = AIR;
+    else onChest = m_player.m_inventory.armor[1]->type;
+    if(!m_player.m_inventory.armor[2]) onLeg = AIR;
+    else onLeg = m_player.m_inventory.armor[2]->type;
+    if(!m_player.m_inventory.armor[3]) onFoot = AIR;
+    else onFoot = m_player.m_inventory.armor[3]->type;
     PlayerStatePacket pp = PlayerStatePacket(m_player.getPos(),
                                              m_player.getVelocity(),
                                              m_player.getTheta(),
                                              m_player.getPhi(),
-                                             m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);
+                                             inHand, onHead, onChest, onLeg, onFoot,
+                                             m_player.m_flightMode);
     send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -332,27 +344,9 @@ void MyGL::paintGL() {
     m_progLambert.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     m_progInstanced.setViewProjMatrix(m_player.mcr_camera.getViewProj());
     renderTerrain();
+    renderEntities();
 
-    m_player.drawArm(&m_progLambert, m_skin_texture);
-    m_player.drawCubeDisplay(&m_progFlat);
-    m_multiplayers_mutex.lock();
-    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        Player* cur = it->second.get();
-        if (!cur->created) cur->createVBOdata();
-        cur->orientCamera();
-        if (glm::length(cur->getVelocity()) > 0.00005) {
-            if (!cur->swinging && cur->stopped) {
-                cur->start_swing = m_time;
-                cur->swinging = true;
-                cur->stopped = false;
-                cur->swing_dir *= -1;
-            }
-        } else {
-            cur->swinging = false;
-        }
-        cur->draw(&m_progLambert, m_skin_texture, m_time);
-    }
-    m_multiplayers_mutex.unlock();
+
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -360,9 +354,27 @@ void MyGL::paintGL() {
     m_progPostProcess.setType(m_player.getType());
     m_frame.bindToTextureSlot(3);
 
+    renderOverlays();
+}
+
+// TODO: Change this so it renders the nine zones of generated
+// terrain that surround the player (refer to Terrain::m_generatedTerrain
+// for more info)
+
+void MyGL::renderTerrain() {
+    m_block_texture.bind(0);
+    //chunk player is in
+    int renderDist = 512;
+    float x = floor(m_player.mcr_position.x/16.f)*16;
+    float y = floor(m_player.mcr_position.z/16.f)*16;
+
+    m_terrain.draw(x-renderDist, x+renderDist, y-renderDist, y+renderDist, &m_progLambert);
+    //m_terrain.draw(0, 1024, 0, 1024, &m_progInstanced);
+}
+void MyGL::renderOverlays() {
     glDisable(GL_DEPTH_TEST);
     m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
-    
+
     m_progFlat.setViewProjMatrix(overlayTransform);
     m_progOverlay.setViewProjMatrix(overlayTransform);
 
@@ -497,26 +509,51 @@ void MyGL::paintGL() {
         m_progFlat.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(2*cur.x()-width()+65, -2*cur.y()+height(), 0)));
         m_progFlat.draw(m_crosshair);
     }
-    
+
     glEnable(GL_DEPTH_TEST);
 }
-
-// TODO: Change this so it renders the nine zones of generated
-// terrain that surround the player (refer to Terrain::m_generatedTerrain
-// for more info)
-
-void MyGL::renderTerrain() {
-    //chunk player is in
-    int renderDist = 512;
-    float x = floor(m_player.mcr_position.x/16.f)*16;
-    float y = floor(m_player.mcr_position.z/16.f)*16;
-
-    m_terrain.draw(x-renderDist, x+renderDist, y-renderDist, y+renderDist, &m_progLambert);
-    //m_terrain.draw(0, 1024, 0, 1024, &m_progInstanced);
+void MyGL::renderEntities() {
+    //player arm
+    m_player.drawArm(&m_progLambert, m_skin_texture);
+    m_player.drawCubeDisplay(&m_progFlat);
+    //players
+    m_multiplayers_mutex.lock();
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        Player* cur = it->second.get();
+        if (!cur->created) cur->createVBOdata();
+        cur->orientCamera();
+        if (glm::length(cur->getVelocity()) > 0.00005) {
+            if (!cur->swinging && cur->stopped) {
+                cur->start_swing = m_time;
+                cur->swinging = true;
+                cur->stopped = false;
+                cur->swing_dir *= -1;
+            }
+        } else {
+            cur->swinging = false;
+        }
+        cur->draw(&m_progLambert, m_skin_texture, m_time);
+    }
+    m_multiplayers_mutex.unlock();
+    //item entites
+    for(auto& it: m_terrain.item_entities) {
+        ItemEntity ite = it.second;
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), ite.mcr_position) *
+                                     glm::rotate(glm::mat4(), ite.a, glm::vec3(0, 1, 0)));
+        m_progOverlay.draw(ite.item);
+    }
 }
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
+    if(isDead) {
+        //checks for respawn
+        if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+            m_player.setState(m_terrain.worldSpawn, glm::vec3(0), 0, 0, AIR);
+            isDead = false;
+        }
+        return;
+    }
     // http://doc.qt.io/qt-5/qt.html#Key-enum
     // This could all be much more efficient if a switch
     // statement were used, but I really dislike their
@@ -590,8 +627,18 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         else if (e->key() == Qt::Key_E) {
             m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
             mouseMove = !m_player.m_inventory.showInventory;
-        } else if (e->key() == Qt::Key_Q) {
-            m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
+        } else if (e->key() == Qt::Key_Q) { //ejecting an item
+            if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]) {
+                m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count--;
+                ItemEntityStatePacket bcp = ItemEntityStatePacket(-1, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count, m_player.m_position);
+                send_packet(&bcp);
+                if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count == 0) {
+                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected].reset();
+                }
+                else {
+                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count));
+                }
+            }
         } else if (e->key() == Qt::Key_1) {
             m_player.m_inventory.hotbar.selected = 0;
             m_player.m_inventory.hotbar.createVBOdata();
@@ -706,7 +753,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     else {
                         if(m_player.m_inventory.items[i].has_value()) {
-                            int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
+                           int toMerge = (m_player.m_inventory.items[i]->item_count+1)/2;
                             m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge);
 
                             m_player.m_inventory.items[i]->item_count -= toMerge;
@@ -807,6 +854,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             qDebug() << QString::fromStdString(glm::to_string(neighbor));
             qDebug() << dist;
 
+            m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+            m_terrain.renderChange(m_terrain.getChunkAt(neighbor.x, neighbor.z).get(), neighbor.x, neighbor.z);
             BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
             send_packet(&bcp);
             }
@@ -891,6 +940,10 @@ send_packet(Packet* packet) {
         buffer = (dynamic_cast<BlockChangePacket*>(packet))->packetToBuffer();
         break;
     }
+    case ITEM_ENTITY_STATE: {
+        buffer = (dynamic_cast<ItemEntityStatePacket*>(packet))->packetToBuffer();
+        break;
+    }
     default:
         break;
     }
@@ -908,6 +961,31 @@ void MyGL::packet_processer(Packet* packet) {
         m_multiplayers_mutex.lock();
         if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
             m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand);
+            m_multiplayers[thispack->player_id]->inHand = thispack->player_hand;
+            if(thispack->player_helmet == AIR) {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[0].reset();
+            }
+            else {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[0] = Item(this, thispack->player_helmet, 1);
+            }
+            if(thispack->player_chest == AIR) {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[1].reset();
+            }
+            else {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[1] = Item(this, thispack->player_chest, 1);
+            }
+            if(thispack->player_leg == AIR) {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[2].reset();
+            }
+            else {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[2] = Item(this, thispack->player_leg, 1);
+            }
+            if(thispack->player_boots == AIR) {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[3].reset();
+            }
+            else {
+                m_multiplayers[thispack->player_id]->m_inventory.armor[3] = Item(this, thispack->player_boots, 1);
+            }
         }
         m_multiplayers_mutex.unlock();
         break;
@@ -955,14 +1033,10 @@ void MyGL::packet_processer(Packet* packet) {
         BlockChangePacket* thispack = dynamic_cast<BlockChangePacket*>(packet);
         glm::ivec2 xz = toCoords(thispack->chunkPos);
         qDebug() << xz.x << thispack->yPos << xz.y << thispack->newBlock;
+        if(m_terrain.hasChunkAt(xz.x, xz.y) && m_terrain.getBlockAt(xz.x, thispack->yPos, xz.y) == thispack->newBlock) return;
         m_terrain.changeBlockAt(xz.x, thispack->yPos, xz.y, thispack->newBlock);
 
-        Chunk* c = m_terrain.getChunkAt(xz.x, xz.y).get();
-
-        if (xz.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-        if (xz.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-        if (xz.y % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-        if (xz.y % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+        m_terrain.renderChange(m_terrain.getChunkAt(xz.x, xz.y).get(), xz.x, xz.y);
         break;
     }
     case CHAT: {
@@ -971,6 +1045,44 @@ void MyGL::packet_processer(Packet* packet) {
         std::string s1 = m_multiplayers[thispack->player_id]->name.toStdString();
         std::string s2 = thispack->message.toStdString();
         chatQueue.push(std::make_pair(s1+": "+s2, glm::vec4(1)));
+        break;
+    }
+    case ITEM_ENTITY_STATE: {
+        ItemEntityStatePacket* thispack = dynamic_cast<ItemEntityStatePacket*>(packet);
+        m_terrain.item_entities_mutex.lock();
+        m_terrain.item_entities.insert(std::make_pair(thispack->entity_id, ItemEntity(thispack->pos, Item(this, thispack->type, thispack->count), this)));
+        m_terrain.item_entities_mutex.unlock();
+        break;
+    }
+    case DELETE_ITEM_ENTITY: {
+        ItemEntityDeletePacket* thispack = dynamic_cast<ItemEntityDeletePacket*>(packet);
+        m_terrain.item_entities_mutex.lock();
+        m_terrain.item_entities.erase(thispack->entity_id);
+        m_terrain.item_entities_mutex.unlock();
+        break;
+    }
+    case HIT: {
+        HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
+        m_player.knockback(thispack->direction);
+        m_player.health = max(0, m_player.health-thispack->damage);
+        break;
+    }
+    case PLAYER_DEATH: {
+        DeathPacket* thispack = dynamic_cast<DeathPacket*>(packet);
+        std::string s1, s2;
+        if(thispack->victim == client_fd) {
+            s1 = m_player.name.toStdString();
+            isDead = true;
+        }
+        else if(m_multiplayers[thispack->victim]) s1 = m_multiplayers[thispack->victim]->name.toStdString();
+        if(thispack->killer == client_fd) s2 = m_player.name.toStdString();
+        else if(m_multiplayers[thispack->killer]) s2 = m_multiplayers[thispack->killer]->name.toStdString();
+        if(thispack->killer == thispack->victim) {
+            chatQueue.push(std::make_pair(s1 + " commit toaster bath", glm::vec4(1)));
+        }
+        else {
+            chatQueue.push(std::make_pair(s1 + " was slain by " + s2, glm::vec4(1)));
+        }
         break;
     }
     default:

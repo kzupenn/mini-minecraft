@@ -130,6 +130,7 @@ public:
     void createGroundThread(glm::vec2);
     //creates a vbo thread
     void createVBOThread(Chunk* c);
+    void renderChange(Chunk* c, int x, int z);
 
     //processes the sub structures returned by generation functions into either meta data or directly into the chunk
     void processMegaStructure(const std::vector<Structure>& s);
@@ -141,7 +142,9 @@ public:
                    glm::ivec3 *out_blockHit, Direction &out_dir) const;
 
     //item entities
+    std::mutex item_entities_mutex;
     std::unordered_map<int, ItemEntity> item_entities;
+    int item_entity_id;
 };
 
 

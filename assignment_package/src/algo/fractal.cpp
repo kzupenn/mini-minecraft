@@ -22,6 +22,23 @@ float fBm(vec2 x, int numoctaves, vec4 seed, int grid_size)
     return t/m;
 }
 
+float fBm(vec3 x, int numoctaves, vec4 seed, int grid_size)
+{
+    float G = 0.5;
+    float f = 1.0;
+    float a = 0.5;//1.0;
+    float t = 0.0;
+    float m = 0; //use a mag to scale noise up
+    for( int i=0; i<numoctaves; i++ )
+    {
+        t += a*(perlinNoise3D(f*x, seed, grid_size));
+        m+= a;
+        f *= 2.0;
+        a *= G;
+    }
+    return t/m;
+}
+
 float hybridMultifractal(vec2 p, int numoctaves, vec4 seed, int grid_size) {
     float G = 0.5;
     float f = 1.0;

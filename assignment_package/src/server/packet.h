@@ -10,7 +10,7 @@ using namespace glm;
 
 enum PacketType: unsigned char {
     BAD_PACKET,
-    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT,
+    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT, PLAYER_DEATH,
     CHUNK_CHANGE, BLOCK_CHANGE,
     ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY,
     HIT
@@ -89,13 +89,24 @@ struct BlockChangePacket: Packet {
 //Client: send over movement input updates to server
 struct PlayerStatePacket : public Packet{
     int player_id; //id by server assigned client_fd
+    //position
     vec3 player_pos;
+    //velocity
     vec3 player_velo;
+    //head facing
     float player_phi, player_theta;
+    //holding
     ItemType player_hand;
+    //armor
+    ItemType player_helmet;
+    ItemType player_chest;
+    ItemType player_leg;
+    ItemType player_boots;
+    //gamemode
+    bool player_creative;
 
-    PlayerStatePacket(int i, glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_velo(v), player_theta(t), player_phi(ph), player_hand(it) {}
-    PlayerStatePacket(glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it) : PlayerStatePacket(0, p, v, t, ph, it) {}
+    PlayerStatePacket(int i, glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it, ItemType ita, ItemType itb, ItemType itc, ItemType itd, bool cr) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_velo(v), player_theta(t), player_phi(ph), player_hand(it), player_helmet(ita), player_chest(itb), player_leg(itc), player_boots(itd), player_creative(cr) {}
+    PlayerStatePacket(glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it, ItemType ita, ItemType itb, ItemType itc, ItemType itd, bool cr) : PlayerStatePacket(0, p, v, t, ph, it, ita, itb, itc, itd, cr) {}
     ~PlayerStatePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
@@ -103,7 +114,9 @@ struct PlayerStatePacket : public Packet{
         out << PLAYER_STATE << player_id
             << player_pos.x << player_pos.y << player_pos.z
             << player_velo.x << player_velo.y << player_velo.z
-            << player_theta << player_phi << player_hand;
+            << player_theta << player_phi << player_hand
+            << player_helmet << player_chest << player_leg << player_boots
+            << player_creative;
         return buffer;
     }
 };
@@ -169,14 +182,27 @@ struct ItemEntityDeletePacket : public Packet {
 //hit
 struct HitPacket : public Packet {
     glm::vec3 direction;
-    float strength, damage;
+    int damage;
     bool left_click;
-    HitPacket(bool b, float s, float dd, glm::vec3 d): left_click(b), strength(s), damage(dd), direction(d), Packet(HIT){}
+    HitPacket(bool b, int dd, glm::vec3 d): left_click(b), damage(dd), direction(d), Packet(HIT){}
     ~HitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::ReadWrite);
-        out << HIT << left_click << strength << direction.x << direction.y << direction.z;
+        out << HIT << left_click << damage <<  direction.x << direction.y << direction.z;
+        return buffer;
+    }
+};
+
+//player dies
+struct DeathPacket : public Packet {
+    int victim, killer;
+    DeathPacket(int a, int b): victim(a), killer(b), Packet(PLAYER_DEATH){}
+    ~DeathPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << PLAYER_DEATH << victim << killer;
         return buffer;
     }
 };

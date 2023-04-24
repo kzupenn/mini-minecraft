@@ -11,7 +11,6 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
-    bool m_flightMode;
     float theta, phi; //horiz, vert
     float airtime, maxair;
     bool in_liquid, bott_in_liquid, shift;
@@ -36,6 +35,8 @@ public:
     virtual ~Player() override;
     Inventory m_inventory;
     int health;
+    bool m_flightMode; //creative mode
+
     int armor;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
@@ -84,5 +85,5 @@ public:
     QString name;
 
     void setState(glm::vec3, glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
-
+    void knockback(glm::vec3); //apply knockback
 };

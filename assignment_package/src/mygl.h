@@ -81,7 +81,11 @@ private:
     std::mutex m_chat_mutex;
     std::deque<Font> m_chat;
     Font m_mychat;
+    //if the player is in chat mode, redirect all keyboard inputs to chat
     bool chatMode;
+    //the player dies when they are killed
+    bool isDead;
+    //a gray transparent rectangle, used primarily for font background
     Rectangle m_rectangle;
 
     void packet_parser(Packet*);
@@ -137,6 +141,8 @@ public:
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
+    void renderEntities();
+    void renderOverlays();
     void setupTerrainThreads();
 
 

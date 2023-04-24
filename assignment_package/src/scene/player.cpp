@@ -426,3 +426,7 @@ void Player::createVBOdata() {
     created = true;
 }
 
+void Player::knockback(glm::vec3 kb) {
+    m_velocity+=kb;
+}
+

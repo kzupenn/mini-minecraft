@@ -10,6 +10,7 @@
 #include <queue>
 #include "algo/noise.h"
 #include "algo/seed.h"
+#include "algo/fractal.h"
 
 
 #define TEST_RADIUS 256
@@ -20,7 +21,7 @@
 #define beach_level 0.1
 
 Terrain::Terrain(OpenGLContext *context)
-    : m_chunks(), mp_context(context), m_generatedTerrain(), setSpawn(false)
+    : m_chunks(), mp_context(context), m_generatedTerrain(), setSpawn(false), item_entity_id(0)
 {
 }
 
@@ -374,9 +375,9 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             }
             case RIVER: {
                 int y = maxy;
-                float depth = abs(0.5-generateRiver(glm::vec2(xx+x, zz+z)))*1000*8;
+                float depth = 10*(1-glm::sqrt(abs(0.5-generateRiver(glm::vec2(xx+x, zz+z)))/river_width));
                 for(; y > maxy-depth; y--) cPtr->setBlockAt(xx, y, zz, WATER);
-                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, STONE);
+                for(; y >= 0; y--) cPtr->setBlockAt(xx, y, zz, DIRT);
                 break;
             }
             default:{
@@ -388,10 +389,12 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
             float rd = std::rand() % 1;
             float mx = maxy * (rd / 10.f + 0.95);
             for(int y = fmin(128, mx); y > 0; y--) {
-                float n = generateCaves(vec3(x+xx, y, z+zz));
-                if (n > -0.001f && n < 0.001f) {
-                    if (y < 25) cPtr->setBlockAt(xx, y, zz, LAVA);
-                    else cPtr->setBlockAt(xx, y, zz, EMPTY);
+                if(cPtr->getBlockAt(xx, y, zz) != WATER) {
+                    float cave_coef = generateCaves(vec3(x+xx, y, z+zz));
+                    if (cave_coef < 0.1 && cave_coef > -0.1) {
+                        if (y < 25) cPtr->setBlockAt(xx, y, zz, LAVA);
+                        else cPtr->setBlockAt(xx, y, zz, EMPTY);
+                    }
                 }
             }
         }
@@ -727,27 +730,95 @@ void Terrain::buildStructure(const Structure& s) {
         }
         break;
     }
+    case BIRCH_TREE: {
+        //how tall the tree is off the ground
+        //TO DO: replace GRASS with LEAVES block once implemented
+        //TO DO: replace DIRT with WOOD block once implemented
+        int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), SEED.getSeed(8654.512,8568.53,3163.562));
+        //find base of tree
+        int ymin = c->heightMap[xx-x][zz-z];
+        for(int dy = 0; dy < 4; dy++) {
+            int yat = ymin+ymax-dy;
+            switch(dy) {
+                case 0:
+                    setBlockAt(xx, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
+                    break;
+                case 1:
+                    setBlockAt(xx, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz-1, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+1, OAK_LEAVES, isEmpty);
+                    if(noise1D(glm::vec3(xx+1, yat, zz+1), SEED.getSeed(7785.015,5766.378,649.792,6102.897)) > 0.5) {
+                        setBlockAt(xx+1, yat, zz+1, OAK_LEAVES);
+                    }
+                    if(noise1D(glm::vec3(xx+1, yat, zz-1), SEED.getSeed(1420.159,7503.537,1373.417,2979.007)) > 0.5) {
+                        setBlockAt(xx+1, yat, zz-1, OAK_LEAVES, isEmpty);
+                    }
+                    if(noise1D(glm::vec3(xx-1, yat, zz+1), SEED.getSeed(464.713,1450.085,4383.409,6818.919)) > 0.5) {
+                        setBlockAt(xx-1, yat, zz+1, OAK_LEAVES, isEmpty);
+                    }
+                    if(noise1D(glm::vec3(xx-1, yat, zz-1), SEED.getSeed(8513.165,8543.726,1277.831,9162.371)) > 0.5) {
+                        setBlockAt(xx-1, yat, zz-1, OAK_LEAVES, isEmpty);
+                    }
+                    break;
+                default: //2, 3
+                    for(int dx = xx-2; dx <= xx+2; dx++) {
+                        for(int dz = zz-1; dz <= zz+1; dz++) {
+                            if(dx != xx || dz != zz) {
+                                setBlockAt(dx, yat, dz, OAK_LEAVES, isEmpty);
+                            }
+                        }
+                    }
+                    setBlockAt(xx-1, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx+1, yat, zz+2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx-1, yat, zz-2, OAK_LEAVES, isEmpty);
+                    setBlockAt(xx, yat, zz-2, OAK_LEAVES);
+                    setBlockAt(xx+1, yat, zz-2, OAK_LEAVES, isEmpty);
+                    if(noise1D(glm::vec3(xx+2, yat, zz+2), SEED.getSeed(7798.159,7306.237,4491.404,966.212)) > 0.5) {
+                        setBlockAt(xx+2, yat, zz+2, OAK_LEAVES, isEmpty);
+                    }
+                    if(noise1D(glm::vec3(xx+2, yat, zz-2), SEED.getSeed(3953.665,7624.82,5599.103,4681.367)) > 0.5) {
+                        setBlockAt(xx+2, yat, zz-2, OAK_LEAVES, isEmpty);
+                    }
+                    if(noise1D(glm::vec3(xx-2, yat, zz+2), SEED.getSeed(431.931,9230.515,2698.152,3252.572)) > 0.5) {
+                        setBlockAt(xx-2, yat, zz+2, OAK_LEAVES, isEmpty);
+                    }
+                    if(noise1D(glm::vec3(xx-2, yat, zz-2), SEED.getSeed(2799.543,9511.908,2472.754,4812.237)) > 0.5) {
+                        setBlockAt(xx-2, yat, zz-2, OAK_LEAVES, isEmpty);
+                    }
+                    break;
+            }
+        }
+        for(int y = ymin; y < ymin+ymax; y++){
+            setBlockAt(xx, y, zz, BIRCH_LOG);
+        }
+        break;
+    }
     case FANCY_OAK_TREE:{
         int ymin = c->heightMap[xx-x][zz-z];
         break;
     }
-        //creates a spruce tree
-        //TO DO: replace block types with appropriate leaves and wood
     case SPRUCE_TREE:{
         int ymin = c->heightMap[xx-x][zz-z];
         int ymax = 5+7*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
         float leaves = 1;
-        setBlockAt(xx, ymax, zz, DIRT);
+        setBlockAt(xx, ymax, zz, SPRUCE_LOG);
         for(int y = ymax+ymin-1; y > ymax; y--) {
             float transition = noise1D(glm::vec3(xx, y, zz), SEED.getSeed(7656.579,4083.936,4656.875,8280.13));
             if(leaves == 0){
                 leaves++;
             }
             else if(leaves == 1) { //radius 1
-                setBlockAt(xx-1, y, zz, GRASS_BLOCK);
-                setBlockAt(xx+1, y, zz, GRASS_BLOCK);
-                setBlockAt(xx, y, zz-1, GRASS_BLOCK);
-                setBlockAt(xx, y, zz+1, GRASS_BLOCK);
+                setBlockAt(xx-1, y, zz, OAK_LEAVES);
+                setBlockAt(xx+1, y, zz, OAK_LEAVES);
+                setBlockAt(xx, y, zz-1, OAK_LEAVES);
+                setBlockAt(xx, y, zz+1, OAK_LEAVES);
                 if(transition < 0.3) leaves--;
                 else leaves++;
             }
@@ -755,7 +826,7 @@ void Terrain::buildStructure(const Structure& s) {
                 for(int xxx = xx-2; xxx <= xx+2; xxx++) {
                     for(int zzz = zz-2; zzz <= zz+2; zzz++) {
                         if(abs(xxx-xx)+abs(zzz-zz) != 4)
-                            setBlockAt(xxx, y, zzz, GRASS_BLOCK);
+                            setBlockAt(xxx, y, zzz, OAK_LEAVES);
                     }
                 }
                 if(transition<0.7) leaves--;
@@ -765,14 +836,37 @@ void Terrain::buildStructure(const Structure& s) {
                 for(int xxx = xx-3; xxx <= xx+3; xxx++) {
                     for(int zzz = zz-3; zzz <= zz+3; zzz++) {
                         if(abs(xxx-xx)+abs(zzz-zz) != 6)
-                            setBlockAt(xxx, y, zzz, GRASS_BLOCK);
+                            setBlockAt(xxx, y, zzz, OAK_LEAVES);
                     }
                 }
                 leaves--;
             }
-            setBlockAt(xx, y, zz, DIRT);
+            setBlockAt(xx, y, zz, SPRUCE_LOG);
         }
-        setBlockAt(xx, ymax+ymin, zz, GRASS_BLOCK);
+        setBlockAt(xx, ymax+ymin, zz, OAK_LEAVES);
+        break;
+    }
+    case PINE_TREE: {
+        int ymin = c->heightMap[xx-x][zz-z];
+        int ymax = 5+4*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
+        setBlockAt(xx, ymax, zz, SPRUCE_LOG);
+        for(int y = ymax+ymin-1; y > ymax; y--) {
+            if(y > ymin+ymax-4) {
+                setBlockAt(xx-1, y, zz, OAK_LEAVES);
+                setBlockAt(xx+1, y, zz, OAK_LEAVES);
+                setBlockAt(xx, y, zz-1, OAK_LEAVES);
+                setBlockAt(xx, y, zz+1, OAK_LEAVES);
+            }
+            setBlockAt(xx, y, zz, SPRUCE_LOG);
+        }
+        break;
+    }
+    case CACTUS_PLANT: {
+        int ymin = c->heightMap[xx-x][zz-z];
+        int ymax = 2+3*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
+        for(int y = ymin; y<= ymax+ymin; y++) {
+            setBlockAt(xx, y, zz, CACTUS);
+        }
         break;
     }
     case VILLAGE_CENTER:
@@ -1333,4 +1427,14 @@ std::vector<std::pair<int64_t, vec3Map>> Terrain::getChunkChanges() {
     }
     m_chunks_mutex.unlock();
     return ret;
+}
+
+void Terrain::renderChange(Chunk *c, int x, int z) {
+    x%=16;
+    z%=16;
+    createVBOThread(c);
+    if(x == 15 && c->getNeighborChunk(XPOS)) createVBOThread(c->getNeighborChunk(XPOS));
+    if(x == 0 && c->getNeighborChunk(XNEG)) createVBOThread(c->getNeighborChunk(XNEG));
+    if(z == 15 && c->getNeighborChunk(ZPOS)) createVBOThread(c->getNeighborChunk(ZPOS));
+    if(z == 0 && c->getNeighborChunk(ZNEG)) createVBOThread(c->getNeighborChunk(ZNEG));
 }

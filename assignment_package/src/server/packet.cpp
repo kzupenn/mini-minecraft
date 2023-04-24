@@ -8,9 +8,10 @@ Packet* bufferToPacket(QByteArray buffer) {
     case PLAYER_STATE:{
         int pid;
         float f1, f2, f3, f4, f5, f6, f7, f8;
-        ItemType c;
-        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5 >> f6 >> f7 >> f8 >> c;
-        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), glm::vec3(f4, f5, f6), f7, f8, c);
+        bool cr;
+        ItemType c, ca, cb, cc, cd;
+        in >> pid >> f1 >> f2 >> f3 >> f4 >> f5 >> f6 >> f7 >> f8 >> c >> ca >> cb >> cc >> cd >> cr;
+        return new PlayerStatePacket(pid, glm::vec3(f1, f2, f3), glm::vec3(f4, f5, f6), f7, f8, c, ca, cb, cc, cd, cr);
         break;
     }
     case WORLD_INIT:{
@@ -68,11 +69,30 @@ Packet* bufferToPacket(QByteArray buffer) {
     }
     case HIT: {
         bool b;
-        float s;
-        float d;
+        int d;
         float f1, f2, f3;
-        in >> b >> s >> f1 >> f2 >> f3;
-        return new HitPacket(b, s, d, glm::vec3(f1, f2, f3));
+        in >> b >> d >> f1 >> f2 >> f3;
+        return new HitPacket(b, d, glm::vec3(f1, f2, f3));
+        break;
+    }
+    case ITEM_ENTITY_STATE: {
+        int id, c;
+        ItemType t;
+        float f1, f2, f3;
+        in >> id >> t >> c >> f1 >> f2 >> f3;
+        return new ItemEntityStatePacket(id, t, c, glm::vec3(f1, f2, f3));
+        break;
+    }
+    case DELETE_ITEM_ENTITY: {
+        int id;
+        in >> id;
+        return new ItemEntityDeletePacket(id);
+        break;
+    }
+    case PLAYER_DEATH: {
+        int v, k;
+        in >> v >> k;
+        return new DeathPacket(v, k);
         break;
     }
     default:

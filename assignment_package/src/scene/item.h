@@ -35,6 +35,9 @@ public:
         createVBOdata();
     };
     Item(OpenGLContext* context, ItemType t, int init_count);
+    //used for non-drawn items (server-side)
+    Item(ItemType t, int init_count) : Drawable(nullptr), count_text(nullptr),
+        type(t), item_count(init_count){}
     virtual ~Item(){};
     virtual void createVBOdata();
     virtual GLenum drawMode();
