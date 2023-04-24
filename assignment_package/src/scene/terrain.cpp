@@ -88,7 +88,7 @@ BlockType Terrain::getBlockAt(int x, int y, int z) const
 
 
 BlockType Terrain::getBlockAt(glm::vec3 p) const {
-    return getBlockAt(p.x, p.y, p.z);
+    return getBlockAt(floorf(p.x), floorf(p.y), floorf(p.z));
 }
 
 bool Terrain::hasChunkAt(int x, int z) const {

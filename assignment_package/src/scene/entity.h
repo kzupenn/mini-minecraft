@@ -19,6 +19,7 @@ protected:
 
 public:
     glm::vec3 m_position;
+    glm::vec3 dim;
 
     // A readonly reference to position for external use
     const glm::vec3& mcr_position;
@@ -59,4 +60,6 @@ public:
 
     //getter function
     glm::vec3 getPos();
+    bool inBoundingBox(glm::vec3 pt);
+    void setDimension(glm::vec3 d);
 };

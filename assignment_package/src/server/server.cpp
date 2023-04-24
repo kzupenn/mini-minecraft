@@ -98,7 +98,7 @@ void Server::process_packet(Packet* packet, int sender) {
                 if(damage>0){
                     m_players[sender].health = glm::max(0, m_players[sender].health-damage);
                     //use a hit packet to simulate fall damage
-                    target_packet(mkU<HitPacket>(false, damage, glm::vec3(0, 0.2, 0)).get(), sender);
+                    target_packet(mkU<HitPacket>(damage, glm::vec3(0, 0.2, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
                         broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);

@@ -101,11 +101,11 @@ bool Player::checkAirborne() {
                                      glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z - 0.3)};
 
-    glm::vec3 down(0, -0.15, 0);
+    glm::vec3 down(0, -0.125, 0);
     for (auto &c : corners) {
         float dist; glm::ivec3 outblock; Direction d;
         mcr_terrain.gridMarch(c, down, &dist, &outblock, d);
-        if (dist <= 0.1) return false;
+        if (dist <= 0.10) return false;
     }
     return true;
 }
@@ -117,7 +117,7 @@ void Player::computePhysics(float dT) {
     m_velocity += m_acceleration * dT;
     if (!m_flightMode) {
         if (airtime > 0) {
-            m_velocity += glm::vec3(0, 1, 0) * 3.92f * dT * airtime / (maxair / 1.5f);
+            m_velocity += glm::vec3(0, 1, 0) * 3.95f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
         if (bott_in_liquid) m_velocity += glm::vec3(0, -0.9f, 0) * dT;
@@ -126,8 +126,8 @@ void Player::computePhysics(float dT) {
     }
     glm::vec3 vout = m_velocity;
     if (shift) {
-        vout.x *= 1.5;
-        vout.z *= 1.5;
+        vout.x *= 1.6;
+        vout.z *= 1.6;
         shift = false;
     }
     if (in_liquid) vout /= 1.5f;
@@ -180,7 +180,7 @@ void Player::checkCollision()
                                     &y, &b, d);
         bool zF = mcr_terrain.gridMarch(origin, glm::vec3(0, 0, m_velocity.z),
                                     &z, &b, d);
-        float eps = 0.275f;
+        float eps = 0.21f;
         if (xF && x < glm::abs(min.x)) {
             min.x = x * glm::sign(min.x);
             if (min.x <= eps) min.x = 0;
@@ -404,7 +404,7 @@ void Player::drawArm(ShaderProgram* m_prog, Texture& skin) {
 }
 
 void Player::drawCubeDisplay(ShaderProgram* m_prog) {
-    float bound = 3.f;
+    float bound = 4.f;
     float dist;
     glm::ivec3 block_pos; Direction dir;
     glm::vec3 ray = glm::normalize(m_forward) * bound;

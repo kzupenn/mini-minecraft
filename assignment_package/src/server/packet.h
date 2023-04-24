@@ -183,13 +183,12 @@ struct ItemEntityDeletePacket : public Packet {
 struct HitPacket : public Packet {
     glm::vec3 direction;
     int damage;
-    bool left_click;
-    HitPacket(bool b, int dd, glm::vec3 d): left_click(b), damage(dd), direction(d), Packet(HIT){}
+    HitPacket(int dd, glm::vec3 d): damage(dd), direction(d), Packet(HIT){}
     ~HitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::ReadWrite);
-        out << HIT << left_click << damage <<  direction.x << direction.y << direction.z;
+        out << HIT << damage <<  direction.x << direction.y << direction.z;
         return buffer;
     }
 };

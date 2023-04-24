@@ -6,17 +6,26 @@
 
 Entity::Entity(glm::vec3 pos)
     : m_forward(0,0,-1), m_right(1,0,0), m_up(0,1,0),
-      m_position(pos), mcr_position(m_position)
+      m_position(pos), mcr_position(m_position), dim(glm::vec3(0))
 {}
 
 Entity::Entity(const Entity &e)
     : m_forward(e.m_forward), m_right(e.m_right), m_up(e.m_up),
-      m_position(e.m_position), mcr_position(m_position)
+      m_position(e.m_position), mcr_position(m_position), dim(e.dim)
 {}
 
 Entity::~Entity()
 {}
 
+void Entity::setDimension(glm::vec3 d) {
+    dim = d;
+}
+
+bool Entity::inBoundingBox(glm::vec3 pt) {
+    return glm::abs(m_position.x - pt.x) <= dim.x / 2 &&
+           glm::abs(m_position.y - pt.y) <= dim.y / 2 &&
+            glm::abs(m_position.z - pt.z) <= dim.z / 2;
+}
 
 void Entity::moveAlongVector(glm::vec3 dir) {
     m_position += dir;

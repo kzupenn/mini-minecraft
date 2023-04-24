@@ -28,7 +28,8 @@ MyGL::MyGL(QWidget *parent)
       m_time(0), m_block_texture(this), m_font_texture(this), m_inventory_texture(this), m_icon_texture(this), m_currentMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()),
       ip("localhost"),
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
-      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this), m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this), 
+      m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this),
+      m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this),
       mouseMove(false), isDead(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -346,7 +347,25 @@ void MyGL::paintGL() {
     renderTerrain();
     renderEntities();
 
-
+    m_player.drawCubeDisplay(&m_progFlat);
+    m_multiplayers_mutex.lock();
+    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
+        Player* cur = it->second.get();
+        if (!cur->created) cur->createVBOdata();
+        cur->orientCamera();
+        if (glm::length(cur->getVelocity()) > 0.00005) {
+            if (!cur->swinging && cur->stopped) {
+                cur->start_swing = m_time;
+                cur->swinging = true;
+                cur->stopped = false;
+                cur->swing_dir *= -1;
+            }
+        } else {
+            cur->swinging = false;
+        }
+        cur->draw(&m_progLambert, m_skin_texture, m_time);
+    }
+    m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -373,6 +392,7 @@ void MyGL::renderTerrain() {
 }
 void MyGL::renderOverlays() {
     glDisable(GL_DEPTH_TEST);
+    m_player.drawArm(&m_progLambert, m_skin_texture);
     m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
 
     m_progFlat.setViewProjMatrix(overlayTransform);
@@ -817,47 +837,64 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         }
     }
     else {
+        float bound = 4.f;
         if(e->buttons() & Qt::LeftButton)
         {
             glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-            glm::vec3 ray_dir = m_player.getLook() * 3.f;
+            glm::vec3 ray_dir = m_player.getLook() * bound;
 
-            float dist;
-            glm::ivec3 block_pos; Direction d;
-            if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
-                qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-                //m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
-                //Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
+            float hit = 3.f; float step = m_player.dim.x;
+            float cur = 0; bool found = false;
+            glm::vec3 ray = m_player.getLook();
+            glm::vec3 hit_direction;
+            while (cur <= hit && !found) {
+                glm::vec3 pt = m_player.m_position + cur * ray;
+                for (auto &a : m_multiplayers) {
+                    Player* p = a.second.get();
+                    if (p -> inBoundingBox(pt)) {
+                        found = true;
+                        hit_direction = p -> m_position - m_player.m_position;
+                        HitPacket hp = HitPacket(0, hit_direction);
+                        send_packet(&hp);
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                float dist; glm::ivec3 block_pos; Direction d;
+                if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
+                    qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+                    //m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+                    //Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
 
-                BlockChangePacket bcp = BlockChangePacket(toKey(block_pos.x, block_pos.z), block_pos.y, EMPTY);
-                send_packet(&bcp);
+                    BlockChangePacket bcp = BlockChangePacket(toKey(block_pos.x, block_pos.z), block_pos.y, EMPTY);
+                    send_packet(&bcp);
 
-//                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-//                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-//                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-//                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+    //                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
+    //                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
+    //                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
+    //                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
+                }
             }
         } else if (e->buttons() & Qt::RightButton) {
-        float bound = 3.f;
-        glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
-        glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
+            glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
+            glm::vec3 ray_dir = glm::normalize(m_player.getLook()) * bound;
 
-        float dist;
-        glm::ivec3 block_pos; Direction dir;
-        bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
-        if (found) {
-            //TO DO: make block placed be the block in the inventory slot
-            BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
-            glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
-            //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
-            qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-            qDebug() << QString::fromStdString(glm::to_string(neighbor));
-            qDebug() << dist;
-
-            m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
-            m_terrain.renderChange(m_terrain.getChunkAt(neighbor.x, neighbor.z).get(), neighbor.x, neighbor.z);
-            BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
-            send_packet(&bcp);
+            float dist;
+            glm::ivec3 block_pos; Direction dir;
+            bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
+            if (found) {
+                //TO DO: make block placed be the block in the inventory slot
+                BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+                glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
+                //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+                qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
+                qDebug() << QString::fromStdString(glm::to_string(neighbor));
+                qDebug() << dist;
+                m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+                m_terrain.renderChange(m_terrain.getChunkAt(neighbor.x, neighbor.z).get(), neighbor.x, neighbor.z);
+                BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
+                send_packet(&bcp);
             }
         }
     }
