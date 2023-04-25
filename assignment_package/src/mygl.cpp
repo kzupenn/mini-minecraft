@@ -587,7 +587,7 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
                 m_chat.push_front(Font(this, m_player.name.toStdString() + ": "+m_mychat.getText(), glm::vec4(1)));
                 if(m_chat.size() > 20) m_chat.pop_back();
                 m_chat_mutex.unlock();
-                ChatPacket cpp = ChatPacket(client_fd, QString::fromStdString(m_mychat.getText()));
+                ChatPacket cpp = ChatPacket(client_id, QString::fromStdString(m_mychat.getText()));
                 send_packet(&cpp);
             }
             chatMode = false;
@@ -848,6 +848,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             float cur = 0; bool found = false;
             glm::vec3 ray = m_player.getLook();
             glm::vec3 hit_direction;
+            m_multiplayers_mutex.lock();
             while (cur <= hit && !found) {
                 glm::vec3 pt = m_player.m_position + cur * ray;
                 for (auto &a : m_multiplayers) {
@@ -864,6 +865,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 //qDebug() << cur;
                 cur += step;
             }
+            m_multiplayers_mutex.unlock();
             if (!found) {
                 float dist; glm::ivec3 block_pos; Direction d;
                 if (m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, d)) {
@@ -871,13 +873,11 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     //m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
                     //Chunk* c = m_terrain.getChunkAt(block_pos.x, block_pos.z).get();
 
+                    m_terrain.changeBlockAt(block_pos.x, block_pos.y, block_pos.z, EMPTY);
+                    m_terrain.renderChange(m_terrain.getChunkAt(block_pos.x, block_pos.z).get(), block_pos.x, block_pos.z);
+
                     BlockChangePacket bcp = BlockChangePacket(toKey(block_pos.x, block_pos.z), block_pos.y, EMPTY);
                     send_packet(&bcp);
-
-    //                if (block_pos.x % 16 == 0) c->getNeighborChunk(XNEG)->blocksChanged = true;
-    //                if (block_pos.x % 16 == 15) c->getNeighborChunk(XPOS)->blocksChanged = true;
-    //                if (block_pos.z % 16 == 0) c->getNeighborChunk(ZNEG)->blocksChanged = true;
-    //                if (block_pos.z % 16 == 15) c->getNeighborChunk(ZPOS)->blocksChanged = true;
                 }
             }
         } else if (e->buttons() & Qt::RightButton) {
@@ -895,7 +895,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
                 qDebug() << QString::fromStdString(glm::to_string(neighbor));
                 qDebug() << dist;
-                m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
+                m_terrain.changeBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
                 m_terrain.renderChange(m_terrain.getChunkAt(neighbor.x, neighbor.z).get(), neighbor.x, neighbor.z);
                 BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
                 send_packet(&bcp);
@@ -1035,10 +1035,10 @@ void MyGL::packet_processer(Packet* packet) {
         WorldInitPacket* thispack = dynamic_cast<WorldInitPacket*>(packet);
         //TO do: set seed somewhere
         m_terrain.worldSpawn = thispack->spawn;
+        client_id = thispack->pid;
         verified_server = true;
         m_multiplayers_mutex.lock();
         for(std::pair<int, QString> pp: thispack->players) {
-            qDebug() << pp.first << pp.second;
             m_multiplayers[pp.first] = mkU<Player>(Player(glm::vec3(0), nullptr, this, pp.second));
         }
         m_multiplayers_mutex.unlock();
@@ -1111,12 +1111,14 @@ void MyGL::packet_processer(Packet* packet) {
     case PLAYER_DEATH: {
         DeathPacket* thispack = dynamic_cast<DeathPacket*>(packet);
         std::string s1, s2;
-        if(thispack->victim == client_fd) {
+        qDebug() << "me" << client_id;
+        qDebug() << "dead" << thispack->victim << thispack->killer;
+        if(thispack->victim == client_id) {
             s1 = m_player.name.toStdString();
             isDead = true;
         }
         else if(m_multiplayers[thispack->victim]) s1 = m_multiplayers[thispack->victim]->name.toStdString();
-        if(thispack->killer == client_fd) s2 = m_player.name.toStdString();
+        if(thispack->killer == client_id) s2 = m_player.name.toStdString();
         else if(m_multiplayers[thispack->killer]) s2 = m_multiplayers[thispack->killer]->name.toStdString();
         if(thispack->killer == thispack->victim) {
             chatQueue.push(std::make_pair(s1 + " commit toaster bath", glm::vec4(1)));
