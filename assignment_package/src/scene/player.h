@@ -86,6 +86,7 @@ public:
     void drawArm(ShaderProgram* m_prog, Texture& skin);
     void drawCubeDisplay(ShaderProgram* m_prog);
     void drawHandItem(ShaderProgram* m_prog, Texture& tex);
+    void drawHandItem(ShaderProgram* m_prog, Texture& tex, Item it);
 
     ItemType inHand;
     QString name;

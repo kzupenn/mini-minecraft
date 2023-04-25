@@ -13,7 +13,7 @@
 using namespace std;
 
 
-Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true), time(0){
+Server::Server(int s, int p) : m_terrain(nullptr), seed(s), port(p), setup(false), open(true), time(0){
     m_clients.setMaxThreadCount(MAX_CLIENTS);
     ServerConnectionWorker* sw = new ServerConnectionWorker(this);
     QThreadPool::globalInstance()->start(sw);
@@ -288,7 +288,7 @@ int Server::start()
     // bind server socket to address
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_port = htons(port);
     if (::bind(server_fd, (struct sockaddr*)&address, addrlen) < 0)
     {
         cout << "Failed to bind server socket to address" << endl;
@@ -302,7 +302,7 @@ int Server::start()
         return -1;
     }
 
-    cout << "Server started listening on port " << PORT << endl;
+    cout << "Server started listening on port " << port << endl;
 
     //initialize spawn chunks, and select a spawn point
     m_terrain.createSpawn();

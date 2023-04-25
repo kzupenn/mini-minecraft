@@ -7,8 +7,6 @@
 #include "scene/player.h"
 #include "server/packet.h"
 
-#include "port.h"
-
 #define BUFFER_SIZE 1024
 #define MAX_CLIENTS 10
 
@@ -132,7 +130,8 @@ private:
     int seed;
     int time;
 public:
-    Server(int);
+    Server(int, int);
+    int port;
 
     //starts the server
     int start();

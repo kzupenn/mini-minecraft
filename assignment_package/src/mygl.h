@@ -22,7 +22,6 @@
 #include <queue>
 #include <smartpointerhelp.h>
 
-#include "server/port.h"
 #define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
@@ -141,6 +140,7 @@ public:
     void run_client(); //runs the client
     void packet_processer(Packet*);
     std::string ip;
+    int port;
 
     // Called from paintGL().
     // Calls Terrain::draw().

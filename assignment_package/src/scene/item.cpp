@@ -151,28 +151,28 @@ void Item::createVBOdata() {
         VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
 
         //front
-        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
-        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
-        VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
         VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
 
         //left
-        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
-        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
-        VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
         VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
 
         //back
-        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
-        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
-        VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
         VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
 
         //right
-        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
-        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
-        VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
         VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
 
         //top
         for (int i = 0; i < 4; i++) {
@@ -231,11 +231,11 @@ void Item::createVBOdata() {
 
         for(int i = 0; i < 6; i++){
             idx.push_back(i*4);
-            idx.push_back(i*4+1);
-            idx.push_back(i*4+2);
-            idx.push_back(i*4);
             idx.push_back(i*4+2);
             idx.push_back(i*4+3);
+            idx.push_back(i*4);
+            idx.push_back(i*4+1);
+            idx.push_back(i*4+2);
         }
 
         m_count = idx.size();
@@ -282,16 +282,12 @@ void Item::draw(ShaderProgram* m_prog, Texture& block, Texture& text, float bloc
         m_prog->setModelMatrix(glm::translate(glm::mat4(1), block_pos)*
                            glm::scale(glm::mat4(1), glm::vec3(block_size, block_size, 1)));
     else
-//        m_prog->setModelMatrix(glm::translate(glm::mat4(), block_pos) *
+        m_prog->setModelMatrix(glm::translate(glm::mat4(), block_pos) *
 //                               glm::translate(glm::mat4(), glm::vec3(-0.5, -0.5, -0.5))*
 //                               glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(0, 1, 0))*
-//                               glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(1, 0, 0))*
+//                               glm::rotate(glm::mat4(), glm::radians(0.f), glm::vec3(1, 0, 0))*
 //                               glm::translate(glm::mat4(), glm::vec3(0.5, 0.5, 0.5))*
-//                               glm::scale(glm::mat4(1), glm::vec3(0.7*block_size, 0.7*block_size, 0.7*block_size)));
-        m_prog->setModelMatrix(glm::translate(glm::mat4(), block_pos) *
-                                       glm::rotate(glm::mat4(), glm::radians(0.f), glm::vec3(0, 1, 0))*
-                                       //glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(1, 0, 0))*
-                               glm::scale(glm::mat4(1), glm::vec3(block_size, block_size, block_size)));
+                               glm::scale(glm::mat4(1), glm::vec3(1*block_size, 1*block_size, 1*block_size)));
 
     m_prog->draw(*this);
     if(item_count > 1) {

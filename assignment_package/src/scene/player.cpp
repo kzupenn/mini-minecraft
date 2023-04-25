@@ -427,25 +427,46 @@ void Player::drawCubeDisplay(ShaderProgram* m_prog) {
 
 void Player::drawHandItem(ShaderProgram* m_prog, Texture& tex) {
     tex.bind(0);
-    float ratio = 1.8f / 52.f;
+    float ratio = 1.8f / 52;
     glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
     glm::mat4 cam_to_arm = glm::translate(glm::mat4(1), glm::vec3(23, -12.5, 12));
-    glm::mat4 inward = glm::rotate(glm::mat4(1), glm::radians(60.f), glm::vec3(0, 1, 0));
-    glm::mat4 outward = glm::rotate(glm::mat4(1), glm::radians(-80.f), glm::vec3(0, 0, 1));
+    glm::mat4 inward = glm::rotate(glm::mat4(1), glm::radians(-7.5f), glm::vec3(0, 1, 0));
+    glm::mat4 outward = glm::rotate(glm::mat4(1), glm::radians(110.f), glm::vec3(0, 0, 1));
     glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
     float len = glm::sqrt(pow(m_forward.x, 2) + pow(m_forward.z, 2));
     float ang = glm::atan(m_forward.y, len);
     glm::mat4 vert = glm::rotate(glm::mat4(1), ang, glm::vec3(0, 0, 1));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
-                           glm::translate(glm::mat4(1), glm::vec3(10, 1.5, 0)) *
+                           glm::translate(glm::mat4(1), glm::vec3(0, 1.5, 0)) *
                            horiz *
                            vert *
                            sc *
                            cam_to_arm *
-//                           inward *
-//                           outward *
-                           glm::scale(glm::mat4(1), glm::vec3(10.f / ratio)));
+                           inward *
+                           outward);
     m_prog->drawInterleaved(hand_item);
+}
+
+void Player::drawHandItem(ShaderProgram* m_prog, Texture& tex, Item it) {
+    tex.bind(0);
+    float ratio = 1.8f / 52;
+    glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
+    glm::mat4 cam_to_arm = glm::translate(glm::mat4(1), glm::vec3(23, -12.5, 12));
+    glm::mat4 inward = glm::rotate(glm::mat4(1), glm::radians(-7.5f), glm::vec3(0, 1, 0));
+    glm::mat4 outward = glm::rotate(glm::mat4(1), glm::radians(110.f), glm::vec3(0, 0, 1));
+    glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
+    float len = glm::sqrt(pow(m_forward.x, 2) + pow(m_forward.z, 2));
+    float ang = glm::atan(m_forward.y, len);
+    glm::mat4 vert = glm::rotate(glm::mat4(1), ang, glm::vec3(0, 0, 1));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           glm::translate(glm::mat4(1), glm::vec3(0, 1.5, 0)) *
+                           horiz *
+                           vert *
+                           sc *
+                           cam_to_arm *
+                           inward *
+                           outward);
+    m_prog->draw(it);
 }
 
 void Player::createVBOdata() {

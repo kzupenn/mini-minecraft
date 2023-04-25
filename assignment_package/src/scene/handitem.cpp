@@ -9,139 +9,116 @@ HandItem::~HandItem() {};
 void HandItem::createVBOdata() {
     std::vector<glm::vec4> pos, uvs, nor, inter;
     std::vector<GLuint> idx;
+    float w = 4;
+    float dd = 4;
+    float h = 12;
+    //top
+//    pos.emplace_back(glm::vec4(dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd/ 2, 0, -w / 2, 1));
 
-    //Front face
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 1.f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 1.f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 1.f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 1.f, 1.f));
-
-    //Right face
-    //UR
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 0.0f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 0.0f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 1.f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 1.f, 1.f));
-
-    //Left face
-    //UR
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 1.f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 1.f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 0.0f, 1.f));
-
-    //Back face
-    //UR
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 0.0f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 0.0f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 0.0f, 1.f));
-
-    //Top face
-    //UR
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 0.0f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(1.f, 0.125f, 1.f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 1.f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(0.0f, 0.125f, 0.0f, 1.f));
-
-    //Bottom face
-    //UR
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 1.f, 1.f));
-    //LR
-    pos.emplace_back(glm::vec4(1.f, 0.0f, 0.0f, 1.f));
-    //LL
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 0.0f, 1.f));
-    //UL
-    pos.emplace_back(glm::vec4(0.0f, 0.0f, 1.f, 1.f));
+    //bott
+    pos.emplace_back(glm::vec4(dd / 2, -h, w / 2, 1));
+    pos.emplace_back(glm::vec4(-dd / 2, -h, w / 2, 1));
+    pos.emplace_back(glm::vec4(-dd / 2, -h, -w / 2, 1));
+    pos.emplace_back(glm::vec4(dd / 2, -h, -w / 2, 1));
 
     //front
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 0, 1, 0);
-    }
-    //right
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(1, 0, 0, 0);
-    }
+//    pos.emplace_back(glm::vec4(dd / 2, 0, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, -h, w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, -h, -w / 2, 1));
+
     //left
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(-1, 0, 0, 0);
-    }
+//    pos.emplace_back(glm::vec4(dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, -h, w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, -h, w / 2, 1));
+
     //back
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 0, -1, 0);
-    }
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, -h, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, -h, w / 2, 1));
+
+    //right
+//    pos.emplace_back(glm::vec4(-dd / 2, 0, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, 0, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(dd / 2, -h, -w / 2, 1));
+//    pos.emplace_back(glm::vec4(-dd / 2, -h, -w / 2, 1));
+
     //top
-    for (int i = 0; i < 4; i++) {
-        nor.emplace_back(0, 1, 0, 0);
-    }
-    //bottom
+//    for (int i = 0; i < 4; i++) {
+//        nor.emplace_back(0, 1, 0, 0);
+//    }
+//    //bott
     for (int i = 0; i < 4; i++) {
         nor.emplace_back(0, -1, 0, 0);
     }
+//    //+x=front
+//    for (int i = 0; i < 4; i++) {
+//        nor.emplace_back(1, 0, 0, 0);
+//    }
+//    //+z=left
+//    for (int i = 0; i < 4; i++) {
+//        nor.emplace_back(0, 0, 1, 0);
+//    }
+//    //-x=back
+//    for (int i = 0; i < 4; i++) {
+//        nor.emplace_back(-1, 0, 0, 0);
+//    }
+//    //-z=right
+//    for (int i = 0; i < 4; i++) {
+//        nor.emplace_back(0, 0, -1, 0);
+//    }
 
     float d = 16.f/1024.f;
-    //front
-    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-
-    //right
-    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
-
-    //left
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
-
-    //back
-    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
-
     //top
     uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
     uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
     uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
     uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
 
-    //bott
-    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
-    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
-    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+//    //bott
+//    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
 
+//    //front
+//    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
 
-    for(int i = 0; i < 6; i++){
-        idx.emplace_back(i*4);
-        idx.emplace_back(i*4+1);
-        idx.emplace_back(i*4+1);
-        idx.emplace_back(i*4+2);
-        idx.emplace_back(i*4+2);
-        idx.emplace_back(i*4+3);
-        idx.emplace_back(i*4+3);
-        idx.emplace_back(i*4);
+//    //right
+//    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(d, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(d, d, 0, 0));
+
+//    //left
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
+
+//    //back
+//    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, 0, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+//    uvs.emplace_back(p + glm::vec4(0, d, 0, 0));
+
+    for(int i = 0; i < 1; i++){
+        idx.push_back(i*4);
+        idx.push_back(i*4+1);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4);
+        idx.push_back(i*4+2);
+        idx.push_back(i*4+3);
     }
+
 
     for (int i = 0; i < pos.size(); i++) {
         inter.push_back(pos[i]);

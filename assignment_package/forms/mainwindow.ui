@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>844</width>
-    <height>598</height>
+    <width>1170</width>
+    <height>707</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -30,7 +30,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="game">
        <widget class="MyGL" name="mygl">
@@ -38,8 +38,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>821</width>
-          <height>561</height>
+          <width>1011</width>
+          <height>661</height>
          </rect>
         </property>
         <property name="maximumSize">
@@ -205,6 +205,32 @@
          <string>-&gt;</string>
         </property>
        </widget>
+       <widget class="QLineEdit" name="portText">
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>280</y>
+          <width>151</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>3080</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_6">
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>250</y>
+          <width>131</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Port #</string>
+        </property>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -215,7 +241,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>844</width>
+     <width>1170</width>
      <height>22</height>
     </rect>
    </property>

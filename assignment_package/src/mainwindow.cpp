@@ -49,6 +49,8 @@ void MainWindow::on_actionCamera_Controls_triggered()
 void MainWindow::slot_setSceneSinglePlayer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
+    std::string ps = ui->portText->displayText().toStdString();
+    ui->mygl->port = atoi(ps.c_str());
     ui->mygl->start(false, ui->usernameText->text());
 }
 
@@ -62,6 +64,8 @@ void MainWindow::slot_setSceneMultiPlayer() {
 void MainWindow::slot_setSceneHostServer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
+    std::string ps = ui->portText->displayText().toStdString();
+    ui->mygl->port = atoi(ps.c_str());
     ui->mygl->start(false, ui->usernameText->text());
 }
 
@@ -69,6 +73,8 @@ void MainWindow::slot_setSceneJoinServer() {
     scene = 1;
     ui->scenesWidget->setCurrentIndex(0);
     ui->mygl->ip = ui->serverIPText->displayText().toStdString();
+    std::string ps = ui->portText->displayText().toStdString();
+    ui->mygl->port = atoi(ps.c_str());
     ui->mygl->start(true, ui->usernameText->text());
 }
 

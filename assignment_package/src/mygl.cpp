@@ -65,7 +65,7 @@ void MyGL::start(bool joinServer, QString username) {
 
     //check if we need to host a server
     if(!joinServer) {
-        SERVER = mkU<Server>(1);
+        SERVER = mkU<Server>(1, port);
         while(!SERVER->setup);
         ip = getIP().data();
     }
@@ -95,7 +95,7 @@ void MyGL::start(bool joinServer, QString username) {
     Item i = Item(this, STRING, 1, true);
     Item j = Item(this, IRON_HELMET, 1, true);
     Item k = Item(this, IRON_INGOT, 9, true);
-    Item l = Item(this, DIRT_, 12, true);
+    Item l = Item(this, GRASS_BLOCK_, 12, true);
     m_player.m_inventory.addItem(a);
     m_player.m_inventory.addItem(b);
     m_player.m_inventory.addItem(c);
@@ -281,7 +281,7 @@ void MyGL::tick() {
                                              inHand, onHead, onChest, onLeg, onFoot,
                                              m_player.m_flightMode);
     m_player.inHand = inHand;
-    if(!isDead) send_packet(&pp);
+    if(!m_player.isDead) send_packet(&pp);
 
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -587,15 +587,22 @@ void MyGL::renderEntities() {
         itemQueue.pop();
     }
 
-    //hand/item
-    if (m_player.inHand != AIR) {
-        glm::vec2 cur = itemUV.at(m_player.inHand);
-        m_player.hand_item.p = glm::vec4(cur.x, cur.y, 0, 0);
-        m_player.hand_item.createVBOdata();
-        m_player.drawHandItem(&m_progLambert, m_block_texture);
-    } else {
-        m_player.drawArm(&m_progLambert, m_skin_texture);
-    }
+    //hand/item WIP
+//    if (m_player.inHand != AIR) {
+//        if(item2block.find(m_player.inHand) == item2block.end()) {
+//            glm::vec2 cur = itemUV.at(m_player.inHand);
+//            m_player.hand_item.p = glm::vec4(cur.x, cur.y, 0, 0);
+//            m_player.hand_item.createVBOdata();
+//            m_player.drawHandItem(&m_progLambert, m_block_texture);
+//        }
+//        else {
+//            m_player.drawHandItem(&m_progLambert, m_block_texture, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected].value());
+//        }
+//    } else {
+//        m_player.drawArm(&m_progLambert, m_skin_texture);
+//    }
+    m_player.drawArm(&m_progLambert, m_skin_texture);
+
     //cube display
     m_player.drawCubeDisplay(&m_progFlat);
     //players
@@ -648,12 +655,26 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     if(chatMode && !m_player.m_inventory.showInventory) {
         if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
             if(!m_mychat.getText().empty()){
-                m_chat_mutex.lock();
-                m_chat.push_front(Font(this, m_player.name.toStdString() + ": "+m_mychat.getText(), glm::vec4(1)));
-                if(m_chat.size() > 20) m_chat.pop_back();
-                m_chat_mutex.unlock();
-                ChatPacket cpp = ChatPacket(client_id, QString::fromStdString(m_mychat.getText()));
-                send_packet(&cpp);
+                if(m_mychat.getText() == "/kit 1"){
+
+                }
+                else if(m_mychat.getText() == "/kit 2"){
+
+                }
+                else if(m_mychat.getText() == "/kit 3"){
+
+                }
+                else if(m_mychat.getText() == "/kit 4"){
+
+                }
+                else {
+                    m_chat_mutex.lock();
+                    m_chat.push_front(Font(this, m_player.name.toStdString() + ": "+m_mychat.getText(), glm::vec4(1)));
+                    if(m_chat.size() > 20) m_chat.pop_back();
+                    m_chat_mutex.unlock();
+                    ChatPacket cpp = ChatPacket(client_id, QString::fromStdString(m_mychat.getText()));
+                    send_packet(&cpp);
+                }
             }
             chatMode = false;
         }
@@ -964,12 +985,27 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 if(item2block.find(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type) == item2block.end()) return;
                 BlockType type = item2block.at(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);//m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
                 glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
-                //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
-                qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
-                qDebug() << QString::fromStdString(glm::to_string(neighbor));
-                qDebug() << dist;
+
+                for(float dx = -0.3; dx <= 0.3; dx += 0.6) {
+                    for(float dz = -0.3; dz <= 0.3; dz += 0.6) {
+                        for(float dy = 0; dy <= 1.8; dy += 0.9) {
+                            if(neighbor.x == glm::floor(m_player.m_position.x + dx) &&
+                                 neighbor.y == glm::floor(m_player.m_position.y + dy) &&
+                                     neighbor.z == glm::floor(m_player.m_position.z + dz)){
+                                return;
+                            }
+                        }
+                    }
+                }
                 m_terrain.changeBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
                 m_terrain.renderChange(m_terrain.getChunkAt(neighbor.x, neighbor.z).get(), neighbor.x, neighbor.z);
+                m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count--;
+                if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count == 0) {
+                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected].reset();
+                }
+                else {
+                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count));
+                }
                 BlockChangePacket bcp = BlockChangePacket(toKey(neighbor.x, neighbor.z), neighbor.y, type);
                 send_packet(&bcp);
             }
@@ -1015,7 +1051,7 @@ void MyGL::init_client() {
 
     // connect to server
     server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(PORT);
+    server_address.sin_port = htons(port);
     if (inet_pton(AF_INET, &ip[0], &server_address.sin_addr) <= 0)
     {
         qDebug() << "Invalid server address";
