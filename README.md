@@ -17,9 +17,6 @@ Made rivers and oceans look nicer and less noisy. Multithreading was also improv
 ## Day and Night Cycle
 Created a procedural sky using ray tracing and had a day cycle in which the sun would move from one side to the other and night cycle in which the moon would stay at a position in the sky. Added clouds and a glow effect when the sun was rising or setting and interpollated between night and day sky at sunrise and sunset. Modified terrain light to use the sun or moon during day and night cycles respectively.
 
-## Textures
-Fixed issues with texture transparency and added more block textures to the game.
-
 # Milestone 2
 
 # Kevin Zhang
