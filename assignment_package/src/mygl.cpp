@@ -12,6 +12,7 @@
 #include <QKeyEvent>
 
 #include "algo/perlin.h"
+#include "algo/seed.h"
 #include "scene/biome.h"
 #include "scene/font.h"
 #include "scene/inventory.h"
@@ -65,7 +66,7 @@ void MyGL::start(bool joinServer, QString username) {
 
     //check if we need to host a server
     if(!joinServer) {
-        SERVER = mkU<Server>(1, port);
+        SERVER = mkU<Server>(2, port);
         while(!SERVER->setup);
         ip = getIP().data();
     }
@@ -96,29 +97,29 @@ void MyGL::start(bool joinServer, QString username) {
     Item j = Item(this, IRON_HELMET, 1, true);
     Item k = Item(this, IRON_INGOT, 9, true);
     Item l = Item(this, GRASS_BLOCK_, 12, true);
-    m_player.m_inventory.addItem(a);
-    m_player.m_inventory.addItem(b);
-    m_player.m_inventory.addItem(c);
-    m_player.m_inventory.addItem(d);
-    m_player.m_inventory.addItem(e);
-    m_player.m_inventory.addItem(f);
-    m_player.m_inventory.addItem(g);
-    m_player.m_inventory.addItem(h);
-    m_player.m_inventory.addItem(i);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(k);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(k, 26);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(l);
+//    m_player.m_inventory.addItem(a);
+//    m_player.m_inventory.addItem(b);
+//    m_player.m_inventory.addItem(c);
+//    m_player.m_inventory.addItem(d);
+//    m_player.m_inventory.addItem(e);
+//    m_player.m_inventory.addItem(f);
+//    m_player.m_inventory.addItem(g);
+//    m_player.m_inventory.addItem(h);
+//    m_player.m_inventory.addItem(i);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(k);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(k, 26);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(l);
 
-    m_player.m_inventory.armor[0] = j;
-    m_player.m_inventory.armor[1] = h;
-    m_player.m_inventory.armor[2] = b;
-    m_player.m_inventory.armor[3] = e;
+//    m_player.m_inventory.armor[0] = j;
+//    m_player.m_inventory.armor[1] = h;
+//    m_player.m_inventory.armor[2] = b;
+//    m_player.m_inventory.armor[3] = e;
     m_player.armor = m_player.m_inventory.calcArmor();
 
     // Tell the timer to redraw 60 times per second
@@ -410,7 +411,7 @@ void MyGL::paintGL() {
 void MyGL::renderTerrain() {
     m_block_texture.bind(0);
     //chunk player is in
-    int renderDist = 256;
+    int renderDist = 512;
     float x = floor(m_player.mcr_position.x/16.f)*16;
     float y = floor(m_player.mcr_position.z/16.f)*16;
 
