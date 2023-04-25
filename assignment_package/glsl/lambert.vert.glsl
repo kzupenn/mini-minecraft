@@ -30,12 +30,12 @@ in vec4 vs_UV;              //The array of vertex uv coords passed to the shader
 
 out vec4 fs_Pos;
 out vec4 fs_Nor;            // The array of normals that has been transformed by u_ModelInvTr. This is implicitly passed to the fragment shader.
-out vec3 fs_UV;             //The UV of each vertex, passed to the fragment shader
+out vec4 fs_UV;             //The UV of each vertex, passed to the fragment shader
 
 void main()
 {
     fs_Pos = vs_Pos;                     // Pass the vertex colors to the fragment shader for interpolation
-    fs_UV = vec3(vs_UV);
+    fs_UV = vs_UV;
 
     mat3 invTranspose = mat3(u_ModelInvTr);
     fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.

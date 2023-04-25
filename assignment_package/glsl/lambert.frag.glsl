@@ -21,7 +21,7 @@ uniform sampler2D u_Texture; // The texture to be read from by this shader
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 
-in vec3 fs_UV;
+in vec4 fs_UV;
 
 uniform int uTime;
 

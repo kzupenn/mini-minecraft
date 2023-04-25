@@ -47,7 +47,7 @@ private:
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
     FrameBuffer m_frame;
     Quad m_quad;
-    Quad m_sky;
+    Quad m_sky; bool drawSky;
 
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
     std::optional<Item> m_cursor_item; // Item player is handling in inventory mode

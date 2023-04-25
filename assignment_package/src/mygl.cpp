@@ -31,7 +31,7 @@ MyGL::MyGL(QWidget *parent)
       m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this),
       m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this),
       deathMsg1(this), deathMsg2(this),
-      mouseMove(false), isDead(false), chatMode(false)
+      mouseMove(false), isDead(false), chatMode(false), drawSky(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -384,7 +384,7 @@ void MyGL::paintGL() {
     m_progSky.setEye(m_player.mcr_position);
     m_progSky.setTime(m_time);
 
-    m_progSky.draw(m_sky);
+    if(drawSky) m_progSky.draw(m_sky);
 
     renderTerrain();
     renderEntities();
@@ -406,7 +406,7 @@ void MyGL::paintGL() {
 void MyGL::renderTerrain() {
     m_block_texture.bind(0);
     //chunk player is in
-    int renderDist = 512;
+    int renderDist = 256;
     float x = floor(m_player.mcr_position.x/16.f)*16;
     float y = floor(m_player.mcr_position.z/16.f)*16;
 
@@ -706,6 +706,8 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
                     m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count));
                 }
             }
+        } else if (e->key() == Qt::Key_M) { //drawing sky
+            drawSky = !drawSky;
         } else if (e->key() == Qt::Key_1) {
             m_player.m_inventory.hotbar.selected = 0;
             m_player.m_inventory.hotbar.createVBOdata();
