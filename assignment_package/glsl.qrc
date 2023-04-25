@@ -10,5 +10,7 @@
         <file>glsl/instanced.frag.glsl</file>
         <file>glsl/overlay.frag.glsl</file>
         <file>glsl/overlay.vert.glsl</file>
+        <file>glsl/sky.vert.glsl</file>
+        <file>glsl/sky.frag.glsl</file>
     </qresource>
 </RCC>

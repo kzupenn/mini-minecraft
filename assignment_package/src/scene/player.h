@@ -47,6 +47,8 @@ public:
     void tick(float dT, InputBundle &input) override;
     void orientCamera();
 
+    bool isDead;
+
 
     // Player overrides all of Entity's movement
     // functions so that it transforms its camera

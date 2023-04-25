@@ -91,6 +91,8 @@ void Server::process_packet(Packet* packet, int sender) {
     case PLAYER_STATE: {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
+        if(m_players[sender].health == 0) return;
+
         m_players[sender].pos = thispack->player_pos;
         m_players[sender].velo = thispack->player_velo;
         m_players[sender].phi = thispack->player_phi;
@@ -110,14 +112,15 @@ void Server::process_packet(Packet* packet, int sender) {
             else if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
                 m_players[sender].isFalling = false;
                 int damage = glm::max(0, (int) glm::round(m_players[sender].fallHeight-thispack->player_pos.y)-3);
+                if(m_players[sender].velo.y < 0.01) damage *= 1.5;
                 if(damage>0){
                     m_players[sender].health = glm::max(0, m_players[sender].health-damage);
+                    m_players[sender].regen = 600;
                     //use a hit packet to simulate fall damage
-                    target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.2, 0)).get(), sender);
+                    target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.4, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
-                        qDebug() << "DEAD MOFO";
-                        broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
+                        broadcast_packet(mkU<DeathPacket>(sender, sender).get(), -1);
                     }
                 }
             }
@@ -129,6 +132,15 @@ void Server::process_packet(Packet* packet, int sender) {
         }
         else {
             m_players[sender].isFalling = false;
+        }
+
+        if(m_players[sender].health < 20) {
+            m_players[sender].regen--;
+            if(m_players[sender].regen <= 0) {
+                m_players[sender].health++;
+                m_players[sender].regen = 300;
+                target_packet(mkU<HitPacket>(-1, sender, glm::vec3(0, 0, 0)).get(), sender);
+            }
         }
         m_players_mutex.unlock();
 
@@ -162,6 +174,22 @@ void Server::process_packet(Packet* packet, int sender) {
                 d = 20;
                 break;
             }
+            case DIAMOND_SWORD: {
+                d = 7;
+                break;
+            }
+            case IRON_SWORD: {
+                d = 6;
+                break;
+            }
+            case GOLDEN_SWORD: {
+                d = 4;
+                break;
+            }
+            case STONE_SWORD: {
+                d = 5;
+                break;
+            }
             default:
                 break;
             }
@@ -170,15 +198,18 @@ void Server::process_packet(Packet* packet, int sender) {
             int a = m_players[thispack->target].armor;
             int t = m_players[thispack->target].toughness;
 
-            int damage = glm::floor((float)damage*(1.f-(glm::max(a*0.2f, a-(4.f*d/(t+8.f))))*0.04f));
+            int damage = glm::floor((float)d*(1.f-(glm::max(a*0.2f, a-(4.f*d/(t+8.f))))*0.04f));
             //deals the damage
 
             m_players[thispack->target].health = glm::max(0, m_players[thispack->target].health-damage);
+            m_players[sender].regen = 600;
+
+            glm::vec3 dd = glm::normalize(thispack->direction);
             //use hit packet to kb
-            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0)).get(), 0);
+            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0) + dd).get(), -1);
             //if player dies, broadcast that they died
             if(m_players[thispack->target].health == 0) {
-                broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), 0);
+                broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), -1);
             }
         }
         m_players_mutex.unlock();

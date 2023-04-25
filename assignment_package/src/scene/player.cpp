@@ -17,7 +17,7 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       display(m_context), hand_item(m_context, glm::vec4()),
       start_swing(0), swinging(false), stopped(true),
       created(false), swing_dir(1), shift(false), hit(0),
-      health(20), armor(0), inHand(AIR)
+      health(20), armor(0), inHand(AIR), isDead(false)
 {}
 
 Player::~Player()
@@ -44,7 +44,7 @@ void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
     float SPEED = 1.25f;
-    if (m_flightMode) SPEED *= 4;
+    if (m_flightMode) SPEED *= 12;
     if (inputs.mouseX) {
         theta -= inputs.mouseX;
         if (theta > 360 || theta < -360) theta = 0;
@@ -319,6 +319,17 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
     float len = glm::sqrt(pow(m_forward.x, 2) + pow(m_forward.z, 2));
     glm::mat4 vert = glm::rotate(glm::mat4(1), glm::atan(m_forward.y, len), glm::vec3(0, 0, 1));
+    if(isDead) {
+        glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
+        m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position-glm::vec3(0, 1.5, 0)) *
+                               sc *
+                               head_trans *
+                               horiz *
+                               vert *
+                               glm::translate(glm::mat4(1), glm::vec3(0, 8, 0)));
+        m_prog->drawInterleaved(head);
+        return;
+    }
     //torso
     glm::mat4 torso_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
     m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
