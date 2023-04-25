@@ -1,16 +1,17 @@
 # Milestone 3
 # Kevin Zhang
 ## Armor and Health
-Added armor and health bars. Players also take fall damage, similar to actual Minecraft, and this damage is negated by water. 
+Added armor and health bars. Armor bars depend on the armor equipped in the slots, while health can be lost from damage sources and regained through passive regeneration. Players also take fall damage proportional to fall distance (similar to actual Minecraft) and this damage is negated by water. 
 
 ## Player vs Player
-Added damage calculation of players based on armor and weapons. Hitting players also applies knockback effects on them.
+Added server-side damage calculation of players based on armor and weapons. Hitting players also applies knockback effects on them. When players die, a death screen is applied and players can choose to respawn.
 
 ## Inventory blocks
-Blocks can be held and used to place down blocks of a desired type.
+Blocks can be held in the hotbar and used to place down blocks of a desired type.
 
 ## Fixes
 Made rivers and oceans look nicer and less noisy. Multithreading was also improved so that running a server-client didn't block terrain generation as much. 
+
 
 # Leon Kabue
 ## Day and Night Cycle
