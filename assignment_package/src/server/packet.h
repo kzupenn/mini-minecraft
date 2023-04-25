@@ -33,7 +33,7 @@ struct WorldInitPacket : Packet {
     int pid;
     int time;
     std::vector<std::pair<int, QString>> players;
-    WorldInitPacket(int s, int ppid, int tt, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), time(t), spawn(p), players(pp) {}
+    WorldInitPacket(int s, int ppid, int tt, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), time(tt), spawn(p), players(pp) {}
     ~WorldInitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;

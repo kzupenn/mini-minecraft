@@ -57,7 +57,6 @@ void MyGL::start(bool joinServer, QString username) {
     
     //player model
     m_player.createVBOdata();
-    m_player.setDimension(glm::vec3(0.6, 0.6, 1.8));
 
     //noise function distribution tests
     //distTest();
@@ -414,6 +413,7 @@ void MyGL::renderOverlays() {
 
     //crosshair
     m_progFlat.setModelMatrix(glm::mat4());
+
     m_progFlat.draw(m_crosshair);
 
     //armor and health bars
@@ -854,20 +854,22 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             glm::vec3 cam_pos = m_player.mcr_camera.mcr_position;
             glm::vec3 ray_dir = m_player.getLook() * bound;
 
-            float hit = 3.f; float step = m_player.dim.x;
+            float hit = 3.f; float step = 0.3f;
             float cur = 0; bool found = false;
-            glm::vec3 ray = m_player.getLook();
+            glm::vec3 ray = glm::normalize(m_player.getLook());
             glm::vec3 hit_direction;
             m_multiplayers_mutex.lock();
             while (cur <= hit && !found) {
-                glm::vec3 pt = m_player.m_position + cur * ray;
+                glm::vec3 pt = m_player.mcr_camera.m_position + cur * ray;
+                //qDebug() << "PT= " << pt.x << " " << pt.y << " " << pt.z;
                 for (auto &a : m_multiplayers) {
                     Player* p = a.second.get();
+                    //qDebug() << p->m_position.x << " " << p->m_position.y << " " << p->m_position.z;
                     if (p -> inBoundingBox(pt)) {
-                        found = true;
+                        found = true; p -> hit = true;
                         hit_direction = p -> m_position - m_player.m_position;
                         HitPacket hp = HitPacket(0, a.first, hit_direction);
-                        p -> hit = true;
+                        qDebug() << "bop!";
                         send_packet(&hp);
                         break;
                     }

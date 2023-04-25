@@ -102,7 +102,6 @@ private:
     std::mutex itemQueue_mutex;
     std::queue<Drawable*> itemQueue;
 
-
     //server, if hosting
     uPtr<Server> SERVER;
 

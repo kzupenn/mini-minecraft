@@ -4,7 +4,7 @@
 
 
 Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, QString n)
-    : Entity(pos), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
+    : Entity(pos, glm::vec3(1, 2, 1)), m_inventory(m_context, 27, true), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       theta(0), phi(0), mcr_camera(m_camera), m_flightMode(true),
       airtime(0), maxair(40), in_liquid(false), bott_in_liquid(false), name(n),
@@ -14,8 +14,8 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       right_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
       left_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
       left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
-      parts {head, torso, right_arm, right_leg, left_arm, left_leg},
-      display(m_context), start_swing(0), swinging(false), stopped(true),
+      display(m_context),
+      start_swing(0), swinging(false), stopped(true),
       created(false), swing_dir(1), shift(false), hit(0),
       health(20), armor(0), inHand(AIR)
 {}
@@ -416,13 +416,12 @@ void Player::drawCubeDisplay(ShaderProgram* m_prog) {
 
 void Player::createVBOdata() {
     bool b = hit > 0;
-    for (Prism p : parts) p.setHit(b);
-    head.createVBOdata();
-    torso.createVBOdata();
-    right_arm.createVBOdata();
-    right_leg.createVBOdata();
-    left_arm.createVBOdata();
-    left_leg.createVBOdata();
+    head.setHit(b); head.createVBOdata();
+    torso.setHit(b); torso.createVBOdata();
+    right_arm.setHit(b); right_arm.createVBOdata();
+    right_leg.setHit(b); right_leg.createVBOdata();
+    left_arm.setHit(b); left_arm.createVBOdata();
+    left_leg.setHit(b); left_leg.createVBOdata();
     display.createVBOdata();
     created = true;
 }

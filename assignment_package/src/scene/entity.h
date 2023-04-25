@@ -29,6 +29,7 @@ public:
     // Various constructors
     //Entity();
     Entity(glm::vec3 pos);
+    Entity(glm::vec3 pos, glm::vec3 dim);
     Entity(const Entity &e);
     virtual ~Entity();
 
@@ -61,5 +62,4 @@ public:
     //getter function
     glm::vec3 getPos();
     bool inBoundingBox(glm::vec3 pt);
-    void setDimension(glm::vec3 d);
 };

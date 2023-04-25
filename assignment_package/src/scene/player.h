@@ -1,9 +1,9 @@
 #pragma once
 #include "entity.h"
 #include "prism.h"
-#include "cubedisplay.h"
 #include "camera.h"
 #include "scene/inventory.h"
+#include "scene/cubedisplay.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -26,7 +26,6 @@ public:
     // for easy access from MyGL
     const Camera& mcr_camera;
     Prism head, torso, right_arm, right_leg, left_arm, left_leg;
-    std::vector<Prism> parts;
     CubeDisplay display;
     float start_swing, swing_dir;
     bool swinging, stopped, created;
