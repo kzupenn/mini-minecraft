@@ -188,7 +188,7 @@ void Server::initClient(int i) {
     m_players[i] = PlayerState(glm::vec3(0, 80, 0), glm::vec3(), 0.f, 0.f, QString("Player"));
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
-    target_packet(mkU<WorldInitPacket>(seed, m_terrain.worldSpawn, pps).get(), i);
+    target_packet(mkU<WorldInitPacket>(seed, i, m_terrain.worldSpawn, pps).get(), i);
     std::vector<std::pair<int64_t, vec3Map>> chunkChangesToSend = m_terrain.getChunkChanges();
     for(std::pair<int64_t, vec3Map> p: chunkChangesToSend) {
         std::vector<std::pair<vec3, BlockType>> ch;
@@ -253,7 +253,7 @@ int Server::start()
             // create a new thread to handle the client
             ServerThreadWorker* stw = new ServerThreadWorker(this, client_fd);
             m_clients.start(stw);
-            cout << "New client connected: " << inet_ntoa(address.sin_addr) << endl;
+            cout << "New client connected: " << inet_ntoa(address.sin_addr) << " with client fd " << client_fd << endl;
         }
     }
 

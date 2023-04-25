@@ -15,9 +15,9 @@ Packet* bufferToPacket(QByteArray buffer) {
         break;
     }
     case WORLD_INIT:{
-        int s;
+        int s, pp;
         float f1, f2, f3;
-        in >> s >> f1 >> f2 >> f3;
+        in >> s >> pp >> f1 >> f2 >> f3;
         int ps;
         std::vector<std::pair<int, QString>> pps;
         in >> ps;
@@ -27,7 +27,7 @@ Packet* bufferToPacket(QByteArray buffer) {
             in >> pid >> n;
             pps.push_back(std::make_pair(pid, n));
         }
-        return new WorldInitPacket(s, glm::vec3(f1, f2, f3), pps);
+        return new WorldInitPacket(s, pp, glm::vec3(f1, f2, f3), pps);
         break;
     }
     case PLAYER_JOIN:{

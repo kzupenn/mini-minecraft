@@ -30,14 +30,15 @@ struct Packet{
 struct WorldInitPacket : Packet {
     int seed;
     vec3 spawn;
+    int pid;
     std::vector<std::pair<int, QString>> players;
-    WorldInitPacket(int s, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), spawn(p), players(pp) {}
+    WorldInitPacket(int s, int ppid, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), spawn(p), players(pp) {}
     ~WorldInitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         int a = players.size(); //overloaded <<
-        out << WORLD_INIT << seed << spawn.x << spawn.y << spawn.z;
+        out << WORLD_INIT << seed << pid << spawn.x << spawn.y << spawn.z;
         out << a;
         for(std::pair<int, QString> pp: players) {
             out << pp.first << pp.second;

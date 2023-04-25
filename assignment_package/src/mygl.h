@@ -74,7 +74,8 @@ private:
     //client vars
     void receive_messages(void*arg);
 
-    int client_fd;
+    int client_fd; //socket connection
+    int client_id; //server-side client fd, used as a player id
     struct sockaddr_in server_address;
     bool open;
 
