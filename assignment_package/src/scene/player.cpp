@@ -44,7 +44,7 @@ void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
     float SPEED = 1.25f;
-    if (m_flightMode) SPEED *= 4;
+    if (m_flightMode) SPEED *= 12;
     if (inputs.mouseX) {
         theta -= inputs.mouseX;
         if (theta > 360 || theta < -360) theta = 0;
@@ -321,7 +321,7 @@ void Player::draw(ShaderProgram* m_prog, Texture& skin, float tick) {
     glm::mat4 vert = glm::rotate(glm::mat4(1), glm::atan(m_forward.y, len), glm::vec3(0, 0, 1));
     if(isDead) {
         glm::mat4 head_trans = glm::translate(glm::mat4(1), glm::vec3(0, 24, 0));
-        m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position-glm::vec3(0, 1.6, 0)) *
+        m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position-glm::vec3(0, 1.5, 0)) *
                                sc *
                                head_trans *
                                horiz *

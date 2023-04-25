@@ -1,4 +1,5 @@
 #include "item.h"
+#include "chunk.h"
 
 const std::map<ItemType, glm::vec2> itemUV = {
     {DIAMOND_HOE, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
@@ -102,33 +103,161 @@ GLenum Item::drawMode() {
 }
 
 void Item::createVBOdata() {
-    m_count = 6;
-    std::vector<glm::vec4> VBOpos, col, uvs;
-    std::vector<int> idx = {0, 1, 2, 2, 3, 0};
+    if(type < blockItemLimit){
+        m_count = 6;
+        std::vector<glm::vec4> VBOpos, col, uvs;
+        std::vector<int> idx = {0, 1, 2, 2, 3, 0};
 
-    col = {glm::vec4(1,1,1,1),glm::vec4(1,1,1,1),glm::vec4(1,1,1,1),glm::vec4(1,1,1,1)};
-    glm::vec4 blc = glm::vec4(656.f/1024.f, 944.f/1024.f, 0, 1);
-    if(itemUV.find(type)!=itemUV.end()) {
-        blc = glm::vec4(itemUV.at(type), 0, 1);
+        col = {glm::vec4(1,1,1,1),glm::vec4(1,1,1,1),glm::vec4(1,1,1,1),glm::vec4(1,1,1,1)};
+        glm::vec4 blc = glm::vec4(656.f/1024.f, 944.f/1024.f, 0, 1);
+        if(itemUV.find(type)!=itemUV.end()) {
+            blc = glm::vec4(itemUV.at(type), 0, 1);
+        }
+        VBOpos = {glm::vec4(0, 0, 0, 1), glm::vec4(1, 0, 0, 1), glm::vec4(1, 1, 0, 1), glm::vec4(0, 1, 0, 1)};
+        uvs = {blc, blc+glm::vec4(16.f/1024.f, 0, 0, 0), blc+glm::vec4(16.f/1024.f, 16.f/1024.f,0,0), blc+glm::vec4(0, 16.f/1024.f, 0, 0)};
+
+        generateIdx();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufIdx);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+        generatePos();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
+
+        generateUV();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufUV);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec4), uvs.data(), GL_STATIC_DRAW);
+
+        generateCol();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
     }
-    VBOpos = {glm::vec4(0, 0, 0, 1), glm::vec4(1, 0, 0, 1), glm::vec4(1, 1, 0, 1), glm::vec4(0, 1, 0, 1)};
-    uvs = {blc, blc+glm::vec4(16.f/1024.f, 0, 0, 0), blc+glm::vec4(16.f/1024.f, 16.f/1024.f,0,0), blc+glm::vec4(0, 16.f/1024.f, 0, 0)};
+    else {
+        float d = 1.f; float w = 1.f; float h = 1.f;
+        std::vector<glm::vec4> VBOpos, nor, uvs, col;
+        std::vector<GLuint> idx;
+        //top
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
 
-    generateIdx();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufIdx);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+        //bott
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
 
-    generatePos();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
+        //front
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
 
-    generateUV();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufUV);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec4), uvs.data(), GL_STATIC_DRAW);
+        //left
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
 
-    generateCol();
-    mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
+        //back
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
+
+        //right
+        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
+
+        //top
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(0, 1, 0, 0);
+        }
+        //bott
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(0, -1, 0, 0);
+        }
+        //+x=front
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(1, 0, 0, 0);
+        }
+        //+z=left
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(0, 0, 1, 0);
+        }
+        //-x=back
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(-1, 0, 0, 0);
+        }
+        //-z=right
+        for (int i = 0; i < 4; i++) {
+            nor.emplace_back(0, 0, -1, 0);
+        }
+
+
+        //top
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 2)) {
+            uvs.emplace_back(foo);
+        }
+        //bott
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 3)) {
+            uvs.emplace_back(foo);
+        }
+
+        //front
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 4)) {
+            uvs.emplace_back(foo);
+        }
+
+        //left
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 0)) {
+            uvs.emplace_back(foo);
+        }
+
+        //back
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 5)) {
+            uvs.emplace_back(foo);
+        }
+
+        //right
+        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 1)) {
+            uvs.emplace_back(foo);
+        }
+
+        for(int i = 0; i < 6; i++){
+            idx.push_back(i*4);
+            idx.push_back(i*4+1);
+            idx.push_back(i*4+2);
+            idx.push_back(i*4);
+            idx.push_back(i*4+2);
+            idx.push_back(i*4+3);
+        }
+
+        m_count = idx.size();
+
+        for(int i = 0; i < VBOpos.size(); i++) {
+           col.emplace_back(1);
+        }
+
+        generateIdx();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufIdx);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(GLuint), idx.data(), GL_STATIC_DRAW);
+
+        generatePos();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufPos);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, VBOpos.size() * sizeof(glm::vec4), VBOpos.data(), GL_STATIC_DRAW);
+
+        generateUV();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufUV);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec4), uvs.data(), GL_STATIC_DRAW);
+
+        generateCol();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
+    }
 }
 
 void Item::merge(Item& x) {

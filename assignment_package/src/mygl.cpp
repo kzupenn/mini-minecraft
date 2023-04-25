@@ -94,6 +94,7 @@ void MyGL::start(bool joinServer, QString username) {
     Item i = Item(this, STRING, 1, true);
     Item j = Item(this, IRON_HELMET, 1, true);
     Item k = Item(this, IRON_INGOT, 9, true);
+    Item l = Item(this, DIRT_, 12, true);
     m_player.m_inventory.addItem(a);
     m_player.m_inventory.addItem(b);
     m_player.m_inventory.addItem(c);
@@ -111,7 +112,7 @@ void MyGL::start(bool joinServer, QString username) {
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
     m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(bb);
+    m_player.m_inventory.addItem(l);
 
     m_player.m_inventory.armor[0] = j;
     m_player.m_inventory.armor[1] = h;
@@ -695,17 +696,17 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
             m_player.m_inventory.showInventory = !m_player.m_inventory.showInventory;
             mouseMove = !m_player.m_inventory.showInventory;
         } else if (e->key() == Qt::Key_Q) { //ejecting an item
-            if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]) {
-                m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count--;
-                ItemEntityStatePacket bcp = ItemEntityStatePacket(-1, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count, m_player.m_position);
-                send_packet(&bcp);
-                if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count == 0) {
-                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected].reset();
-                }
-                else {
-                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count));
-                }
-            }
+//            if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]) {
+//                m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count--;
+//                ItemEntityStatePacket bcp = ItemEntityStatePacket(-1, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type, m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count, m_player.m_position);
+//                send_packet(&bcp);
+//                if(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count == 0) {
+//                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected].reset();
+//                }
+//                else {
+//                    m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->count_text.setText(std::to_string(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->item_count));
+//                }
+//            }
         } else if (e->key() == Qt::Key_M) { //drawing sky
             drawSky = !drawSky;
         } else if (e->key() == Qt::Key_1) {

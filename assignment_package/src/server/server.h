@@ -26,9 +26,10 @@ struct PlayerState {
     //fall damage calculations
     bool isFalling;
     float fallHeight;
+    int regen;
 
     PlayerState(glm::vec3 p, glm::vec3 v, float t, float ph, QString n)
-        : phi(ph), theta(t), velo(v) , pos(p), name(n), armor(0), health(20), creative(true), isFalling(false), fallHeight(0){};
+        : phi(ph), theta(t), velo(v) , pos(p), name(n), armor(0), health(20), creative(true), isFalling(false), fallHeight(0), regen(600){};
     PlayerState(){};
     int calcArmor(std::vector<ItemType> armor) {
         int ret = 0;
