@@ -12,17 +12,13 @@ Blocks can be held in the hotbar and used to place down blocks of a desired type
 ## Fixes
 Made rivers and oceans look nicer and less noisy. Multithreading was also improved so that running a server-client didn't block terrain generation as much. 
 
-# Aaron Cheng
-## Player Model
-Added player model (Steve) that animates arms/legs along with movement. Head rotates to face camera-vector, and body faces x-z forward vector. Also drew hand model for each player. 
-## PVP 
-Added ray-tracing function to send a hit-packet to server when a player is detected.
-## Cube Display
-Added wireframe cube to highlight block (4-block distance) currently selected. 
 
 # Leon Kabue
 ## Day and Night Cycle
 Created a procedural sky using ray tracing and had a day cycle in which the sun would move from one side to the other and night cycle in which the moon would stay at a position in the sky. Added clouds and a glow effect when the sun was rising or setting and interpollated between night and day sky at sunrise and sunset. Modified terrain light to use the sun or moon during day and night cycles respectively.
+
+## Textures
+Fixed issues with texture transparency and added more block textures to the game.
 
 # Milestone 2
 
