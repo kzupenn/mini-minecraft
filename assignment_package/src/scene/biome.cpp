@@ -193,7 +193,7 @@ std::pair<float, BiomeType> generateGround (vec2 pp) {
 
     //TO DO: remove this later
     if(TESTING) {
-        std::pair<float, BiomeType> testret = std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TUNDRA]), TUNDRA);
+        std::pair<float, BiomeType> testret = std::make_pair(getBiomeHeight(erosion, pp, biomeErosion[TAIGA]), TAIGA);
         float height = output/adjmag;
         float rivercoef = generateRiver(pp);
         float riverdepression = pow(clamp((float)(50*(abs(rivercoef-0.5)-river_width)), 0.f, 1.f), 3);

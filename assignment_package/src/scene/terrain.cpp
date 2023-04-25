@@ -850,7 +850,7 @@ void Terrain::buildStructure(const Structure& s) {
         int ymin = c->heightMap[xx-x][zz-z];
         int ymax = 5+4*noise1D(glm::vec2(xx,zz), SEED.getSeed(9606.874,301.036,378.273));
         setBlockAt(xx, ymax, zz, SPRUCE_LOG);
-        for(int y = ymax+ymin-1; y > ymax; y--) {
+        for(int y = ymax+ymin-1; y > ymin; y--) {
             if(y > ymin+ymax-4) {
                 setBlockAt(xx-1, y, zz, OAK_LEAVES);
                 setBlockAt(xx+1, y, zz, OAK_LEAVES);
