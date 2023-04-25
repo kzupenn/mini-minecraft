@@ -89,12 +89,12 @@ const std::map<ItemType, int> itemMaxStack = {
     {DIAMOND_BOOTS, 1}
 };
 
-Item:: Item(OpenGLContext* context, ItemType t, int init_count) :
+Item:: Item(OpenGLContext* context, ItemType t, int init_count, bool drawImmediately) :
     Drawable(context),
     max_count(itemMaxStack.at(t)),
-    count_text(context, std::to_string(init_count), glm::vec4(1)), type(t), item_count(init_count)
+    count_text(context, std::to_string(init_count), glm::vec4(1), drawImmediately), type(t), item_count(init_count)
 {
-    createVBOdata();
+    if(drawImmediately) createVBOdata();
 };
 
 GLenum Item::drawMode() {

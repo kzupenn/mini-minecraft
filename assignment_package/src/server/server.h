@@ -17,8 +17,10 @@ struct PlayerState {
     glm::vec3 velo;
     glm::vec3 pos;
     QString name;
+    //in hand item
+    ItemType hand;
     //hp, armor
-    int armor, health;
+    int armor, health, toughness;
     //creative mode
     bool creative;
     //fall damage calculations
@@ -68,6 +70,30 @@ struct PlayerState {
                     break;
                 case DIAMOND_BOOTS:
                     ret+=3;
+                    break;
+                default:
+                break;
+                }
+            }
+        }
+        return ret;
+    }
+    int calcTough(std::vector<ItemType> armor) {
+        int ret = 0;
+        for(ItemType it: armor) {
+            if(it){
+                switch(it) {
+                case DIAMOND_HELMET:
+                    ret+=2;
+                    break;
+                case DIAMOND_CHESTPLATE:
+                    ret+=2;
+                    break;
+                case DIAMOND_LEGGINGS:
+                    ret+=2;
+                    break;
+                case DIAMOND_BOOTS:
+                    ret+=2;
                     break;
                 default:
                 break;

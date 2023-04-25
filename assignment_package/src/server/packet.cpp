@@ -68,10 +68,10 @@ Packet* bufferToPacket(QByteArray buffer) {
         break;
     }
     case HIT: {
-        int d;
+        int d, t;
         float f1, f2, f3;
         in >> d >> f1 >> f2 >> f3;
-        return new HitPacket(d, glm::vec3(f1, f2, f3));
+        return new HitPacket(d, t, glm::vec3(f1, f2, f3));
         break;
     }
     case ITEM_ENTITY_STATE: {

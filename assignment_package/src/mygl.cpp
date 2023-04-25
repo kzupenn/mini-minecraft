@@ -82,18 +82,18 @@ void MyGL::start(bool joinServer, QString username) {
 
     m_player.m_inventory.createVBOdata();
     m_player.m_inventory.hotbar.createVBOdata();
-    Item a = Item(this, DIAMOND_HOE, 1);
-    Item b = Item(this, DIAMOND_LEGGINGS, 1);
-    Item bb = Item(this, GOLDEN_LEGGINGS, 1);
-    Item c = Item(this, GOLD_NUGGET, 64);
-    Item d = Item(this, IRON_NUGGET, 8);
-    Item e = Item(this, IRON_BOOTS, 1);
-    Item f = Item(this, STONE_SWORD, 1);
-    Item g = Item(this, DIAMOND_SWORD, 1);
-    Item h = Item(this, IRON_CHESTPLATE, 1);
-    Item i = Item(this, STRING, 1);
-    Item j = Item(this, IRON_HELMET, 1);
-    Item k = Item(this, IRON_INGOT, 9);
+    Item a = Item(this, DIAMOND_HOE, 1, true);
+    Item b = Item(this, DIAMOND_LEGGINGS, 1, true);
+    Item bb = Item(this, GOLDEN_LEGGINGS, 1, true);
+    Item c = Item(this, GOLD_NUGGET, 64, true);
+    Item d = Item(this, IRON_NUGGET, 8, true);
+    Item e = Item(this, IRON_BOOTS, 1, true);
+    Item f = Item(this, STONE_SWORD, 1, true);
+    Item g = Item(this, DIAMOND_SWORD, 1, true);
+    Item h = Item(this, IRON_CHESTPLATE, 1, true);
+    Item i = Item(this, STRING, 1, true);
+    Item j = Item(this, IRON_HELMET, 1, true);
+    Item k = Item(this, IRON_INGOT, 9, true);
     m_player.m_inventory.addItem(a);
     m_player.m_inventory.addItem(b);
     m_player.m_inventory.addItem(c);
@@ -348,26 +348,6 @@ void MyGL::paintGL() {
     renderTerrain();
     renderEntities();
 
-    m_player.drawCubeDisplay(&m_progFlat);
-    m_player.drawArm(&m_progLambert, m_skin_texture);
-    m_multiplayers_mutex.lock();
-    for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
-        Player* cur = it->second.get();
-        if (!cur->created) cur->createVBOdata();
-        cur->orientCamera();
-        if (glm::length(cur->getVelocity()) > 0.00005) {
-            if (!cur->swinging && cur->stopped) {
-                cur->start_swing = m_time;
-                cur->swinging = true;
-                cur->stopped = false;
-                cur->swing_dir *= -1;
-            }
-        } else {
-            cur->swinging = false;
-        }
-        cur->draw(&m_progLambert, m_skin_texture, m_time);
-    }
-    m_multiplayers_mutex.unlock();
     glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
     glViewport(0,0,this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -403,6 +383,7 @@ void MyGL::renderOverlays() {
     m_font_texture.bind(0);
     float shiftChat = 0;
 
+    chatQueue_mutex.lock();
     while(!chatQueue.empty()) {
         m_chat.push_front(Font(this, chatQueue.front().first, chatQueue.front().second));
         if(m_chat.size() > 20) m_chat.pop_back();
@@ -426,6 +407,7 @@ void MyGL::renderOverlays() {
                                   glm::scale(glm::mat4(), glm::vec3(30,30,0)));
         m_progOverlay.draw(m_chat[i]);
     }
+    chatQueue_mutex.unlock();
 
     //crosshair
     m_progFlat.setModelMatrix(glm::mat4());
@@ -534,11 +516,17 @@ void MyGL::renderOverlays() {
 }
 
 void MyGL::renderEntities() {
+    //lock queue for rendering and create vbos
+    m_multiplayers_mutex.lock();
+    itemQueue_mutex.lock();
+    while(!itemQueue.empty()) {
+        itemQueue.front()->createVBOdata();
+        itemQueue.pop();
+    }
     //player arm
     m_player.drawArm(&m_progLambert, m_skin_texture);
     m_player.drawCubeDisplay(&m_progFlat);
     //players
-    m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         Player* cur = it->second.get();
         if (!cur->created) cur->createVBOdata();
@@ -563,6 +551,8 @@ void MyGL::renderEntities() {
                                      glm::rotate(glm::mat4(), ite.a, glm::vec3(0, 1, 0)));
         m_progOverlay.draw(ite.item);
     }
+    //unlock mutex to allow modifications to queue
+    itemQueue_mutex.unlock();
 }
 
 
@@ -757,7 +747,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 else if (e->buttons() & Qt::RightButton) {
                     if(m_cursor_item.has_value()) {
                         if(!m_player.m_inventory.items[i].has_value()) {
-                            m_player.m_inventory.items[i] = Item(this, m_cursor_item->type, 1);
+                            m_player.m_inventory.items[i] = Item(this, m_cursor_item->type, 1, true);
                             m_cursor_item-> item_count--;
 
                             if(m_cursor_item->item_count == 0) m_cursor_item.reset();
@@ -775,7 +765,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     else {
                         if(m_player.m_inventory.items[i].has_value()) {
                            int toMerge = (m_player.m_inventory.items[i]->item_count+1)/2;
-                            m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge);
+                            m_cursor_item = Item(this, m_player.m_inventory.items[i]->type, toMerge, true);
 
                             m_player.m_inventory.items[i]->item_count -= toMerge;
                             if(m_player.m_inventory.items[i]->item_count == 0) m_player.m_inventory.items[i].reset();
@@ -806,7 +796,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 else if (e->buttons() & Qt::RightButton) {
                     if(m_cursor_item.has_value()) {
                         if(!m_player.m_inventory.hotbar.items[i].has_value()) {
-                            m_player.m_inventory.hotbar.items[i] = Item(this, m_cursor_item->type, 1);
+                            m_player.m_inventory.hotbar.items[i] = Item(this, m_cursor_item->type, 1, true);
                             m_cursor_item-> item_count--;
 
                             if(m_cursor_item->item_count == 0) m_cursor_item.reset();
@@ -824,7 +814,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     else {
                         if(m_player.m_inventory.hotbar.items[i].has_value()) {
                             int toMerge = (m_player.m_inventory.hotbar.items[i]->item_count+1)/2;
-                            m_cursor_item = Item(this, m_player.m_inventory.hotbar.items[i]->type, toMerge);
+                            m_cursor_item = Item(this, m_player.m_inventory.hotbar.items[i]->type, toMerge, true);
 
                             m_player.m_inventory.hotbar.items[i]->item_count -= toMerge;
 
@@ -856,7 +846,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     if (p -> inBoundingBox(pt)) {
                         found = true;
                         hit_direction = p -> m_position - m_player.m_position;
-                        HitPacket hp = HitPacket(0, hit_direction);
+                        HitPacket hp = HitPacket(0, a.first, hit_direction);
                         p -> hit = true;
                         send_packet(&hp);
                         break;
@@ -984,6 +974,10 @@ send_packet(Packet* packet) {
         buffer = (dynamic_cast<ItemEntityStatePacket*>(packet))->packetToBuffer();
         break;
     }
+    case HIT: {
+        buffer = (dynamic_cast<HitPacket*>(packet))->packetToBuffer();
+        break;
+    }
     default:
         break;
     }
@@ -1002,30 +996,36 @@ void MyGL::packet_processer(Packet* packet) {
         if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
             m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand);
             m_multiplayers[thispack->player_id]->inHand = thispack->player_hand;
+            itemQueue_mutex.lock();
             if(thispack->player_helmet == AIR) {
                 m_multiplayers[thispack->player_id]->m_inventory.armor[0].reset();
             }
             else {
-                m_multiplayers[thispack->player_id]->m_inventory.armor[0] = Item(this, thispack->player_helmet, 1);
+                m_multiplayers[thispack->player_id]->m_inventory.armor[0] = Item(this, thispack->player_helmet, 1, false);
+                itemQueue.push(&m_multiplayers[thispack->player_id]->m_inventory.armor[0].value());
             }
             if(thispack->player_chest == AIR) {
                 m_multiplayers[thispack->player_id]->m_inventory.armor[1].reset();
             }
             else {
-                m_multiplayers[thispack->player_id]->m_inventory.armor[1] = Item(this, thispack->player_chest, 1);
+                m_multiplayers[thispack->player_id]->m_inventory.armor[1] = Item(this, thispack->player_chest, 1, false);
+                itemQueue.push(&m_multiplayers[thispack->player_id]->m_inventory.armor[1].value());
             }
             if(thispack->player_leg == AIR) {
                 m_multiplayers[thispack->player_id]->m_inventory.armor[2].reset();
             }
             else {
-                m_multiplayers[thispack->player_id]->m_inventory.armor[2] = Item(this, thispack->player_leg, 1);
+                m_multiplayers[thispack->player_id]->m_inventory.armor[2] = Item(this, thispack->player_leg, 1, false);
+                itemQueue.push(&m_multiplayers[thispack->player_id]->m_inventory.armor[2].value());
             }
             if(thispack->player_boots == AIR) {
                 m_multiplayers[thispack->player_id]->m_inventory.armor[3].reset();
             }
             else {
-                m_multiplayers[thispack->player_id]->m_inventory.armor[3] = Item(this, thispack->player_boots, 1);
+                m_multiplayers[thispack->player_id]->m_inventory.armor[3] = Item(this, thispack->player_boots, 1, false);
+                itemQueue.push(&m_multiplayers[thispack->player_id]->m_inventory.armor[3].value());
             }
+            itemQueue_mutex.unlock();
         }
         m_multiplayers_mutex.unlock();
         break;
@@ -1046,14 +1046,18 @@ void MyGL::packet_processer(Packet* packet) {
     case PLAYER_JOIN:{
         PlayerJoinPacket* thispack = dynamic_cast<PlayerJoinPacket*>(packet);
         if(thispack->join){
-            m_multiplayers_mutex.lock();
+            chatQueue_mutex.lock();
             chatQueue.push(std::make_pair(thispack->name.toStdString()+" joined the game.", glm::vec4(1,1,0,0)));
+            chatQueue_mutex.unlock();
+            m_multiplayers_mutex.lock();
             m_multiplayers[thispack->player_id] = mkU<Player>(Player(glm::vec3(0), nullptr, this, thispack->name));
             m_multiplayers_mutex.unlock();
         }
         else {
-            m_multiplayers_mutex.lock();
+            chatQueue_mutex.lock();
             chatQueue.push(std::make_pair(thispack->name.toStdString()+" has left the game.", glm::vec4(1,1,0,0)));
+            chatQueue_mutex.unlock();
+            m_multiplayers_mutex.lock();
             m_multiplayers.erase(thispack->player_id);
             m_multiplayers_mutex.unlock();
         }
@@ -1090,7 +1094,10 @@ void MyGL::packet_processer(Packet* packet) {
     case ITEM_ENTITY_STATE: {
         ItemEntityStatePacket* thispack = dynamic_cast<ItemEntityStatePacket*>(packet);
         m_terrain.item_entities_mutex.lock();
-        m_terrain.item_entities.insert(std::make_pair(thispack->entity_id, ItemEntity(thispack->pos, Item(this, thispack->type, thispack->count), this)));
+        m_terrain.item_entities.insert(std::make_pair(thispack->entity_id, ItemEntity(thispack->pos, Item(this, thispack->type, thispack->count, false), this)));
+        itemQueue_mutex.lock();
+        itemQueue.push(&(m_terrain.item_entities.at(thispack->entity_id).item));
+        itemQueue_mutex.unlock();
         m_terrain.item_entities_mutex.unlock();
         break;
     }
@@ -1103,8 +1110,13 @@ void MyGL::packet_processer(Packet* packet) {
     }
     case HIT: {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
-        m_player.knockback(thispack->direction);
-        m_player.health = max(0, m_player.health-thispack->damage);
+        if(thispack->target == client_id) {
+            m_player.knockback(thispack->direction);
+            m_player.health = max(0, m_player.health-thispack->damage);
+        }
+        else {
+            // TO DO: make other player blush
+        }
         break;
     }
     case PLAYER_DEATH: {

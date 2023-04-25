@@ -89,16 +89,19 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].phi = thispack->player_phi;
         m_players[sender].theta = thispack->player_theta;
         m_players[sender].armor = m_players[sender].calcArmor({thispack->player_helmet, thispack->player_chest, thispack->player_leg, thispack->player_boots});
+        m_players[sender].toughness = m_players[sender].calcTough({thispack->player_helmet, thispack->player_chest, thispack->player_leg, thispack->player_boots});
         m_players[sender].creative = thispack->player_creative;
+        m_players[sender].hand = thispack->player_hand;
+
         if(!thispack->player_creative) {
             //take fall damage
             if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
                 m_players[sender].isFalling = false;
-                int damage = glm::max(0, (int)(m_players[sender].fallHeight-thispack->player_pos.y)-3);
+                int damage = glm::max(0, (int) glm::round(m_players[sender].fallHeight-thispack->player_pos.y)-3);
                 if(damage>0){
                     m_players[sender].health = glm::max(0, m_players[sender].health-damage);
                     //use a hit packet to simulate fall damage
-                    target_packet(mkU<HitPacket>(damage, glm::vec3(0, 0.2, 0)).get(), sender);
+                    target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.2, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
                         broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
@@ -138,8 +141,35 @@ void Server::process_packet(Packet* packet, int sender) {
     case HIT: {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
         m_players_mutex.lock();
-        //TO DO: perform grid marching hit detections here
-        //TO DO: if another player is hit by the grid march, send a hit packet to the target
+        qDebug() << "!!!";
+        if(m_players.find(sender)!=m_players.end() && m_players.find(thispack->target)!=m_players.end()) {
+            qDebug() << "hit passed";
+            //calculate raw damage
+            int d = 1;
+            switch(m_players[sender].hand) {
+            case DIAMOND_HOE: {
+                d = 20;
+                break;
+            }
+            default:
+                break;
+            }
+
+            //calculate post-armor damage
+            int a = m_players[thispack->target].armor;
+            int t = m_players[thispack->target].toughness;
+
+            int damage = glm::floor((float)damage*(1.f-(glm::max(a*0.2f, a-(4.f*d/(t+8.f))))*0.04f));
+            //deals the damage
+
+            m_players[thispack->target].health = glm::max(0, m_players[thispack->target].health-damage);
+            //use hit packet to kb
+            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0)).get(), 0);
+            //if player dies, broadcast that they died
+            if(m_players[thispack->target].health == 0) {
+                broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), 0);
+            }
+        }
         m_players_mutex.unlock();
         break;
     }

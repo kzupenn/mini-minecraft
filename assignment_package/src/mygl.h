@@ -98,6 +98,11 @@ private:
     std::mutex chatQueue_mutex;
     std::queue<std::pair<std::string, glm::vec4>> chatQueue;
 
+    //drawing items in main thread
+    std::mutex itemQueue_mutex;
+    std::queue<Drawable*> itemQueue;
+
+
     //server, if hosting
     uPtr<Server> SERVER;
 
