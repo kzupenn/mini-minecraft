@@ -18,6 +18,7 @@
 #include "scene/runnables.h"
 #include "scene/structure.h"
 #include "server/getip.h"
+#include "scene/item.cpp"
 #include <QDateTime>
 
 MyGL::MyGL(QWidget *parent)
@@ -537,8 +538,18 @@ void MyGL::renderEntities() {
         itemQueue.front()->createVBOdata();
         itemQueue.pop();
     }
-    //player arm
-    m_player.drawArm(&m_progLambert, m_skin_texture);
+
+    qDebug() << m_player.inHand;
+
+    //hand/item
+    if (m_player.inHand != AIR) {
+        glm::vec2 cur = itemUV.at(m_player.inHand);
+        m_player.hand_item.p = glm::vec4(cur.x, cur.y, 0, 0);
+        m_player.drawHandItem(&m_progLambert, m_block_texture);
+    } else {
+        m_player.drawArm(&m_progLambert, m_skin_texture);
+    }
+    //cube display
     m_player.drawCubeDisplay(&m_progFlat);
     //players
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
@@ -1138,7 +1149,7 @@ void MyGL::packet_processer(Packet* packet) {
     case HIT: {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
         if(thispack->target == client_id) {
-            qDebug() << thispack->damage;
+            //qDebug() << thispack->damage;
             m_player.knockback(thispack->direction);
             m_player.health = max(0, m_player.health-thispack->damage);
         }

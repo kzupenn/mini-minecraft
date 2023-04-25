@@ -14,7 +14,7 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       right_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
       left_arm(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(40, 16), glm::ivec2(55, 31))),
       left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
-      display(m_context),
+      display(m_context), hand_item(m_context, glm::vec4()),
       start_swing(0), swinging(false), stopped(true),
       created(false), swing_dir(1), shift(false), hit(0),
       health(20), armor(0), inHand(AIR)
@@ -412,6 +412,30 @@ void Player::drawCubeDisplay(ShaderProgram* m_prog) {
         m_prog->setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(block_pos)));
         m_prog->draw(display);
     }
+}
+
+void Player::drawHandItem(ShaderProgram* m_prog, Texture& tex) {
+    tex.bind(0);
+    hand_item.createVBOdata();
+    float ratio = 1.8f / 52.f;
+    glm::mat4 sc = glm::scale(glm::mat4(1), glm::vec3(ratio));
+    glm::mat4 cam_to_arm = glm::translate(glm::mat4(1), glm::vec3(23, -12.5, 12));
+    glm::mat4 inward = glm::rotate(glm::mat4(1), glm::radians(60.f), glm::vec3(0, 1, 0));
+    glm::mat4 outward = glm::rotate(glm::mat4(1), glm::radians(110.f), glm::vec3(0, 0, 1));
+    glm::mat4 horiz = glm::rotate(glm::mat4(1), -glm::atan(m_forward.z, m_forward.x), glm::vec3(0, 1, 0));
+    float len = glm::sqrt(pow(m_forward.x, 2) + pow(m_forward.z, 2));
+    float ang = glm::atan(m_forward.y, len);
+    glm::mat4 vert = glm::rotate(glm::mat4(1), ang, glm::vec3(0, 0, 1));
+    m_prog->setModelMatrix(glm::translate(glm::mat4(1), m_position) *
+                           glm::translate(glm::mat4(1), glm::vec3(0, 1.5, 0)) *
+                           horiz *
+                           vert *
+                           sc *
+                           cam_to_arm *
+                           inward *
+                           outward *
+                           glm::scale(glm::mat4(1), glm::vec3(0.5f / ratio)));
+    m_prog->drawInterleaved(hand_item);
 }
 
 void Player::createVBOdata() {
