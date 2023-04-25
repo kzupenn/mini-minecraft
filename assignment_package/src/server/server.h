@@ -129,6 +129,7 @@ private:
     QThreadPool m_clients;
 
     int seed;
+    int time;
 public:
     Server(int);
 

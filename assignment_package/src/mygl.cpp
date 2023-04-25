@@ -30,7 +30,8 @@ MyGL::MyGL(QWidget *parent)
       m_frame(this, this->width(), this->height(), this->devicePixelRatio()), m_quad(this),
       m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this),
       m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this),
-      mouseMove(false), isDead(false)
+      deathMsg1(this), deathMsg2(this),
+      mouseMove(false), isDead(false), chatMode(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -200,6 +201,8 @@ void MyGL::initializeGL()
 
     m_frame.create();
     m_quad.createVBOdata();
+    deathMsg1.setText("You died!");
+    deathMsg2.setText("press enter to respawn");
 }
 
 void MyGL::resizeGL(int w, int h) {
@@ -269,7 +272,7 @@ void MyGL::tick() {
                                              m_player.getPhi(),
                                              inHand, onHead, onChest, onLeg, onFoot,
                                              m_player.m_flightMode);
-    send_packet(&pp);
+    if(!isDead) send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
@@ -512,6 +515,17 @@ void MyGL::renderOverlays() {
         m_progFlat.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(2*cur.x()-width()+65, -2*cur.y()+height(), 0)));
         m_progFlat.draw(m_crosshair);
     }
+
+    //death gui
+    if(isDead){
+        m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width(), -height(), 0))*glm::scale(glm::mat4(), glm::vec3(2*width(), 2*height(), 1)));
+        m_progFlat.draw(m_rectangle);
+        m_font_texture.bind(0);
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg1.width*50, -50, 0)) * glm::scale(glm::mat4(), glm::vec3(100, 100, 1)));
+        m_progOverlay.draw(deathMsg1);
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg2.width*30, 100, 0)) * glm::scale(glm::mat4(), glm::vec3(60, 60, 1)));
+        m_progOverlay.draw(deathMsg2);
+    }
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -562,6 +576,9 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
             m_player.setState(m_terrain.worldSpawn, glm::vec3(0), 0, 0, AIR);
             isDead = false;
+            m_player.health = 20;
+            RespawnPacket rp = RespawnPacket(client_id);
+            send_packet(&rp);
         }
         return;
     }
@@ -711,6 +728,9 @@ void MyGL::updateMouse() {
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
+    //disallow mouse inputs while in death screen
+    if(isDead) return;
+
     if(m_player.m_inventory.showInventory) {
         QPoint cur = 2*mapFromGlobal(QCursor::pos());
         cur = QPoint(cur.x()-width(), height()-cur.y());
@@ -978,6 +998,10 @@ send_packet(Packet* packet) {
         buffer = (dynamic_cast<HitPacket*>(packet))->packetToBuffer();
         break;
     }
+    case PLAYER_RESPAWN: {
+        buffer = (dynamic_cast<RespawnPacket*>(packet))->packetToBuffer();
+        break;
+    }
     default:
         break;
     }
@@ -1033,6 +1057,7 @@ void MyGL::packet_processer(Packet* packet) {
     case WORLD_INIT:{
         WorldInitPacket* thispack = dynamic_cast<WorldInitPacket*>(packet);
         //TO do: set seed somewhere
+        m_time = thispack->time;
         m_terrain.worldSpawn = thispack->spawn;
         client_id = thispack->pid;
         verified_server = true;
@@ -1111,6 +1136,7 @@ void MyGL::packet_processer(Packet* packet) {
     case HIT: {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
         if(thispack->target == client_id) {
+            qDebug() << thispack->damage;
             m_player.knockback(thispack->direction);
             m_player.health = max(0, m_player.health-thispack->damage);
         }

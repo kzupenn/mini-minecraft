@@ -15,9 +15,9 @@ Packet* bufferToPacket(QByteArray buffer) {
         break;
     }
     case WORLD_INIT:{
-        int s, pp;
+        int s, pp, tt;
         float f1, f2, f3;
-        in >> s >> pp >> f1 >> f2 >> f3;
+        in >> s >> pp >> tt >> f1 >> f2 >> f3;
         int ps;
         std::vector<std::pair<int, QString>> pps;
         in >> ps;
@@ -27,7 +27,7 @@ Packet* bufferToPacket(QByteArray buffer) {
             in >> pid >> n;
             pps.push_back(std::make_pair(pid, n));
         }
-        return new WorldInitPacket(s, pp, glm::vec3(f1, f2, f3), pps);
+        return new WorldInitPacket(s, pp, tt, glm::vec3(f1, f2, f3), pps);
         break;
     }
     case PLAYER_JOIN:{
@@ -70,7 +70,7 @@ Packet* bufferToPacket(QByteArray buffer) {
     case HIT: {
         int d, t;
         float f1, f2, f3;
-        in >> d >> f1 >> f2 >> f3;
+        in >> d >> t >> f1 >> f2 >> f3;
         return new HitPacket(d, t, glm::vec3(f1, f2, f3));
         break;
     }
@@ -92,6 +92,12 @@ Packet* bufferToPacket(QByteArray buffer) {
         int v, k;
         in >> v >> k;
         return new DeathPacket(v, k);
+        break;
+    }
+    case PLAYER_RESPAWN: {
+        int a;
+        in >> a;
+        return new RespawnPacket(a);
         break;
     }
     default:

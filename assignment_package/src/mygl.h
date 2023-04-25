@@ -119,9 +119,7 @@ private:
                               // your mouse stays within the screen bounds and is always read.
 
     void sendPlayerDataToGUI() const;
-
-
-
+    Font deathMsg1, deathMsg2;
 
 public:
     explicit MyGL(QWidget *parent = nullptr);

@@ -13,7 +13,7 @@
 using namespace std;
 
 
-Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true){
+Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true), time(0){
     m_clients.setMaxThreadCount(MAX_CLIENTS);
     ServerConnectionWorker* sw = new ServerConnectionWorker(this);
     QThreadPool::globalInstance()->start(sw);
@@ -81,6 +81,13 @@ void Server::process_packet(Packet* packet, int sender) {
         broadcast_packet(mkU<PlayerJoinPacket>(true, sender, thispack->name).get(), sender);
         break;
     }
+    case PLAYER_RESPAWN: {
+        m_players_mutex.lock();
+        m_players[sender].health = 20;
+        m_players[sender].isFalling = false;
+        m_players_mutex.unlock();
+        break;
+    }
     case PLAYER_STATE: {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
@@ -94,8 +101,13 @@ void Server::process_packet(Packet* packet, int sender) {
         m_players[sender].hand = thispack->player_hand;
 
         if(!thispack->player_creative) {
+            //negate fall damage if in water
+            if(m_terrain.hasChunkAt(thispack->player_pos.x, thispack->player_pos.z) &&
+                    m_terrain.getBlockAt(thispack->player_pos) == WATER) {
+                m_players[sender].isFalling = false;
+            }
             //take fall damage
-            if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
+            else if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
                 m_players[sender].isFalling = false;
                 int damage = glm::max(0, (int) glm::round(m_players[sender].fallHeight-thispack->player_pos.y)-3);
                 if(damage>0){
@@ -104,6 +116,7 @@ void Server::process_packet(Packet* packet, int sender) {
                     target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.2, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
+                        qDebug() << "DEAD MOFO";
                         broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
                     }
                 }
@@ -141,9 +154,7 @@ void Server::process_packet(Packet* packet, int sender) {
     case HIT: {
         HitPacket* thispack = dynamic_cast<HitPacket*>(packet);
         m_players_mutex.lock();
-        qDebug() << "!!!";
         if(m_players.find(sender)!=m_players.end() && m_players.find(thispack->target)!=m_players.end()) {
-            qDebug() << "hit passed";
             //calculate raw damage
             int d = 1;
             switch(m_players[sender].hand) {
@@ -218,7 +229,7 @@ void Server::initClient(int i) {
     m_players[i] = PlayerState(glm::vec3(0, 80, 0), glm::vec3(), 0.f, 0.f, QString("Player"));
     m_players_mutex.unlock();
     client_fds_mutex.unlock();
-    target_packet(mkU<WorldInitPacket>(seed, i, m_terrain.worldSpawn, pps).get(), i);
+    target_packet(mkU<WorldInitPacket>(seed, i, time, m_terrain.worldSpawn, pps).get(), i);
     std::vector<std::pair<int64_t, vec3Map>> chunkChangesToSend = m_terrain.getChunkChanges();
     for(std::pair<int64_t, vec3Map> p: chunkChangesToSend) {
         std::vector<std::pair<vec3, BlockType>> ch;
@@ -295,6 +306,7 @@ void Server::shutdown() {
 }
 
 void Server::tick() {
+    time++;
 //    std::vector<int> itemsToRemove;
 //    for(auto& iter: m_terrain.item_entities) {
 //        iter.second.tick();

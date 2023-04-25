@@ -10,7 +10,7 @@ using namespace glm;
 
 enum PacketType: unsigned char {
     BAD_PACKET,
-    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT, PLAYER_DEATH,
+    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT, PLAYER_DEATH, PLAYER_RESPAWN,
     CHUNK_CHANGE, BLOCK_CHANGE,
     ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY,
     HIT
@@ -31,14 +31,15 @@ struct WorldInitPacket : Packet {
     int seed;
     vec3 spawn;
     int pid;
+    int time;
     std::vector<std::pair<int, QString>> players;
-    WorldInitPacket(int s, int ppid, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), spawn(p), players(pp) {}
+    WorldInitPacket(int s, int ppid, int tt, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), time(t), spawn(p), players(pp) {}
     ~WorldInitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         int a = players.size(); //overloaded <<
-        out << WORLD_INIT << seed << pid << spawn.x << spawn.y << spawn.z;
+        out << WORLD_INIT << seed << pid << time << spawn.x << spawn.y << spawn.z;
         out << a;
         for(std::pair<int, QString> pp: players) {
             out << pp.first << pp.second;
@@ -204,6 +205,18 @@ struct DeathPacket : public Packet {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::ReadWrite);
         out << PLAYER_DEATH << victim << killer;
+        return buffer;
+    }
+};
+
+struct RespawnPacket: public Packet {
+    int pid;
+    RespawnPacket(int a): Packet(PLAYER_RESPAWN), pid(a){}
+    ~RespawnPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << PLAYER_RESPAWN << pid;
         return buffer;
     }
 };
