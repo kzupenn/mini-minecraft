@@ -84,40 +84,40 @@ void MyGL::start(bool joinServer, QString username) {
 
     m_player.m_inventory.createVBOdata();
     m_player.m_inventory.hotbar.createVBOdata();
-    Item a = Item(this, DIAMOND_HOE, 1, true);
-    Item b = Item(this, DIAMOND_LEGGINGS, 1, true);
-    Item bb = Item(this, GOLDEN_LEGGINGS, 1, true);
-    Item c = Item(this, GOLD_NUGGET, 64, true);
-    Item d = Item(this, IRON_NUGGET, 8, true);
-    Item e = Item(this, IRON_BOOTS, 1, true);
-    Item f = Item(this, STONE_SWORD, 1, true);
-    Item g = Item(this, DIAMOND_SWORD, 1, true);
-    Item h = Item(this, IRON_CHESTPLATE, 1, true);
-    Item i = Item(this, STRING, 1, true);
-    Item j = Item(this, IRON_HELMET, 1, true);
-    Item k = Item(this, IRON_INGOT, 12, true);
-    Item l = Item(this, OAK_PLANKS_, 64, true);
-    m_player.m_inventory.addItem(a);
-    m_player.m_inventory.addItem(b);
-    m_player.m_inventory.addItem(a);
-//    m_player.m_inventory.addItem(d);
-    m_player.m_inventory.addItem(e);
-//    m_player.m_inventory.addItem(f);
-    m_player.m_inventory.addItem(g);
-//    m_player.m_inventory.addItem(h);
-//    m_player.m_inventory.addItem(i);
-//    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(k);
-//    m_player.m_inventory.addItem(j);
-//    m_player.m_inventory.addItem(j);
-//    m_player.m_inventory.addItem(k, 26);
-//    m_player.m_inventory.addItem(j);
-    m_player.m_inventory.addItem(l);
-    m_player.m_inventory.addItem(bb);
-    m_player.m_inventory.addItem(l);
+//    Item a = Item(this, DIAMOND_HOE, 1, true);
+//    Item b = Item(this, DIAMOND_LEGGINGS, 1, true);
+//    Item bb = Item(this, GOLDEN_LEGGINGS, 1, true);
+//    Item c = Item(this, GOLD_NUGGET, 64, true);
+//    Item d = Item(this, IRON_NUGGET, 8, true);
+//    Item e = Item(this, IRON_BOOTS, 1, true);
+//    Item f = Item(this, STONE_SWORD, 1, true);
+//    Item g = Item(this, DIAMOND_SWORD, 1, true);
+//    Item h = Item(this, IRON_CHESTPLATE, 1, true);
+//    Item i = Item(this, STRING, 1, true);
+//    Item j = Item(this, IRON_HELMET, 1, true);
+//    Item k = Item(this, IRON_INGOT, 12, true);
+//    Item l = Item(this, OAK_PLANKS_, 64, true);
+//    m_player.m_inventory.addItem(a);
+//    m_player.m_inventory.addItem(b);
+//    m_player.m_inventory.addItem(a);
+////    m_player.m_inventory.addItem(d);
+//    m_player.m_inventory.addItem(e);
+////    m_player.m_inventory.addItem(f);
+//    m_player.m_inventory.addItem(g);
+////    m_player.m_inventory.addItem(h);
+////    m_player.m_inventory.addItem(i);
+////    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(k);
+////    m_player.m_inventory.addItem(j);
+////    m_player.m_inventory.addItem(j);
+////    m_player.m_inventory.addItem(k, 26);
+////    m_player.m_inventory.addItem(j);
+//    m_player.m_inventory.addItem(l);
+//    m_player.m_inventory.addItem(bb);
+//    m_player.m_inventory.addItem(l);
 
-    m_player.m_inventory.armor[0] = j;
-    m_player.m_inventory.armor[1] = h;
+//    m_player.m_inventory.armor[0] = j;
+//    m_player.m_inventory.armor[1] = h;
 //    m_player.m_inventory.armor[2] = b;
 //    m_player.m_inventory.armor[3] = e;
     m_player.armor = m_player.m_inventory.calcArmor();
@@ -657,16 +657,64 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
         if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
             if(!m_mychat.getText().empty()){
                 if(m_mychat.getText() == "/kit 1"){
-
+                    Item it1 = Item(this, GOLDEN_SWORD, 1, true);
+                    Item it2 = Item(this, GOLDEN_HELMET, 1, true);
+                    Item it3 = Item(this, GOLDEN_CHESTPLATE, 1, true);
+                    Item it4 = Item(this, GOLDEN_LEGGINGS, 1, true);
+                    Item it5 = Item(this, GOLDEN_BOOTS, 1, true);
+                    Item it6 = Item(this, GOLD_NUGGET, 32, true);
+                    Item it7 = Item(this, DIAMOND_HOE, 1, true);
+                    Item it8 = Item(this, OAK_PLANKS_, 64, true);
+                    Item it9 = Item(this, OAK_PLANKS_, 64, true);
+                    m_player.m_inventory.addItem(it1);
+                    m_player.m_inventory.addItem(it2);
+                    m_player.m_inventory.addItem(it3);
+                    m_player.m_inventory.addItem(it4);
+                    m_player.m_inventory.addItem(it5);
+                    m_player.m_inventory.addItem(it6);
+                    m_player.m_inventory.addItem(it7);
+                    m_player.m_inventory.addItem(it8);
+                    m_player.m_inventory.addItem(it9);
                 }
                 else if(m_mychat.getText() == "/kit 2"){
-
+                    Item it1 = Item(this, IRON_SWORD, 1, true);
+                    Item it2 = Item(this, IRON_HELMET, 1, true);
+                    Item it3 = Item(this, IRON_CHESTPLATE, 1, true);
+                    Item it4 = Item(this, IRON_LEGGINGS, 1, true);
+                    Item it5 = Item(this, IRON_BOOTS, 1, true);
+                    Item it6 = Item(this, IRON_INGOT, 32, true);
+                    Item it7 = Item(this, STONE_, 64, true);
+                    Item it8 = Item(this, COBBLESTONE_, 64, true);
+                    Item it9 = Item(this, OAK_PLANKS_, 64, true);
+                    m_player.m_inventory.addItem(it1);
+                    m_player.m_inventory.addItem(it2);
+                    m_player.m_inventory.addItem(it3);
+                    m_player.m_inventory.addItem(it4);
+                    m_player.m_inventory.addItem(it5);
+                    m_player.m_inventory.addItem(it6);
+                    m_player.m_inventory.addItem(it7);
+                    m_player.m_inventory.addItem(it8);
+                    m_player.m_inventory.addItem(it9);
                 }
                 else if(m_mychat.getText() == "/kit 3"){
-
-                }
-                else if(m_mychat.getText() == "/kit 4"){
-
+                    Item it1 = Item(this, DIAMOND_SWORD, 1, true);
+                    Item it2 = Item(this, DIAMOND_HELMET, 1, true);
+                    Item it3 = Item(this, DIAMOND_CHESTPLATE, 1, true);
+                    Item it4 = Item(this, DIAMOND_LEGGINGS, 1, true);
+                    Item it5 = Item(this, DIAMOND_BOOTS, 1, true);
+                    Item it6 = Item(this, STRING, 6, true);
+                    Item it7 = Item(this, STICK, 9, true);
+                    Item it8 = Item(this, DIRT_, 64, true);
+                    Item it9 = Item(this, DIRT_, 64, true);
+                    m_player.m_inventory.addItem(it1);
+                    m_player.m_inventory.addItem(it2);
+                    m_player.m_inventory.addItem(it3);
+                    m_player.m_inventory.addItem(it4);
+                    m_player.m_inventory.addItem(it5);
+                    m_player.m_inventory.addItem(it6);
+                    m_player.m_inventory.addItem(it7);
+                    m_player.m_inventory.addItem(it8);
+                    m_player.m_inventory.addItem(it9);
                 }
                 else {
                     m_chat_mutex.lock();

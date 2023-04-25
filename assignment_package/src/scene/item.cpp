@@ -37,7 +37,7 @@ const std::map<ItemType, glm::vec2> itemUV = {
 
     {GOLDEN_LEGGINGS, glm::vec2(544.f/1024.f, 672.f/1024.f)},
 
-    {GOLDEN_SWORD, glm::vec2(544.f/1024.f, 608.f/1024.f)},
+    {GOLDEN_SWORD, glm::vec2(544.f/1024.f, 624.f/1024.f)},
 
     {APPLE, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
     {ARROW, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
@@ -50,9 +50,9 @@ const std::map<ItemType, glm::vec2> itemUV = {
     {FISHING_ROD, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
 
     {DIAMOND, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
-    {DIAMOND_BOOTS, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
-    {DIAMOND_CHESTPLATE, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
-    {DIAMOND_HELMET, glm::vec2(528.f/1024.f, 1008.f/1024.f)},
+    {DIAMOND_BOOTS, glm::vec2(512.f/1024.f, 496.f/1024.f)},
+    {DIAMOND_CHESTPLATE, glm::vec2(480.f/1024.f, 496.f/1024.f)},
+    {DIAMOND_HELMET, glm::vec2(512.f/1024.f, 496.f/1024.f)},
     {STICK, glm::vec2(528.f/1024.f, 1008.f/1024.f)}
 };
 
