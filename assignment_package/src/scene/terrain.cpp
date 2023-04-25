@@ -303,7 +303,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else {
                     if(noise1D(glm::vec2(xx+x, zz+z), SEED.getSeed(57.2, 12.3, 25.2)) < 0.1) {
-                        cPtr->setBlockAt(xx, y+1, zz, GRASS);
+                        //cPtr->setBlockAt(xx, y+1, zz, GRASS);
                     }
                     cPtr->setBlockAt(xx, y, zz, GRASS_BLOCK);
                 }
@@ -732,8 +732,6 @@ void Terrain::buildStructure(const Structure& s) {
     }
     case BIRCH_TREE: {
         //how tall the tree is off the ground
-        //TO DO: replace GRASS with LEAVES block once implemented
-        //TO DO: replace DIRT with WOOD block once implemented
         int ymax = 6+3.f*noise1D(glm::vec2(xx, zz), SEED.getSeed(8654.512,8568.53,3163.562));
         //find base of tree
         int ymin = c->heightMap[xx-x][zz-z];

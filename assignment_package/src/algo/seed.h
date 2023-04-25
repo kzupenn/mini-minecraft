@@ -13,4 +13,4 @@ public:
     glm::vec4 getSeed(float f1, float f2, float f3, float f4) const;
 };
 
-static Seed SEED(46);
+static Seed SEED(69);
