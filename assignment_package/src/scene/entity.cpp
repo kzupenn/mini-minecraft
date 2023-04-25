@@ -27,7 +27,7 @@ bool Entity::inBoundingBox(glm::vec3 pt) {
     bool x = glm::abs(m_position.x - pt.x) <= dim.x / 2;
     bool z = glm::abs(m_position.z - pt.z) <= dim.z / 2;
     bool y = (pt.y - m_position.y) <= dim.y;
-    qDebug() << x << " " << y << " " << z;
+//    qDebug() << x << " " << y << " " << z;
     return x && y && z;
 }
 

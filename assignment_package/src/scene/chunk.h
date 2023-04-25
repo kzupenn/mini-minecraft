@@ -57,6 +57,8 @@ struct KeyFuncsiv3
 
 typedef std::unordered_map<glm::ivec3,BlockType,KeyFuncsiv3,KeyFuncsiv3> vec3Map;
 
+//block uvs
+std::vector<glm::vec4> getBlockUV(BlockType, int);
 
 // One Chunk is a 16 x 256 x 16 section of the world,
 // containing all the Minecraft blocks in that area.

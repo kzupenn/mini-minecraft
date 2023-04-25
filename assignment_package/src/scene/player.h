@@ -4,6 +4,7 @@
 #include "camera.h"
 #include "scene/inventory.h"
 #include "scene/cubedisplay.h"
+#include "scene/handitem.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -27,6 +28,7 @@ public:
     const Camera& mcr_camera;
     Prism head, torso, right_arm, right_leg, left_arm, left_leg;
     CubeDisplay display;
+    HandItem hand_item;
     float start_swing, swing_dir;
     bool swinging, stopped, created;
     float hit;
@@ -83,6 +85,8 @@ public:
     void draw(ShaderProgram* m_prog, Texture& skin, float tick);
     void drawArm(ShaderProgram* m_prog, Texture& skin);
     void drawCubeDisplay(ShaderProgram* m_prog);
+    void drawHandItem(ShaderProgram* m_prog, Texture& tex);
+    void drawHandItem(ShaderProgram* m_prog, Texture& tex, Item it);
 
     ItemType inHand;
     QString name;

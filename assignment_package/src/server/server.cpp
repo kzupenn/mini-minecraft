@@ -13,7 +13,7 @@
 using namespace std;
 
 
-Server::Server(int s) : m_terrain(nullptr), seed(s), setup(false), open(true), time(0){
+Server::Server(int s, int p) : m_terrain(nullptr), seed(s), port(p), setup(false), open(true), time(0){
     m_clients.setMaxThreadCount(MAX_CLIENTS);
     ServerConnectionWorker* sw = new ServerConnectionWorker(this);
     QThreadPool::globalInstance()->start(sw);
@@ -112,13 +112,15 @@ void Server::process_packet(Packet* packet, int sender) {
             else if(m_players[sender].isFalling && thispack->player_velo.y > -0.01) {
                 m_players[sender].isFalling = false;
                 int damage = glm::max(0, (int) glm::round(m_players[sender].fallHeight-thispack->player_pos.y)-3);
+                if(m_players[sender].velo.y < 0.01) damage *= 1.5;
                 if(damage>0){
                     m_players[sender].health = glm::max(0, m_players[sender].health-damage);
+                    m_players[sender].regen = 600;
                     //use a hit packet to simulate fall damage
                     target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.4, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
-                        broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
+                        broadcast_packet(mkU<DeathPacket>(sender, sender).get(), -1);
                     }
                 }
             }
@@ -130,6 +132,15 @@ void Server::process_packet(Packet* packet, int sender) {
         }
         else {
             m_players[sender].isFalling = false;
+        }
+
+        if(m_players[sender].health < 20) {
+            m_players[sender].regen--;
+            if(m_players[sender].regen <= 0) {
+                m_players[sender].health++;
+                m_players[sender].regen = 300;
+                target_packet(mkU<HitPacket>(-1, sender, glm::vec3(0, 0, 0)).get(), sender);
+            }
         }
         m_players_mutex.unlock();
 
@@ -163,6 +174,22 @@ void Server::process_packet(Packet* packet, int sender) {
                 d = 20;
                 break;
             }
+            case DIAMOND_SWORD: {
+                d = 7;
+                break;
+            }
+            case IRON_SWORD: {
+                d = 6;
+                break;
+            }
+            case GOLDEN_SWORD: {
+                d = 4;
+                break;
+            }
+            case STONE_SWORD: {
+                d = 5;
+                break;
+            }
             default:
                 break;
             }
@@ -175,13 +202,14 @@ void Server::process_packet(Packet* packet, int sender) {
             //deals the damage
 
             m_players[thispack->target].health = glm::max(0, m_players[thispack->target].health-damage);
+            m_players[sender].regen = 600;
 
             glm::vec3 dd = glm::normalize(thispack->direction);
             //use hit packet to kb
-            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0) + dd).get(), 0);
+            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0) + dd).get(), -1);
             //if player dies, broadcast that they died
             if(m_players[thispack->target].health == 0) {
-                broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), 0);
+                broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), -1);
             }
         }
         m_players_mutex.unlock();
@@ -260,7 +288,7 @@ int Server::start()
     // bind server socket to address
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(PORT);
+    address.sin_port = htons(port);
     if (::bind(server_fd, (struct sockaddr*)&address, addrlen) < 0)
     {
         cout << "Failed to bind server socket to address" << endl;
@@ -274,7 +302,7 @@ int Server::start()
         return -1;
     }
 
-    cout << "Server started listening on port " << PORT << endl;
+    cout << "Server started listening on port " << port << endl;
 
     //initialize spawn chunks, and select a spawn point
     m_terrain.createSpawn();
