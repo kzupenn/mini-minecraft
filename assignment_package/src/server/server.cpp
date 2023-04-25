@@ -91,6 +91,8 @@ void Server::process_packet(Packet* packet, int sender) {
     case PLAYER_STATE: {
         PlayerStatePacket* thispack = dynamic_cast<PlayerStatePacket*>(packet);
         m_players_mutex.lock();
+        if(m_players[sender].health == 0) return;
+
         m_players[sender].pos = thispack->player_pos;
         m_players[sender].velo = thispack->player_velo;
         m_players[sender].phi = thispack->player_phi;
@@ -113,10 +115,9 @@ void Server::process_packet(Packet* packet, int sender) {
                 if(damage>0){
                     m_players[sender].health = glm::max(0, m_players[sender].health-damage);
                     //use a hit packet to simulate fall damage
-                    target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.2, 0)).get(), sender);
+                    target_packet(mkU<HitPacket>(damage, sender, glm::vec3(0, 0.4, 0)).get(), sender);
                     //if player dies, broadcast that they died
                     if(m_players[sender].health == 0) {
-                        qDebug() << "DEAD MOFO";
                         broadcast_packet(mkU<DeathPacket>(sender, sender).get(), 0);
                     }
                 }
@@ -170,12 +171,14 @@ void Server::process_packet(Packet* packet, int sender) {
             int a = m_players[thispack->target].armor;
             int t = m_players[thispack->target].toughness;
 
-            int damage = glm::floor((float)damage*(1.f-(glm::max(a*0.2f, a-(4.f*d/(t+8.f))))*0.04f));
+            int damage = glm::floor((float)d*(1.f-(glm::max(a*0.2f, a-(4.f*d/(t+8.f))))*0.04f));
             //deals the damage
 
             m_players[thispack->target].health = glm::max(0, m_players[thispack->target].health-damage);
+
+            glm::vec3 dd = glm::normalize(thispack->direction);
             //use hit packet to kb
-            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0)).get(), 0);
+            broadcast_packet(mkU<HitPacket>(damage, thispack->target, glm::vec3(0, 0.4, 0) + dd).get(), 0);
             //if player dies, broadcast that they died
             if(m_players[thispack->target].health == 0) {
                 broadcast_packet(mkU<DeathPacket>(thispack->target, sender).get(), 0);

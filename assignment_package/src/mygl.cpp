@@ -31,7 +31,7 @@ MyGL::MyGL(QWidget *parent)
       m_rectangle(this), m_crosshair(this), m_mychat(this), m_heart(this),
       m_halfheart(this), m_fullheart(this), m_armor(this), m_fullarmor(this), m_halfarmor(this), m_skin_texture(this),
       deathMsg1(this), deathMsg2(this),
-      mouseMove(false), isDead(false), chatMode(false), drawSky(false)
+      mouseMove(false), chatMode(false), drawSky(false)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -278,7 +278,7 @@ void MyGL::tick() {
                                              m_player.getPhi(),
                                              inHand, onHead, onChest, onLeg, onFoot,
                                              m_player.m_flightMode);
-    if(!isDead) send_packet(&pp);
+    if(!m_player.isDead) send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
     //generates chunks based on player position
@@ -556,13 +556,13 @@ void MyGL::renderOverlays() {
     }
 
     //death gui
-    if(isDead){
+    if(m_player.isDead){
         m_progFlat.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-width(), -height(), 0))*glm::scale(glm::mat4(), glm::vec3(2*width(), 2*height(), 1)));
         m_progFlat.draw(m_rectangle);
         m_font_texture.bind(0);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg1.width*50, -50, 0)) * glm::scale(glm::mat4(), glm::vec3(100, 100, 1)));
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg1.width*50, 50, 0)) * glm::scale(glm::mat4(), glm::vec3(100, 100, 1)));
         m_progOverlay.draw(deathMsg1);
-        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg2.width*30, 100, 0)) * glm::scale(glm::mat4(), glm::vec3(60, 60, 1)));
+        m_progOverlay.setModelMatrix(glm::translate(glm::mat4(), glm::vec3(-deathMsg2.width*20, -100, 0)) * glm::scale(glm::mat4(), glm::vec3(40, 40, 1)));
         m_progOverlay.draw(deathMsg2);
     }
     glEnable(GL_DEPTH_TEST);
@@ -610,11 +610,11 @@ void MyGL::renderEntities() {
 
 
 void MyGL::keyPressEvent(QKeyEvent *e) {
-    if(isDead) {
+    if(m_player.isDead) {
         //checks for respawn
         if(e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
             m_player.setState(m_terrain.worldSpawn, glm::vec3(0), 0, 0, AIR);
-            isDead = false;
+            m_player.isDead = false;
             m_player.health = 20;
             RespawnPacket rp = RespawnPacket(client_id);
             send_packet(&rp);
@@ -770,7 +770,7 @@ void MyGL::updateMouse() {
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
     //disallow mouse inputs while in death screen
-    if(isDead) return;
+    if(m_player.isDead) return;
 
     if(m_player.m_inventory.showInventory) {
         QPoint cur = 2*mapFromGlobal(QCursor::pos());
@@ -1063,6 +1063,7 @@ void MyGL::packet_processer(Packet* packet) {
         if(m_multiplayers.find(thispack->player_id) != m_multiplayers.end()) {
             m_multiplayers[thispack->player_id]->setState(thispack->player_pos, thispack->player_velo, thispack->player_theta, thispack->player_phi, thispack->player_hand);
             m_multiplayers[thispack->player_id]->inHand = thispack->player_hand;
+            m_multiplayers[thispack->player_id]->isDead = false;
             itemQueue_mutex.lock();
             if(thispack->player_helmet == AIR) {
                 m_multiplayers[thispack->player_id]->m_inventory.armor[0].reset();
@@ -1195,9 +1196,12 @@ void MyGL::packet_processer(Packet* packet) {
         qDebug() << "dead" << thispack->victim << thispack->killer;
         if(thispack->victim == client_id) {
             s1 = m_player.name.toStdString();
-            isDead = true;
+            m_player.isDead = true;
         }
-        else if(m_multiplayers[thispack->victim]) s1 = m_multiplayers[thispack->victim]->name.toStdString();
+        else if(m_multiplayers[thispack->victim]) {
+            s1 = m_multiplayers[thispack->victim]->name.toStdString();
+            m_multiplayers[thispack->victim]->isDead = true;
+        }
         if(thispack->killer == client_id) s2 = m_player.name.toStdString();
         else if(m_multiplayers[thispack->killer]) s2 = m_multiplayers[thispack->killer]->name.toStdString();
         if(thispack->killer == thispack->victim) {
