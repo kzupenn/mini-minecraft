@@ -354,7 +354,7 @@ void MyGL::paintGL() {
     glViewport(0,0,this->width(), this->height());
 
     //set sky color
-    int modVal = 1000;
+    int modVal = 20000;
     float time = (float)((m_time+(modVal*4)) % (modVal*4)) / (modVal*4);
     glm::vec3 daySky = glm::vec3(0.37f, 0.74f, 1.0f);
     glm::vec3 nightSky = glm::vec3(2.0/255.0, 1.0/255.0, 78.0/255.0);
