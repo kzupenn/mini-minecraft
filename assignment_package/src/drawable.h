@@ -8,7 +8,7 @@
 class Drawable
 {
 protected:
-    int m_count;     // The number of indices stored in bufIdx.
+    //int m_count;     // The number of indices stored in bufIdx.
     GLuint m_bufIdx; // A Vertex Buffer Object that we will use to store triangle indices (GLuints)
     GLuint m_bufPos; // A Vertex Buffer Object that we will use to store mesh vertices (vec4s)
     GLuint m_bufNor; // A Vertex Buffer Object that we will use to store mesh normals (vec4s)
@@ -30,6 +30,7 @@ protected:
 
 
 public:
+    int m_count;
     Drawable(OpenGLContext* mp_context);
     virtual ~Drawable();
     virtual void createVBOdata() = 0; // To be implemented by subclasses. Populates the VBOs of the Drawable.

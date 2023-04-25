@@ -5,10 +5,13 @@ BlockTypeWorker::~BlockTypeWorker(){
 
 };
 void BlockTypeWorker::run() {
+    //QThread::currentThread()->setPriority(QThread::LowestPriority);
     t->instantiateChunkAt(x, z);
 }
 
-VBOWorker::VBOWorker(Chunk* cc):c(cc){};
+VBOWorker::VBOWorker(Chunk* cc):c(cc){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+};
 VBOWorker::~VBOWorker(){
 
 };
@@ -30,21 +33,27 @@ void StructureWorker:: run() {
     }
 }
 
-ServerConnectionWorker::ServerConnectionWorker(Server* ss): s(ss){}
+ServerConnectionWorker::ServerConnectionWorker(Server* ss): s(ss){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+}
 ServerConnectionWorker::~ServerConnectionWorker(){};
 
 void ServerConnectionWorker:: run() {
     s->start();
 }
 
-ServerThreadWorker::ServerThreadWorker(Server* ss, int tt): s(ss), t(tt){}
+ServerThreadWorker::ServerThreadWorker(Server* ss, int tt): s(ss), t(tt){
+    QThread::currentThread()->setPriority(QThread::HighestPriority);
+}
 ServerThreadWorker::~ServerThreadWorker(){};
 
 void ServerThreadWorker:: run() {
     s->handle_client(t);
 }
 
-ClientWorker::ClientWorker(MyGL* ss): s(ss){}
+ClientWorker::ClientWorker(MyGL* ss): s(ss){
+    QThread::currentThread()->setPriority(QThread::NormalPriority);
+}
 ClientWorker::~ClientWorker(){};
 
 void ClientWorker:: run() {

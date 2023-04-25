@@ -20,6 +20,7 @@ uniform sampler2D u_Texture; // The texture to be read from by this shader
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Pos;
 in vec4 fs_Nor;
+
 in vec3 fs_UV;
 
 uniform int uTime;
@@ -82,7 +83,6 @@ float fbm(vec3 p) {
 
 void main()
 {
-
     int modVal = 1000;
     float time = mod(uTime, modVal) / modVal;
     float time2 = mod(uTime, (modVal*2)) / (modVal*2);
@@ -128,12 +128,12 @@ void main()
 
     float a = diffuseColor.w;
     diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
-
+    
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
     // Avoid negative lighting values
     diffuseTerm = clamp(diffuseTerm, 0, 1);
-
+    
     float ambientTerm = 0.2;
 
     vec3 sunlight_contrib = diffuseTerm * sunColor;

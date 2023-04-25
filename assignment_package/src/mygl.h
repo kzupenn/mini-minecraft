@@ -3,6 +3,7 @@
 
 #include "openglcontext.h"
 #include "scene/crosshair.h"
+#include "scene/icons.h"
 #include "scene/rectangle.h"
 #include "shaderprogram.h"
 #include "scene/worldaxes.h"
@@ -13,6 +14,7 @@
 #include "server/server.h"
 #include "framebuffer.h"
 #include "quad.h"
+#include "scene/cube.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -20,7 +22,7 @@
 #include <queue>
 #include <smartpointerhelp.h>
 
-#define PORT 3079
+#include "server/port.h"
 #define BUFFER_SIZE 5000
 
 class MyGL : public OpenGLContext
@@ -57,6 +59,17 @@ private:
     Texture m_block_texture;
     Texture m_font_texture;
     Texture m_inventory_texture;
+    Texture m_icon_texture;
+
+    Heart m_heart;
+    HalfHeart m_halfheart;
+    FullHeart m_fullheart;
+
+    Armor m_armor;
+    HalfArmor m_halfarmor;
+    FullArmor m_fullarmor;
+    
+    Texture m_skin_texture;
 
     long long m_currentMSecsSinceEpoch;
 
@@ -64,14 +77,19 @@ private:
     //client vars
     void receive_messages(void*arg);
 
-    int client_fd;
+    int client_fd; //socket connection
+    int client_id; //server-side client fd, used as a player id
     struct sockaddr_in server_address;
     bool open;
 
     std::mutex m_chat_mutex;
     std::deque<Font> m_chat;
     Font m_mychat;
+    //if the player is in chat mode, redirect all keyboard inputs to chat
     bool chatMode;
+    //the player dies when they are killed
+    bool isDead;
+    //a gray transparent rectangle, used primarily for font background
     Rectangle m_rectangle;
 
     void packet_parser(Packet*);
@@ -82,6 +100,10 @@ private:
     //needed to bind vbos on main thread
     std::mutex chatQueue_mutex;
     std::queue<std::pair<std::string, glm::vec4>> chatQueue;
+
+    //drawing items in main thread
+    std::mutex itemQueue_mutex;
+    std::queue<Drawable*> itemQueue;
 
     //server, if hosting
     uPtr<Server> SERVER;
@@ -99,9 +121,7 @@ private:
                               // your mouse stays within the screen bounds and is always read.
 
     void sendPlayerDataToGUI() const;
-
-
-
+    Font deathMsg1, deathMsg2;
 
 public:
     explicit MyGL(QWidget *parent = nullptr);
@@ -127,6 +147,8 @@ public:
     // Called from paintGL().
     // Calls Terrain::draw().
     void renderTerrain();
+    void renderEntities();
+    void renderOverlays();
     void setupTerrainThreads();
 
 

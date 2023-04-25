@@ -9,9 +9,11 @@
 using namespace glm;
 
 enum PacketType: unsigned char {
-    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT,
+    BAD_PACKET,
+    PLAYER_STATE, WORLD_INIT, PLAYER_JOIN, CHAT, PLAYER_DEATH, PLAYER_RESPAWN,
     CHUNK_CHANGE, BLOCK_CHANGE,
-    ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY
+    ITEM_ENTITY_STATE, DELETE_ITEM_ENTITY, ENTITY_STATE, DELETE_ENTITY,
+    HIT
 };
 
 struct Packet{
@@ -28,14 +30,16 @@ struct Packet{
 struct WorldInitPacket : Packet {
     int seed;
     vec3 spawn;
+    int pid;
+    int time;
     std::vector<std::pair<int, QString>> players;
-    WorldInitPacket(int s, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), spawn(p), players(pp) {}
+    WorldInitPacket(int s, int ppid, int tt, glm::vec3 p, std::vector<std::pair<int, QString>> pp) : Packet(WORLD_INIT), seed(s), pid(ppid), time(tt), spawn(p), players(pp) {}
     ~WorldInitPacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         int a = players.size(); //overloaded <<
-        out << WORLD_INIT << seed << spawn.x << spawn.y << spawn.z;
+        out << WORLD_INIT << seed << pid << time << spawn.x << spawn.y << spawn.z;
         out << a;
         for(std::pair<int, QString> pp: players) {
             out << pp.first << pp.second;
@@ -87,19 +91,34 @@ struct BlockChangePacket: Packet {
 //Client: send over movement input updates to server
 struct PlayerStatePacket : public Packet{
     int player_id; //id by server assigned client_fd
+    //position
     vec3 player_pos;
+    //velocity
+    vec3 player_velo;
+    //head facing
     float player_phi, player_theta;
+    //holding
     ItemType player_hand;
+    //armor
+    ItemType player_helmet;
+    ItemType player_chest;
+    ItemType player_leg;
+    ItemType player_boots;
+    //gamemode
+    bool player_creative;
 
-    PlayerStatePacket(int i, glm::vec3 p, int t, int ph, ItemType it) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_theta(t), player_phi(ph), player_hand(it) {}
-    PlayerStatePacket(glm::vec3 p, int t, int ph, ItemType it) : PlayerStatePacket(0, p, t, ph, it) {}
+    PlayerStatePacket(int i, glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it, ItemType ita, ItemType itb, ItemType itc, ItemType itd, bool cr) : Packet(PLAYER_STATE), player_id(i), player_pos(p), player_velo(v), player_theta(t), player_phi(ph), player_hand(it), player_helmet(ita), player_chest(itb), player_leg(itc), player_boots(itd), player_creative(cr) {}
+    PlayerStatePacket(glm::vec3 p, glm::vec3 v, int t, int ph, ItemType it, ItemType ita, ItemType itb, ItemType itc, ItemType itd, bool cr) : PlayerStatePacket(0, p, v, t, ph, it, ita, itb, itc, itd, cr) {}
     ~PlayerStatePacket(){}
     QByteArray packetToBuffer() override {
         QByteArray buffer;
         QDataStream out(&buffer,QIODevice::ReadWrite);
         out << PLAYER_STATE << player_id
             << player_pos.x << player_pos.y << player_pos.z
-            << player_theta << player_phi << player_hand;
+            << player_velo.x << player_velo.y << player_velo.z
+            << player_theta << player_phi << player_hand
+            << player_helmet << player_chest << player_leg << player_boots
+            << player_creative;
         return buffer;
     }
 };
@@ -159,6 +178,45 @@ struct ItemEntityDeletePacket : public Packet {
         QByteArray buffer;
         QDataStream out(&buffer, QIODevice::ReadWrite);
         out << DELETE_ITEM_ENTITY << entity_id;
+        return buffer;
+    }
+};
+//hit
+struct HitPacket : public Packet {
+    glm::vec3 direction;
+    int damage;
+    int target;
+    HitPacket(int dd, int t, glm::vec3 d): damage(dd), target(t), direction(d), Packet(HIT){}
+    ~HitPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << HIT << damage <<  target << direction.x << direction.y << direction.z;
+        return buffer;
+    }
+};
+
+//player dies
+struct DeathPacket : public Packet {
+    int victim, killer;
+    DeathPacket(int a, int b): victim(a), killer(b), Packet(PLAYER_DEATH){}
+    ~DeathPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << PLAYER_DEATH << victim << killer;
+        return buffer;
+    }
+};
+
+struct RespawnPacket: public Packet {
+    int pid;
+    RespawnPacket(int a): Packet(PLAYER_RESPAWN), pid(a){}
+    ~RespawnPacket(){}
+    QByteArray packetToBuffer() override {
+        QByteArray buffer;
+        QDataStream out(&buffer, QIODevice::ReadWrite);
+        out << PLAYER_RESPAWN << pid;
         return buffer;
     }
 };

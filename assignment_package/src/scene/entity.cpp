@@ -1,27 +1,35 @@
 #include "entity.h"
+#include <QDebug>
 
 //Entity::Entity()
 //    :  Entity(glm::vec3(0,0,0))
 //{}
 
-void Entity::createVBOdata() {
-
-}
-GLenum Entity::drawMode() {
-    return GL_TRIANGLES;
-}
-
-Entity::Entity(glm::vec3 pos, OpenGLContext* mp_context)
-    : Drawable(mp_context),m_forward(0,0,-1), m_right(1,0,0), m_up(0,1,0), m_position(pos), mcr_position(m_position)
+Entity::Entity(glm::vec3 pos)
+    : m_forward(0,0,-1), m_right(1,0,0), m_up(0,1,0),
+      m_position(pos), mcr_position(m_position), dim(glm::vec3(0))
 {}
 
-Entity::Entity(const Entity &e, OpenGLContext* mp_context)
-    : Drawable(mp_context),m_forward(e.m_forward), m_right(e.m_right), m_up(e.m_up), m_position(e.m_position), mcr_position(m_position)
+Entity::Entity(glm::vec3 pos, glm::vec3 dim)
+    : m_forward(0,0,-1), m_right(1,0,0), m_up(0,1,0),
+      m_position(pos), mcr_position(m_position), dim(dim)
+{}
+
+Entity::Entity(const Entity &e)
+    : m_forward(e.m_forward), m_right(e.m_right), m_up(e.m_up),
+      m_position(e.m_position), mcr_position(m_position), dim(e.dim)
 {}
 
 Entity::~Entity()
 {}
 
+bool Entity::inBoundingBox(glm::vec3 pt) {
+    bool x = glm::abs(m_position.x - pt.x) <= dim.x / 2;
+    bool z = glm::abs(m_position.z - pt.z) <= dim.z / 2;
+    bool y = (pt.y - m_position.y) <= dim.y;
+    qDebug() << x << " " << y << " " << z;
+    return x && y && z;
+}
 
 void Entity::moveAlongVector(glm::vec3 dir) {
     m_position += dir;

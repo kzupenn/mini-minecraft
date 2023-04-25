@@ -14,8 +14,8 @@ void main()
     if (u_Type == 0 || u_Type == 3) out_Col = color; //EMPTY or NON-LAVA/WATER
     else {
         vec4 mixer;
-        if (u_Type == 1) mixer = vec4(0, 0, 1, 0.5);
-        else if (u_Type == 2) mixer = vec4(0.8, 0.2, 0, 0.5);
+        if (u_Type == 1) mixer = vec4(0, 0, 1, 0.75);
+        else if (u_Type == 2) mixer = vec4(0.8, 0.2, 0, 0.75);
         out_Col = mix(color, mixer, 0.3);
     }
 }

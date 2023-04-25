@@ -3,6 +3,8 @@
 #include "glm_includes.h"
 #include <vector>
 
+#define river_width 0.005
+
 enum BiomeType : unsigned char
 {
     TUNDRA, PLAINS, DESERT, TAIGA, SAVANNA, FOREST, SWAMP, RAINFOREST,

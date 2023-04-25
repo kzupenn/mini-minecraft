@@ -13,6 +13,10 @@ public:
         text(text_string), color(text_color){
         createVBOdata();
     };
+    Font(OpenGLContext* context, std::string text_string, glm::vec4 text_color, bool drawImmediately) : Drawable(context),
+        text(text_string), color(text_color){
+        if(drawImmediately) createVBOdata();
+    };
     Font(OpenGLContext* context) : Drawable(context), text(""), color(glm::vec4(1)){};
     virtual ~Font(){};
     void setText(std::string); //setters

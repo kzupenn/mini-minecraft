@@ -1,7 +1,9 @@
 #pragma once
 #include "entity.h"
+#include "prism.h"
 #include "camera.h"
 #include "scene/inventory.h"
+#include "scene/cubedisplay.h"
 #include "terrain.h"
 
 class Player : public Entity {
@@ -9,15 +11,13 @@ private:
     glm::vec3 m_velocity, m_acceleration;
     Camera m_camera;
     const Terrain &mcr_terrain;
-    bool m_flightMode;
     float theta, phi; //horiz, vert
     float airtime, maxair;
-    bool in_liquid, bott_in_liquid;
+    bool in_liquid, bott_in_liquid, shift;
     BlockType camera_block;
 
     void processInputs(InputBundle &inputs);
     bool checkAirborne();
-    void orientCamera();
     void computePhysics(float dT);
     void checkCollision();
 
@@ -25,15 +25,25 @@ public:
     // Readonly public reference to our camera
     // for easy access from MyGL
     const Camera& mcr_camera;
+    Prism head, torso, right_arm, right_leg, left_arm, left_leg;
+    CubeDisplay display;
+    float start_swing, swing_dir;
+    bool swinging, stopped, created;
+    float hit;
 
-    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext*, QString n);
+    Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     
     virtual ~Player() override;
     Inventory m_inventory;
+    int health;
+    bool m_flightMode; //creative mode
+
+    int armor;
 
     void setCameraWidthHeight(unsigned int w, unsigned int h);
 
     void tick(float dT, InputBundle &input) override;
+    void orientCamera();
 
 
     // Player overrides all of Entity's movement
@@ -61,17 +71,20 @@ public:
     QString lookAsQString() const;
 
     glm::vec3 getLook();
+    glm::vec3 getVelocity();
     void setType(BlockType bt);
     int getType();
 
     float getTheta();
     float getPhi();
+    void createVBOdata();
+    void draw(ShaderProgram* m_prog, Texture& skin, float tick);
+    void drawArm(ShaderProgram* m_prog, Texture& skin);
+    void drawCubeDisplay(ShaderProgram* m_prog);
 
     ItemType inHand;
     QString name;
 
-    void setState(glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
-
-    virtual GLenum drawMode();
-    virtual void createVBOdata();
+    void setState(glm::vec3, glm::vec3, float, float, ItemType); //use this to set the state of other players from server packet
+    void knockback(glm::vec3); //apply knockback
 };

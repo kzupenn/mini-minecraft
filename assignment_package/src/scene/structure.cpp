@@ -15,16 +15,71 @@ std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
     ivec2 cp = ivec2(x, z);
     //find trees, trees should force a 3x3 chunk generation zone
     switch(c->biome){
-    case PLAINS:
+    case TUNDRA:{
+        break;
+    }
+    case PLAINS:{
         for(int i = 0; i < 16; i+=16) {
             for(int j = 0; j < 16; j+=16) {
                 ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
-                if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS){
-                    ret.push_back(Structure(OAK_TREE, pp));
+                float p1 = perlinNoise(pp, SEED.getSeed(24.4, 213.4, 345.2, 42.2), 512);
+                if(p1 < 0){
+                    if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS_BLOCK){
+                        ret.push_back(Structure(OAK_TREE, pp));
+                    }
+                }
+            }
+        }
+        break;}
+    case DESERT: {
+        for(int i = 0; i < 16; i+=16) {
+            for(int j = 0; j < 16; j+=16) {
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
+                float p1 = perlinNoise(pp, SEED.getSeed(24.4, 213.4, 345.2, 42.2), 512);
+                if(c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == SAND){
+                    if(p1 < 0.1)
+                        ret.push_back(Structure(CACTUS_PLANT, pp));
                 }
             }
         }
         break;
+    }
+    case TAIGA:{
+        for(int i = 0; i < 16; i+=8) {
+            for(int j = 0; j < 16; j+=8) {
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(6.f*random2(cp+glm::ivec2(i,j), SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
+                float p1 = perlinNoise(pp, SEED.getSeed(24.4, 213.4, 345.2, 42.2), 512);
+                if(c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS_BLOCK){
+                    if(p1 < 0)
+                        ret.push_back(Structure(SPRUCE_TREE, pp));
+                    else
+                        ret.push_back(Structure(PINE_TREE, pp));
+                }
+            }
+        }
+        break;
+    }
+    case SAVANNA:{
+
+    }
+    case FOREST:{
+        for(int i = 0; i < 16; i+=8) {
+            for(int j = 0; j < 16; j+=8) {
+                ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(6.f*random2(cp+glm::ivec2(i,j), SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
+                float p1 = perlinNoise(pp, SEED.getSeed(24.4, 213.4, 345.2, 42.2), 512);
+                if(p1 < 0){
+                    if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS_BLOCK){
+                        ret.push_back(Structure(OAK_TREE, pp));
+                    }
+                }
+                else {
+                    if(c->heightMap[pp.x-cp.x][pp.y-cp.y] < 64+64 && c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == GRASS_BLOCK){
+                        ret.push_back(Structure(BIRCH_TREE, pp));
+                    }
+                }
+            }
+        }
+    }
     case OCEAN:
         break;
     case BEACH:
