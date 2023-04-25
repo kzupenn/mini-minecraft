@@ -143,7 +143,7 @@ float worleyFBM(vec3 uv) {
 void main()
 {
     //times for day and night cycles
-    int modVal = 1000;
+    int modVal = 20000;
     float time = mod(uTime, modVal) / modVal;
     float time2 = mod(uTime, (modVal*2)) / (modVal*2);
     float time4 = mod(uTime, (modVal*4)) / (modVal*4);
