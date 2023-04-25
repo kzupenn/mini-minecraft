@@ -349,6 +349,7 @@ void MyGL::paintGL() {
     renderEntities();
 
     m_player.drawCubeDisplay(&m_progFlat);
+    m_player.drawArm(&m_progLambert, m_skin_texture);
     m_multiplayers_mutex.lock();
     for(std::map<int, uPtr<Player>>::iterator it = m_multiplayers.begin(); it != m_multiplayers.end(); it++) {
         Player* cur = it->second.get();
@@ -393,7 +394,6 @@ void MyGL::renderTerrain() {
 }
 void MyGL::renderOverlays() {
     glDisable(GL_DEPTH_TEST);
-    m_player.drawArm(&m_progLambert, m_skin_texture);
     m_progPostProcess.drawPostProcess(m_quad, m_frame.getTextureSlot());
 
     m_progFlat.setViewProjMatrix(overlayTransform);
@@ -530,9 +530,9 @@ void MyGL::renderOverlays() {
         m_progFlat.setModelMatrix(glm::translate(glm::mat4(1), glm::vec3(2*cur.x()-width()+65, -2*cur.y()+height(), 0)));
         m_progFlat.draw(m_crosshair);
     }
-
     glEnable(GL_DEPTH_TEST);
 }
+
 void MyGL::renderEntities() {
     //player arm
     m_player.drawArm(&m_progLambert, m_skin_texture);
@@ -861,7 +861,6 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                         break;
                     }
                 }
-                //qDebug() << cur;
                 cur += step;
             }
             if (!found) {

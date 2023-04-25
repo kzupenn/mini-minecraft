@@ -77,14 +77,14 @@ void main()
 {
     // Material base color (before shading)
 
-        float period = 40.f;
-        float t = mod(float(uTime), period) / period;
-        t = clamp(t, 0.f, 1.f);
+        float period = 60.f;
+        float t = abs(sin(float(uTime) / period));
 
         vec2 uv = vec2(fs_UV);
 
         if (fs_UV.z == 1.f) {
-            uv.x = fs_UV.x + t/64.f;
+            uv.x = fs_UV.x + t/512.f;
+            uv.y = fs_UV.y + t/512.f;
         }
 
         vec4 diffuseColor = texture(u_Texture, vec2(uv));

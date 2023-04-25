@@ -29,7 +29,8 @@ public:
     std::vector<Prism> parts;
     CubeDisplay display;
     float start_swing, swing_dir;
-    bool swinging, stopped, created, hit;
+    bool swinging, stopped, created;
+    float hit;
 
     Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* context, QString n);
     

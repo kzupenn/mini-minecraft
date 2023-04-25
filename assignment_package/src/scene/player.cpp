@@ -16,7 +16,7 @@ Player::Player(glm::vec3 pos, const Terrain &terrain, OpenGLContext* m_context, 
       left_leg(Prism(m_context, glm::ivec3(4, 12, 4), glm::ivec2(0, 16), glm::ivec2(15, 31))),
       parts {head, torso, right_arm, right_leg, left_arm, left_leg},
       display(m_context), start_swing(0), swinging(false), stopped(true),
-      created(false), swing_dir(1), shift(false), hit(false),
+      created(false), swing_dir(1), shift(false), hit(0),
       health(20), armor(0), inHand(AIR)
 {}
 
@@ -94,9 +94,6 @@ void Player::processInputs(InputBundle &inputs) {
 }
 
 bool Player::checkAirborne() {
-    //hover in air if in unloaded chunk
-    if(!mcr_terrain.hasChunkAt(m_position.x, m_position.z)) return true;
-
     std::vector<glm::vec3> corners = {glm::vec3(m_position.x + 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x - 0.3, m_position.y, m_position.z + 0.3),
                                      glm::vec3(m_position.x + 0.3, m_position.y, m_position.z - 0.3),
@@ -116,19 +113,20 @@ void Player::computePhysics(float dT) {
     // and velocity, and also perform collision detection.
     m_velocity *= 0.8f;
     m_velocity += m_acceleration * dT;
-    if (!m_flightMode) {
+    if (!m_flightMode && mcr_terrain.hasChunkAt(m_position.x, m_position.z)) {
         if (airtime > 0) {
             m_velocity += glm::vec3(0, 1, 0) * 3.95f * dT * airtime / (maxair / 1.5f);
             airtime--;
         }
+        if (hit > 0) hit--;
         if (bott_in_liquid) m_velocity += glm::vec3(0, -0.9f, 0) * dT;
         else m_velocity += glm::vec3(0, -4.1f, 0) * dT;
         checkCollision();
     }
     glm::vec3 vout = m_velocity;
     if (shift) {
-        vout.x *= 1.6;
-        vout.z *= 1.6;
+        vout.x *= 1.75;
+        vout.z *= 1.75;
         shift = false;
     }
     if (in_liquid) vout /= 1.5f;
@@ -417,7 +415,8 @@ void Player::drawCubeDisplay(ShaderProgram* m_prog) {
 }
 
 void Player::createVBOdata() {
-    for (Prism p : parts) p.setHit(hit);
+    bool b = hit > 0;
+    for (Prism p : parts) p.setHit(b);
     head.createVBOdata();
     torso.createVBOdata();
     right_arm.createVBOdata();

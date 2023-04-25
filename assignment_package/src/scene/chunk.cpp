@@ -505,10 +505,10 @@ void Chunk::createVBOdata() {
                             UVs[3] = glm::vec4(208.f/1024.f, 895.f/1024.f, 0.f, 0.f);
                             break;
                         case ICE:
-                            UVs[0] = glm::vec4(224.f/1024.f, 722.f/1024.f, 1.f, 0.f);
-                            UVs[1] = glm::vec4(238.f/1024.f, 722.f/1024.f, 1.f, 0.f);
-                            UVs[2] = glm::vec4(238.f/1024.f, 735.f/1024.f, 1.f, 0.f);
-                            UVs[3] = glm::vec4(224.f/1024.f, 735.f/1024.f, 1.f, 0.f);
+                            UVs[0] = glm::vec4(224.f/1024.f, 722.f/1024.f, 0.f, 0.f);
+                            UVs[1] = glm::vec4(238.f/1024.f, 722.f/1024.f, 0.f, 0.f);
+                            UVs[2] = glm::vec4(238.f/1024.f, 735.f/1024.f, 0.f, 0.f);
+                            UVs[3] = glm::vec4(224.f/1024.f, 735.f/1024.f, 0.f, 0.f);
                             break;
                         case CACTUS:
                             if (Face != 2 && Face != 3) { //side
