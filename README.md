@@ -12,6 +12,13 @@ Blocks can be held in the hotbar and used to place down blocks of a desired type
 ## Fixes
 Made rivers and oceans look nicer and less noisy. Multithreading was also improved so that running a server-client didn't block terrain generation as much. 
 
+# Aaron Cheng
+## Player Model
+Added player model (Steve) that animates arms/legs along with movement. Head rotates to face camera-vector, and body faces x-z forward vector. Also drew hand model for each player. 
+## PVP 
+Added ray-tracing function to send a hit-packet to server when a player is detected.
+## Cube Display
+Added wireframe cube to highlight block (4-block distance) currently selected. 
 
 # Leon Kabue
 ## Day and Night Cycle
