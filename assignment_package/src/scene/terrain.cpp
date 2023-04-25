@@ -303,7 +303,7 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
                 else if(y>generateRockLayer(glm::vec2(xx+x, zz+z))) cPtr->setBlockAt(xx, y, zz, STONE);
                 else {
                     if(noise1D(glm::vec2(xx+x, zz+z), SEED.getSeed(57.2, 12.3, 25.2)) < 0.1) {
-                        cPtr->setBlockAt(xx, y+1, zz, GRASS);
+                        //cPtr->setBlockAt(xx, y+1, zz, GRASS);
                     }
                     cPtr->setBlockAt(xx, y, zz, GRASS_BLOCK);
                 }
