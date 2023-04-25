@@ -90,12 +90,15 @@ const std::map<ItemType, int> itemMaxStack = {
     {DIAMOND_BOOTS, 1}
 };
 
+
+
 Item:: Item(OpenGLContext* context, ItemType t, int init_count, bool drawImmediately) :
     Drawable(context),
-    max_count(itemMaxStack.at(t)),
     count_text(context, std::to_string(init_count), glm::vec4(1), drawImmediately), type(t), item_count(init_count)
 {
     if(drawImmediately) createVBOdata();
+    if(itemMaxStack.find(t)!=itemMaxStack.end()) max_count = itemMaxStack.at(t);
+    else max_count = 64;
 };
 
 GLenum Item::drawMode() {
@@ -133,44 +136,43 @@ void Item::createVBOdata() {
         mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
     }
     else {
-        float d = 1.f; float w = 1.f; float h = 1.f;
         std::vector<glm::vec4> VBOpos, nor, uvs, col;
         std::vector<GLuint> idx;
         //top
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
 
         //bott
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
 
         //front
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
 
         //left
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 1, 1));
 
         //back
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 1, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 1, 1));
 
         //right
-        VBOpos.emplace_back(glm::vec4(-d / 2, 0, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, 0, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(d / 2, -h, -w / 2, 1));
-        VBOpos.emplace_back(glm::vec4(-d / 2, -h, -w / 2, 1));
+        VBOpos.emplace_back(glm::vec4(0, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 1, 0, 1));
+        VBOpos.emplace_back(glm::vec4(1, 0, 0, 1));
+        VBOpos.emplace_back(glm::vec4(0, 0, 0, 1));
 
         //top
         for (int i = 0; i < 4; i++) {
@@ -197,33 +199,33 @@ void Item::createVBOdata() {
             nor.emplace_back(0, 0, -1, 0);
         }
 
-
+        BlockType bt = item2block.at(type);
         //top
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 2)) {
+        for(glm::vec4 foo: getBlockUV(bt, 2)) {
             uvs.emplace_back(foo);
         }
         //bott
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 3)) {
+        for(glm::vec4 foo: getBlockUV(bt, 3)) {
             uvs.emplace_back(foo);
         }
 
         //front
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 4)) {
+        for(glm::vec4 foo: getBlockUV(bt, 4)) {
             uvs.emplace_back(foo);
         }
 
         //left
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 0)) {
+        for(glm::vec4 foo: getBlockUV(bt, 0)) {
             uvs.emplace_back(foo);
         }
 
         //back
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 5)) {
+        for(glm::vec4 foo: getBlockUV(bt, 5)) {
             uvs.emplace_back(foo);
         }
 
         //right
-        for(glm::vec4 foo: getBlockUV((BlockType)(type-blockItemLimit), 1)) {
+        for(glm::vec4 foo: getBlockUV(bt, 1)) {
             uvs.emplace_back(foo);
         }
 
@@ -257,6 +259,10 @@ void Item::createVBOdata() {
         generateCol();
         mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufCol);
         mp_context->glBufferData(GL_ARRAY_BUFFER, col.size() * sizeof(glm::vec4), col.data(), GL_STATIC_DRAW);
+
+        generateNor();
+        mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufNor);
+        mp_context->glBufferData(GL_ARRAY_BUFFER, nor.size() * sizeof(glm::vec4), nor.data(), GL_STATIC_DRAW);
     }
 }
 
@@ -272,8 +278,21 @@ void Item::merge(Item& x) {
 
 void Item::draw(ShaderProgram* m_prog, Texture& block, Texture& text, float block_size, float text_size, glm::vec3 block_pos, glm::vec3 text_pos) {
     block.bind(0);
-    m_prog->setModelMatrix(glm::translate(glm::mat4(1), block_pos)*
+    if(type < blockItemLimit)
+        m_prog->setModelMatrix(glm::translate(glm::mat4(1), block_pos)*
                            glm::scale(glm::mat4(1), glm::vec3(block_size, block_size, 1)));
+    else
+//        m_prog->setModelMatrix(glm::translate(glm::mat4(), block_pos) *
+//                               glm::translate(glm::mat4(), glm::vec3(-0.5, -0.5, -0.5))*
+//                               glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(0, 1, 0))*
+//                               glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(1, 0, 0))*
+//                               glm::translate(glm::mat4(), glm::vec3(0.5, 0.5, 0.5))*
+//                               glm::scale(glm::mat4(1), glm::vec3(0.7*block_size, 0.7*block_size, 0.7*block_size)));
+        m_prog->setModelMatrix(glm::translate(glm::mat4(), block_pos) *
+                                       glm::rotate(glm::mat4(), glm::radians(0.f), glm::vec3(0, 1, 0))*
+                                       //glm::rotate(glm::mat4(), glm::radians(45.f), glm::vec3(1, 0, 0))*
+                               glm::scale(glm::mat4(1), glm::vec3(block_size, block_size, block_size)));
+
     m_prog->draw(*this);
     if(item_count > 1) {
         text.bind(0);

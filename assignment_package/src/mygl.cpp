@@ -534,6 +534,12 @@ void MyGL::renderOverlays() {
                             60, 30,
                            glm::vec3(dx, dy, 0),
                            glm::vec3(dx+65, -5+dy, 0));
+                if(item->type >= 36) {
+                    item->draw(&m_progLambert, m_block_texture, m_font_texture,
+                                60, 30,
+                               glm::vec3(dx, dy, 0),
+                               glm::vec3(dx+65, -5+dy, 0));
+                }
             }
         }
     }
@@ -942,7 +948,9 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             bool found = m_terrain.gridMarch(cam_pos, ray_dir, &dist, &block_pos, dir);
             if (found) {
                 //TO DO: make block placed be the block in the inventory slot
-                BlockType type = m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
+                if(!m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]) return;
+                if(item2block.find(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type) == item2block.end()) return;
+                BlockType type = item2block.at(m_player.m_inventory.hotbar.items[m_player.m_inventory.hotbar.selected]->type);//m_terrain.getBlockAt(block_pos.x, block_pos.y, block_pos.z);
                 glm::ivec3 neighbor = glm::ivec3(dirToVec(dir)) + block_pos;
                 //m_terrain.setBlockAt(neighbor.x, neighbor.y, neighbor.z, type);
                 qDebug() << block_pos.x << " " << block_pos.y << " " << block_pos.z;
