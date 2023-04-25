@@ -37,7 +37,7 @@ std::vector<Structure> getStructureZones(Chunk* c, int x, int z) {
                 ivec2 pp = cp+ivec2(i,j)+ivec2(clamp(14.f*random2(cp, SEED.getSeed(2291.011,5588.136,4058.111,8730.635)), 0.f, 15.f));
                 float p1 = perlinNoise(pp, SEED.getSeed(24.4, 213.4, 345.2, 42.2), 512);
                 if(c->getBlockAt(pp.x-cp.x, c->heightMap[pp.x-cp.x][pp.y-cp.y]-1, pp.y-cp.y) == SAND){
-                    if(p1 < 0.1)
+                    if(p1 < 0.4)
                         ret.push_back(Structure(CACTUS_PLANT, pp));
                 }
             }

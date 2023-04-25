@@ -1,8 +1,13 @@
 #include "seed.h"
 
-Seed::Seed(int S) : seed(S) {
+Seed::Seed(float S) : seed(S) {
 
 }
+
+void Seed::setSeed(float f)  {
+    seed = f;
+}
+
 float Seed::getSeed(float f) const{
     return seed*f;
 }

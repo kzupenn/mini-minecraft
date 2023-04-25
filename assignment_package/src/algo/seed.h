@@ -4,13 +4,13 @@
 
 class Seed {
 private:
-    int seed;
+    float seed;
 public:
-    Seed(int s);
-    void setSeed(int s) const;
+    Seed(float s);
+    void setSeed(float s) ;
     float getSeed(float f) const; //returns seed with obfuscation factor f
     glm::vec3 getSeed(float f1, float f2, float f3) const;
     glm::vec4 getSeed(float f1, float f2, float f3, float f4) const;
 };
 
-static Seed SEED(69);
+static Seed SEED(42);

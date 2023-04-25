@@ -1,4 +1,16 @@
 # Milestone 3
+# Kevin Zhang
+## Armor and Health
+Added armor and health bars. Players also take fall damage, similar to actual Minecraft, and this damage is negated by water. 
+
+## Player vs Player
+Added damage calculation of players based on armor and weapons. Hitting players also applies knockback effects on them.
+
+## Inventory blocks
+Blocks can be held and used to place down blocks of a desired type.
+
+## Fixes
+Made rivers and oceans look nicer and less noisy. Multithreading was also improved so that running a server-client didn't block terrain generation as much. 
 
 # Leon Kabue
 ## Day and Night Cycle
