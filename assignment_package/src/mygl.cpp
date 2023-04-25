@@ -96,9 +96,9 @@ void MyGL::start(bool joinServer, QString username) {
     Item i = Item(this, STRING, 1, true);
     Item j = Item(this, IRON_HELMET, 1, true);
     Item k = Item(this, IRON_INGOT, 9, true);
-    Item l = Item(this, GRASS_BLOCK_, 12, true);
-//    m_player.m_inventory.addItem(a);
-//    m_player.m_inventory.addItem(b);
+    Item l = Item(this, OAK_PLANKS_, 64, true);
+    m_player.m_inventory.addItem(a);
+    m_player.m_inventory.addItem(b);
 //    m_player.m_inventory.addItem(c);
 //    m_player.m_inventory.addItem(d);
 //    m_player.m_inventory.addItem(e);
@@ -113,11 +113,11 @@ void MyGL::start(bool joinServer, QString username) {
 //    m_player.m_inventory.addItem(k, 26);
 //    m_player.m_inventory.addItem(j);
 //    m_player.m_inventory.addItem(j);
-//    m_player.m_inventory.addItem(j);
-//    m_player.m_inventory.addItem(l);
+    m_player.m_inventory.addItem(bb);
+    m_player.m_inventory.addItem(l);
 
-//    m_player.m_inventory.armor[0] = j;
-//    m_player.m_inventory.armor[1] = h;
+    m_player.m_inventory.armor[0] = j;
+    m_player.m_inventory.armor[1] = h;
 //    m_player.m_inventory.armor[2] = b;
 //    m_player.m_inventory.armor[3] = e;
     m_player.armor = m_player.m_inventory.calcArmor();
@@ -354,7 +354,7 @@ void MyGL::paintGL() {
     glViewport(0,0,this->width(), this->height());
 
     //set sky color
-    int modVal = 1000;
+    int modVal = 20000;
     float time = (float)((m_time+(modVal*4)) % (modVal*4)) / (modVal*4);
     glm::vec3 daySky = glm::vec3(0.37f, 0.74f, 1.0f);
     glm::vec3 nightSky = glm::vec3(2.0/255.0, 1.0/255.0, 78.0/255.0);
