@@ -9,7 +9,7 @@
 
 using namespace glm;
 
-const bool TESTING = true;
+const bool TESTING = false;
 
 //terrain generation
 //makes sporatic divets to make smooth terrain appear with erosion
