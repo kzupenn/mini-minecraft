@@ -386,8 +386,6 @@ void MyGL::paintGL() {
 
     m_progSky.draw(m_sky);
 
-    m_block_texture.bind(0);
-    
     renderTerrain();
     renderEntities();
 

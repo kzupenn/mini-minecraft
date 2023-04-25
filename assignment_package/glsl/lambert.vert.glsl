@@ -35,7 +35,7 @@ out vec3 fs_UV;             //The UV of each vertex, passed to the fragment shad
 void main()
 {
     fs_Pos = vs_Pos;                     // Pass the vertex colors to the fragment shader for interpolation
-    fs_UV = vs_UV;
+    fs_UV = vec3(vs_UV);
 
     mat3 invTranspose = mat3(u_ModelInvTr);
     fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.

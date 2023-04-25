@@ -41,45 +41,45 @@ float random1(vec3 p) {
                  *43758.5453);
 }
 
-float mySmoothStep(float a, float b, float t) {
-    t = smoothstep(0, 1, t);
-    return mix(a, b, t);
-}
+//float mySmoothStep(float a, float b, float t) {
+//    t = smoothstep(0, 1, t);
+//    return mix(a, b, t);
+//}
 
-float cubicTriMix(vec3 p) {
-    vec3 pFract = fract(p);
-    float llb = random1(floor(p) + vec3(0,0,0));
-    float lrb = random1(floor(p) + vec3(1,0,0));
-    float ulb = random1(floor(p) + vec3(0,1,0));
-    float urb = random1(floor(p) + vec3(1,1,0));
+//float cubicTriMix(vec3 p) {
+//    vec3 pFract = fract(p);
+//    float llb = random1(floor(p) + vec3(0,0,0));
+//    float lrb = random1(floor(p) + vec3(1,0,0));
+//    float ulb = random1(floor(p) + vec3(0,1,0));
+//    float urb = random1(floor(p) + vec3(1,1,0));
 
-    float llf = random1(floor(p) + vec3(0,0,1));
-    float lrf = random1(floor(p) + vec3(1,0,1));
-    float ulf = random1(floor(p) + vec3(0,1,1));
-    float urf = random1(floor(p) + vec3(1,1,1));
+//    float llf = random1(floor(p) + vec3(0,0,1));
+//    float lrf = random1(floor(p) + vec3(1,0,1));
+//    float ulf = random1(floor(p) + vec3(0,1,1));
+//    float urf = random1(floor(p) + vec3(1,1,1));
 
-    float mixLoBack = mySmoothStep(llb, lrb, pFract.x);
-    float mixHiBack = mySmoothStep(ulb, urb, pFract.x);
-    float mixLoFront = mySmoothStep(llf, lrf, pFract.x);
-    float mixHiFront = mySmoothStep(ulf, urf, pFract.x);
+//    float mixLoBack = mySmoothStep(llb, lrb, pFract.x);
+//    float mixHiBack = mySmoothStep(ulb, urb, pFract.x);
+//    float mixLoFront = mySmoothStep(llf, lrf, pFract.x);
+//    float mixHiFront = mySmoothStep(ulf, urf, pFract.x);
 
-    float mixLo = mySmoothStep(mixLoBack, mixLoFront, pFract.z);
-    float mixHi = mySmoothStep(mixHiBack, mixHiFront, pFract.z);
+//    float mixLo = mySmoothStep(mixLoBack, mixLoFront, pFract.z);
+//    float mixHi = mySmoothStep(mixHiBack, mixHiFront, pFract.z);
 
-    return mySmoothStep(mixLo, mixHi, pFract.y);
-}
+//    return mySmoothStep(mixLo, mixHi, pFract.y);
+//}
 
-float fbm(vec3 p) {
-    float amp = 0.5;
-    float freq = 4.0;
-    float sum = 0.0;
-    for(int i = 0; i < 8; i++) {
-        sum += cubicTriMix(p * freq) * amp;
-        amp *= 0.5;
-        freq *= 2.0;
-    }
-    return sum;
-}
+//float fbm(vec3 p) {
+//    float amp = 0.5;
+//    float freq = 4.0;
+//    float sum = 0.0;
+//    for(int i = 0; i < 8; i++) {
+//        sum += cubicTriMix(p * freq) * amp;
+//        amp *= 0.5;
+//        freq *= 2.0;
+//    }
+//    return sum;
+//}
 
 void main()
 {
@@ -127,8 +127,8 @@ void main()
     }
 
     float a = diffuseColor.w;
-    diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
-    
+    //diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
+
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
     // Avoid negative lighting values
