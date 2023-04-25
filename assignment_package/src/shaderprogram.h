@@ -25,7 +25,10 @@ public:
     int unifModelInvTr; // A handle for the "uniform" mat4 representing inverse transpose of the model matrix in the vertex shader
     int unifViewProj; // A handle for the "uniform" mat4 representing combined projection and view matrices in the vertex shader
     int unifColor; // A handle for the "uniform" vec4 representing color of geometry in the vertex shader
-    
+
+    int unifEye; //A handle for the "uniform" vec3 representing the camera position for drawing the sky in fragment shader
+    int unifDim; //A handle for the "uniform" ivec2 representing the dimensions of the screen for drawing the sky
+
     int unifSampler2D; //A handle for the "uniform" sampler2D that will be used to read the texture containing the scene render
     int unifWater;
     int unifTime; //A handle for the "uniform" float representing the time in the shader
@@ -59,6 +62,9 @@ public:
     QString qTextFileRead(const char*);
 
     void setTime(int t);
+
+    void setDimensions(int w, int h);
+    void setEye(glm::vec3 eye);
 
 private:
     OpenGLContext* context;   // Since Qt's OpenGL support is done through classes like QOpenGLFunctions_3_2_Core,

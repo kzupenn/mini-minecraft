@@ -20,13 +20,21 @@ uniform sampler2D u_Texture; // The texture to be read from by this shader
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Pos;
 in vec4 fs_Nor;
-in vec4 fs_LightVec;
-in vec4 fs_UV;
+
+in vec3 fs_UV;
 
 uniform int uTime;
 
 out vec4 out_Col; // This is the final output color that you will see on your
                   // screen for the pixel that is currently being processed.
+
+
+const vec3 sunColorDawn = vec3(255, 246, 79) / 255.0;
+const vec3 sunColorDusk = vec3(255, 246, 79) / 255.0;
+const vec3 sunColorDay = vec3(255, 249, 196) / 255.0;
+
+const vec3 moonColor = vec3(200.0, 233.0, 248.0) / 255.0;
+
 
 float random1(vec3 p) {
     return fract(sin(dot(p,vec3(127.1, 311.7, 191.999)))
@@ -75,43 +83,68 @@ float fbm(vec3 p) {
 
 void main()
 {
+    int modVal = 1000;
+    float time = mod(uTime, modVal) / modVal;
+    float time2 = mod(uTime, (modVal*2)) / (modVal*2);
+    float time4 = mod(uTime, (modVal*4)) / (modVal*4);
+    vec3 sunMotion = vec3(0, time, -time);
+    vec3 sunDirRise = normalize(vec3(0, 0, 1.f) + sunMotion);
+    sunMotion = vec3(0, -time, -time);
+    vec3 sunDirSet = normalize(vec3(0, 1, 0.f) + sunMotion);
+
+    vec3 sunDir = sunDirRise;
+    vec3 sunColor = vec3(255, 255, 190) / 255.0;
+
+    if (time2 > 0.5) {
+        sunDir = sunDirSet;
+        sunColor = mix(sunColorDay, sunColorDusk, time);
+    } else {
+        sunColor = mix(sunColorDawn, sunColorDay, time);
+    }
+    //Night so we have a moon instead
+    if (time4 >= 0.5) {
+        vec3 moonDir = normalize(vec3(0.f, 1.f, 1.f));
+        sunDir = moonDir;
+        sunColor = 0.25 * moonColor;
+    }
+    vec4 fs_LightVec = vec4(sunDir, 0.f);  // Compute the direction in which the light source lies
+
+
+    float t = mod(float(uTime), 17) / 17;
+    t = clamp(t, 0.f, 1.f);
+
+    vec2 uv = vec2(fs_UV);
+
+    if (fs_UV.z == 1.f) {
+        uv.x = fs_UV.x + t/64.f;
+    }
+
     // Material base color (before shading)
+    vec4 diffuseColor = texture(u_Texture, vec2(uv));
 
-        float period = 60.f;
-        float t = abs(sin(float(uTime) / period));
+    if (fs_UV.z == 1.f && fs_UV.y <= 944.f/1024.f) {
+        diffuseColor += vec4(0.f, 0.3f, 0.8f, 0.f);
+    }
 
-        vec2 uv = vec2(fs_UV);
+    float a = diffuseColor.w;
+    diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
+    
+    // Calculate the diffuse term for Lambert shading
+    float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
+    // Avoid negative lighting values
+    diffuseTerm = clamp(diffuseTerm, 0, 1);
+    
+    float ambientTerm = 0.2;
 
-        if (fs_UV.z == 1.f) {
-            uv.x = fs_UV.x + t/512.f;
-            uv.y = fs_UV.y + t/512.f;
-        }
+    vec3 sunlight_contrib = diffuseTerm * sunColor;
 
-        vec4 diffuseColor = texture(u_Texture, vec2(uv));
+    // Compute final shaded color
+    vec3 final_col = min(sunlight_contrib + ambientTerm, vec3(1.f)) * diffuseColor.rgb;
 
-        if (fs_UV.z == 1.f && fs_UV.y <= 944.f/1024.f) {
-            diffuseColor += vec4(0.f, 0.3f, 0.8f, 0.f);
-        }
 
-        float a = diffuseColor.w;
-//        diffuseColor = diffuseColor * (0.5 * fbm(fs_Pos.xyz) + 0.5);
+    if (a == 0.f) {
+        discard;
+    }
 
-        // Calculate the diffuse term for Lambert shading
-        float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
-        // Avoid negative lighting values
-        diffuseTerm = clamp(diffuseTerm, 0, 1);
-
-        float ambientTerm = 0.2;
-
-        float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
-                                                            //to simulate ambient lighting. This ensures that faces that are not
-                                                            //lit by our point light are not completely black.
-
-        // Compute final shaded color
-
-        out_Col = vec4(diffuseColor.rgb * lightIntensity, a);
-
-        if (fs_UV.w == 1.f) {
-            out_Col += vec4(1, 0, 0, 0.5);
-        }
+    out_Col = vec4(final_col, a);
 }

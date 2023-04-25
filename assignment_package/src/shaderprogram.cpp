@@ -10,7 +10,8 @@ ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
       attrPos(-1), attrNor(-1), attrCol(-1), attrUV(-1),
       unifModel(-1), unifModelInvTr(-1), unifViewProj(-1), unifColor(-1),
-      unifSampler2D(-1), unifTime(-1), unifWater(-1),
+      unifEye(-1), unifDim(-1),
+      unifSampler2D(-1), unifWater(-1), unifTime(-1),
       context(context)
 {}
 
@@ -74,6 +75,9 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     unifModelInvTr = context->glGetUniformLocation(prog, "u_ModelInvTr");
     unifViewProj   = context->glGetUniformLocation(prog, "u_ViewProj");
     unifColor      = context->glGetUniformLocation(prog, "u_Color");
+
+    unifEye        = context->glGetUniformLocation(prog, "u_Eye");
+    unifDim        = context->glGetUniformLocation(prog, "u_Dimensions");
 
     unifWater = context->glGetUniformLocation(prog, "u_Type");
     unifSampler2D  = context->glGetUniformLocation(prog, "u_Texture");
@@ -400,6 +404,24 @@ void ShaderProgram::setTime(int t)
 
     if (unifTime != -1) {
         context->glUniform1i(unifTime, t);
+    }
+}
+
+void ShaderProgram::setDimensions(int w, int h)
+{
+    useMe();
+
+    if (unifDim != -1) {
+        context->glUniform2i(unifDim, w, h);
+    }
+}
+
+void ShaderProgram::setEye(glm::vec3 eye)
+{
+    useMe();
+
+    if (unifEye != -1) {
+        context->glUniform3f(unifEye, eye.x, eye.y, eye.z);
     }
 }
 
