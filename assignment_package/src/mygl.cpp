@@ -272,6 +272,7 @@ void MyGL::tick() {
                                              m_player.getPhi(),
                                              inHand, onHead, onChest, onLeg, onFoot,
                                              m_player.m_flightMode);
+    m_player.inHand = inHand;
     if(!isDead) send_packet(&pp);
 
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
@@ -539,12 +540,11 @@ void MyGL::renderEntities() {
         itemQueue.pop();
     }
 
-    qDebug() << m_player.inHand;
-
     //hand/item
     if (m_player.inHand != AIR) {
         glm::vec2 cur = itemUV.at(m_player.inHand);
         m_player.hand_item.p = glm::vec4(cur.x, cur.y, 0, 0);
+        m_player.hand_item.createVBOdata();
         m_player.drawHandItem(&m_progLambert, m_block_texture);
     } else {
         m_player.drawArm(&m_progLambert, m_skin_texture);

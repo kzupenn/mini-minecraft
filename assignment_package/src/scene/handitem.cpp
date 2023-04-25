@@ -158,8 +158,6 @@ void HandItem::createVBOdata() {
     generateIdx();
     mp_context->glBindBuffer(GL_ARRAY_BUFFER, m_bufIdx);
     mp_context->glBufferData(GL_ARRAY_BUFFER, idx.size() * sizeof(glm::vec4), idx.data(), GL_STATIC_DRAW);
-
-
 }
 
 GLenum HandItem::drawMode() { return GL_TRIANGLES; }
