@@ -132,13 +132,17 @@ void Player::computePhysics(float dT) {
     if (in_liquid) vout /= 1.5f;
     moveAlongVector(vout);
     glm::vec3 cur = m_camera.m_position;
-    if (mcr_terrain.hasChunkAt(cur.x, cur.z)) camera_block = mcr_terrain.getBlockAt(cur);
+
+    if (mcr_terrain.hasChunkAt(cur.x, cur.z) && mcr_terrain.getChunkAt(cur.x, cur.z).get()->dataGen) camera_block = mcr_terrain.getBlockAt(cur);
     m_acceleration = glm::vec3(0);
 }
 
 void Player::checkCollision()
 {
     glm::vec3 p = m_position;
+    //don't do collision checks while chunks are unloaded
+    if(!mcr_terrain.hasChunkAt(p.x, p.z) || !mcr_terrain.getChunkAt(p.x, p.z).get()->dataGen) return;
+
     std::vector<glm::vec3> corners = {glm::vec3(p.x+0.3, p.y+2.f, p.z-0.3),
                                      glm::vec3(p.x+0.3, p.y+2.f, p.z+0.3),
                                      glm::vec3(p.x-0.3, p.y+2.f, p.z+0.3),

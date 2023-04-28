@@ -119,7 +119,7 @@ private:
     //generates terrain around a player
     void generateTerrain(int x, int z);
 
-    Terrain m_terrain;
+    Terrain& m_terrain;
     std::mutex m_players_mutex;
     std::map<int, PlayerState> m_players;
     std::mutex m_entities_mutex;
@@ -130,7 +130,7 @@ private:
     int seed;
     int time;
 public:
-    Server(int, int);
+    Server(int, int, Terrain&);
     int port;
 
     //starts the server

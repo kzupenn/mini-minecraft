@@ -65,7 +65,7 @@ void MyGL::start(bool joinServer, QString username) {
 
     //check if we need to host a server
     if(!joinServer) {
-        SERVER = mkU<Server>(1, port);
+        SERVER = mkU<Server>(1, port, m_terrain);
         while(!SERVER->setup);
         ip = getIP().data();
     }

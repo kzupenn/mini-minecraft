@@ -13,7 +13,7 @@
 using namespace std;
 
 
-Server::Server(int s, int p) : m_terrain(nullptr), seed(s), port(p), setup(false), open(true), time(0){
+Server::Server(int s, int p, Terrain& host_terrain) : m_terrain(host_terrain), seed(s), port(p), setup(false), open(true), time(0){
     m_clients.setMaxThreadCount(MAX_CLIENTS);
     ServerConnectionWorker* sw = new ServerConnectionWorker(this);
     QThreadPool::globalInstance()->start(sw);
