@@ -7,7 +7,7 @@ Demo video: https://www.youtube.com/watch?v=4Lo2-ypq7No
 To set up a server, enter your desired port number to host the server at in the startup screen. Once started, your ip address will be displayed in the info subscreen.
 To join a server, enter the ip address of the host and the matching port number.
 
-## Game Controls
+## Game Controls 
 Standard movement: WASD
 Manual rotation: Arrow keys
 Toggle flying mode: F
